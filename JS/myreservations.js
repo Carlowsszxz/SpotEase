@@ -1,12 +1,22 @@
-/* Render user's reservations from localStorage (pm_reservations)
-   Provide cancel and edit (date/time) actions.
+/* Render user's reservations from Supabase reservations table
+  Provide cancel and edit (date/time) actions.
 */
-(function(){
-  var storageKey = 'pm_reservations';
-  function load(){
-    try{ return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e){ return []; }
+import { checkAuth } from './auth.js'
+import { supabase } from './supabase-auth.js'
+import { showLoading, hideLoading, setStatus } from './loading-utils.js'
+
+(async function(){
+  // ensure user is authenticated before rendering reservations
+  const ok = await checkAuth('FrameLogin.html');
+  if (!ok) return;
+
+  // Get current user
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session || !session.user) {
+    console.error('No user session found')
+    return
   }
-  function save(list){ try{ localStorage.setItem(storageKey, JSON.stringify(list)); } catch(e){} }
+  const userId = session.user.id
 
   var activeListEl = document.getElementById('activeList');
   var upcomingListEl = document.getElementById('upcomingList');
@@ -17,38 +27,116 @@
   var noActive = document.getElementById('noActive');
   var noUpcoming = document.getElementById('noUpcoming');
   var noPast = document.getElementById('noPast');
+  
+  // Loading UI elements
+  var loadingOverlay = document.getElementById('loadingOverlay');
+  var statusBar = document.getElementById('statusBar');
+  var retryBtn = document.getElementById('retryBtn');
+  var lastUpdatedEl = document.getElementById('lastUpdated');
 
-  function toDateTime(r){ return new Date(r.date + 'T' + r.time); }
-  function isExpired(r){ return toDateTime(r) < new Date(); }
-  function isToday(r){ var d = new Date(r.date); var today = new Date(); return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth() && d.getDate()===today.getDate(); }
+  var reservations = [];
 
-  function render(){
-    var all = load();
-    // sort by date asc
-    all.sort(function(a,b){ return new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time); });
+  async function load(){
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('reserved_from', { ascending: false })
+      
+      if (error) {
+        console.error('Error loading reservations:', error)
+        return []
+      }
+      
+      reservations = data || []
+      return reservations
+    } catch (e) {
+      console.error('Error loading reservations:', e)
+      return []
+    }
+  }
 
-    var upcoming = all.filter(function(r){ return !isExpired(r) && !isToday(r) && r.status!=='Cancelled'; });
-    var active = all.filter(function(r){ return !isExpired(r) && isToday(r) && r.status!=='Cancelled'; });
-    var past = all.filter(function(r){ return isExpired(r) || r.status==='Cancelled'; });
+  function toDateTime(r){ return new Date(r.reserved_from); }
+  function toEndDateTime(r){ return new Date(r.reserved_until); }
+  function isExpired(r){ return toEndDateTime(r) < new Date(); }
+  function isActive(r){ 
+    const now = new Date()
+    const start = new Date(r.reserved_from)
+    const end = new Date(r.reserved_until)
+    return start <= now && now <= end
+  }
 
-    renderList(upcomingListEl, upcoming, 'upcoming');
-    renderList(activeListEl, active, 'active');
-    renderList(pastListEl, past, 'past');
+  async function render(){
+    showLoading(loadingOverlay, null, 'Loading reservations...');
+    setStatus('Loading reservations...', false, statusBar, retryBtn);
+    try {
+      var all = await load();
+      if (!all.length) {
+        renderList(upcomingListEl, [], 'upcoming');
+        renderList(activeListEl, [], 'active');
+        renderList(pastListEl, [], 'past');
+        if(countUpcoming) countUpcoming.textContent = 0;
+        if(countActive) countActive.textContent = 0;
+        if(countPast) countPast.textContent = 0;
+        if(noActive) noActive.style.display = 'block';
+        if(noUpcoming) noUpcoming.style.display = 'block';
+        if(noPast) noPast.style.display = 'block';
+        hideLoading(loadingOverlay);
+        setStatus('No reservations found', false, statusBar, retryBtn);
+        if(lastUpdatedEl) lastUpdatedEl.textContent = 'Updated: ' + new Date().toLocaleString();
+        return;
+      }
 
-    if(countUpcoming) countUpcoming.textContent = upcoming.length;
-    if(countActive) countActive.textContent = active.length;
-    if(countPast) countPast.textContent = past.length;
+      var upcoming = all.filter(function(r){ 
+        return !isExpired(r) && !isActive(r) && r.status !== 'cancelled'; 
+      });
+      var active = all.filter(function(r){ 
+        return isActive(r) && r.status !== 'cancelled'; 
+      });
+      var past = all.filter(function(r){ 
+        return (isExpired(r) && r.status !== 'approved') || r.status === 'cancelled'; 
+      });
 
-    if(noActive) noActive.style.display = active.length? 'none':'block';
-    if(noUpcoming) noUpcoming.style.display = upcoming.length? 'none':'block';
-    if(noPast) noPast.style.display = past.length? 'none':'block';
+      renderList(upcomingListEl, upcoming, 'upcoming');
+      renderList(activeListEl, active, 'active');
+      renderList(pastListEl, past, 'past');
+
+      if(countUpcoming) countUpcoming.textContent = upcoming.length;
+      if(countActive) countActive.textContent = active.length;
+      if(countPast) countPast.textContent = past.length;
+
+      if(noActive) noActive.style.display = active.length? 'none':'block';
+      if(noUpcoming) noUpcoming.style.display = upcoming.length? 'none':'block';
+      if(noPast) noPast.style.display = past.length? 'none':'block';
+      
+      hideLoading(loadingOverlay);
+      setStatus('Reservations loaded', false, statusBar, retryBtn);
+      if(lastUpdatedEl) lastUpdatedEl.textContent = 'Updated: ' + new Date().toLocaleString();
+    } catch(err) {
+      hideLoading(loadingOverlay);
+      setStatus('Failed to load reservations: ' + (err.message || err), true, statusBar, retryBtn);
+      console.error('Error in render:', err);
+    }
   }
 
   function statusBadge(r){
-    if(r.status==='Cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
+    if(r.status === 'cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
+    if(r.status === 'pending') return '<span class="badge badge-pending">Pending</span>';
+    if(r.status === 'approved') return '<span class="badge badge-confirmed">Approved</span>';
     if(isExpired(r)) return '<span class="badge badge-expired">Expired</span>';
-    if(r.status==='Pending') return '<span class="badge badge-pending">Pending</span>';
     return '<span class="badge badge-confirmed">Confirmed</span>';
+  }
+
+  function formatDateTime(dateString) {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
   function renderList(container, items, kind){
@@ -57,19 +145,17 @@
     items.forEach(function(r){
       var li = document.createElement('li');
       var meta = document.createElement('div'); meta.className = 'res-meta';
-      var title = document.createElement('div'); title.className = 'res-title'; title.textContent = r.resourceName || r.resource || 'Resource';
-      var sub = document.createElement('div'); sub.className = 'res-sub'; sub.textContent = r.resourceLocation ? (r.resourceLocation+' • ') + r.date + ' ' + r.time : r.date + ' ' + r.time + ' • ' + (r.resourceName||r.resource||'Resource');
+      var title = document.createElement('div'); title.className = 'res-title'; title.textContent = r.resource_id || 'Resource';
+      var sub = document.createElement('div'); sub.className = 'res-sub'; 
+      sub.textContent = formatDateTime(r.reserved_from) + ' to ' + formatDateTime(r.reserved_until);
       meta.appendChild(title); meta.appendChild(sub);
 
       var right = document.createElement('div');
       right.innerHTML = statusBadge(r);
 
       var actions = document.createElement('div'); actions.className='action-group';
-      // Edit allowed if not expired and not cancelled
-      if(!isExpired(r) && r.status!=='Cancelled'){
-        var edit = document.createElement('button'); edit.className='action-btn action-edit'; edit.textContent='Edit';
-        edit.addEventListener('click',function(){ editReservation(r.id); });
-        actions.appendChild(edit);
+      // Cancel allowed if not expired and not already cancelled
+      if(!isExpired(r) && r.status !== 'cancelled'){
         var cancel = document.createElement('button'); cancel.className='action-btn action-cancel'; cancel.textContent='Cancel';
         cancel.addEventListener('click',function(){ cancelReservation(r.id); });
         actions.appendChild(cancel);
@@ -81,33 +167,32 @@
     });
   }
 
-  function findById(id){ var all = load(); return all.find(function(r){return String(r.id)===String(id);}); }
-
-  function cancelReservation(id){
-    var all = load();
-    var idx = all.findIndex(function(r){return String(r.id)===String(id);});
-    if(idx===-1) return alert('Reservation not found');
-    if(confirm('Cancel this reservation?')){
-      all[idx].status = 'Cancelled';
-      save(all); render();
+  async function cancelReservation(id){
+    if(!confirm('Cancel this reservation?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ status: 'cancelled' })
+        .eq('id', id)
+        .eq('user_id', userId)
+      
+      if (error) {
+        alert('Error cancelling reservation: ' + error.message)
+        console.error('Error cancelling reservation:', error)
+        return
+      }
+      
+      alert('Reservation cancelled successfully')
+      render()
+    } catch (e) {
+      alert('Error cancelling reservation: ' + e.message)
+      console.error('Error cancelling reservation:', e)
     }
   }
 
-  function editReservation(id){
-    var all = load();
-    var idx = all.findIndex(function(r){return String(r.id)===String(id);});
-    if(idx===-1) return alert('Reservation not found');
-    var r = all[idx];
-    var newDate = prompt('New date (YYYY-MM-DD)', r.date);
-    if(!newDate) return;
-    var newTime = prompt('New time (HH:MM)', r.time);
-    if(!newTime) return;
-    // basic validation
-    var dt = new Date(newDate + 'T' + newTime);
-    if(isNaN(dt.getTime())){ alert('Invalid date/time'); return; }
-    r.date = newDate; r.time = newTime; r.status = 'Confirmed';
-    save(all); render();
-  }
+  // wire retry button
+  if(retryBtn) retryBtn.addEventListener('click', render);
 
   // initialize UI
   render();
@@ -115,6 +200,5 @@
   // expose for debugging
   window._pm_reservations_render = render;
   window._pm_reservations_cancel = cancelReservation;
-  window._pm_reservations_edit = editReservation;
 
 })();

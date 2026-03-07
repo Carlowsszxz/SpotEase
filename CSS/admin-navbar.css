@@ -1,0 +1,179 @@
+/* Admin Navbar - Top sticky navigation bar for admin pages */
+/* Override body flex to allow navbar to be at top */
+body {
+	flex-direction: column;
+	align-items: stretch;
+	min-height: 100vh;
+}
+
+.main-nav {
+	position: sticky;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	background: linear-gradient(180deg, #fff, #fbfdff);
+	box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
+	z-index: 9999;
+	border-bottom: 1px solid rgba(2, 6, 23, 0.06);
+	flex-shrink: 0;
+}
+
+.main-nav .nav-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 12px 28px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 20px;
+	height: 60px;
+}
+
+.nav-links {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.nav-links li {
+	margin: 0;
+}
+
+.nav-links a {
+	display: inline-block;
+	padding: 8px 12px;
+	border-radius: 8px;
+	color: #0f172a;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+.nav-links a:hover {
+	background: rgba(217, 119, 6, 0.12);
+	color: #d97706;
+}
+
+.nav-right {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	white-space: nowrap;
+}
+
+.nav-username {
+	color: #0f172a;
+	font-weight: 700;
+	font-size: 14px;
+}
+
+.nav-link {
+	padding: 8px 12px;
+	border-radius: 8px;
+	color: #2563eb;
+	text-decoration: none;
+	border: 1px solid rgba(37, 99, 235, 0.2);
+	font-size: 14px;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+	background: rgba(37, 99, 235, 0.12);
+	border-color: rgba(37, 99, 235, 0.4);
+}
+
+.logout-btn {
+	background: transparent;
+	border: 1px solid rgba(2, 6, 23, 0.12);
+	padding: 8px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+	color: #0f172a;
+	font-weight: 600;
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+	background: rgba(239, 68, 68, 0.1);
+	border-color: rgba(239, 68, 68, 0.3);
+	color: #ef4444;
+}
+
+/* Active link state (admin styled) */
+.nav-links a.active{
+	background: rgba(217, 119, 6, 0.18);
+	color: #7c2d12;
+	box-shadow: 0 4px 14px rgba(217, 119, 6, 0.08);
+}
+
+@media (max-width: 768px) {
+	.main-nav .nav-inner {
+		padding: 10px 16px;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+
+	.nav-links {
+		gap: 4px;
+		flex-basis: 100%;
+		order: 3;
+	}
+
+	.nav-links a {
+		padding: 6px 10px;
+		font-size: 13px;
+	}
+
+	.nav-right {
+		gap: 8px;
+		order: 2;
+	}
+
+	.nav-username {
+		font-size: 13px;
+	}
+
+	.nav-link {
+		padding: 6px 10px;
+		font-size: 13px;
+	}
+
+	.logout-btn {
+		padding: 6px 10px;
+		font-size: 13px;
+	}
+}
+
+@media (max-width: 500px) {
+	.main-nav .nav-inner {
+		padding: 8px 12px;
+		gap: 8px;
+	}
+
+	.nav-links {
+		gap: 2px;
+	}
+
+	.nav-links a {
+		padding: 5px 8px;
+		font-size: 12px;
+	}
+
+	.nav-right {
+		gap: 6px;
+	}
+
+	.nav-link,
+	.logout-btn {
+		padding: 5px 8px;
+		font-size: 12px;
+	}
+}

@@ -4,10 +4,27 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Profile</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
   <link rel="stylesheet" href="CSS/frames.css">
   <link rel="stylesheet" href="CSS/profile.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
+
   <div class="profile-page">
     <header>
       <h1>Account Profile</h1>
@@ -47,6 +64,6 @@
     </main>
   </div>
 
-  <script src="JS/profile.js"></script>
+  <script type="module" src="JS/profile.js"></script>
 </body>
 </html>

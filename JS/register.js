@@ -1,5 +1,14 @@
-// Register (using Firebase Auth via ES modules)
-import { auth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from './firebase-init.js';
+// Register (using Supabase Auth)
+import { supabase } from './supabase-auth.js';
+
+// Redirect to dashboard if user is already logged in
+(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        window.location.href = 'FrameDashboard.html';
+        return;
+    }
+})();
 
 const form = document.getElementById('registerForm');
 const msgEl = document.getElementById('register-message');
@@ -9,7 +18,6 @@ if (form) {
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         const fullname = document.getElementById('fullname').value.trim();
-        const username = document.getElementById('username').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
@@ -17,7 +25,7 @@ if (form) {
         msgEl.textContent = '';
         msgEl.classList.remove('success');
 
-        if (!fullname || !username || !email || !password || !confirmPassword) {
+        if (!fullname || !email || !password || !confirmPassword) {
             msgEl.textContent = 'Please fill in all fields.';
             return;
         }
@@ -39,30 +47,43 @@ if (form) {
         }
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            // set displayName from form if available
-            try { await updateProfile(user, { displayName: fullname }); } catch (e) { /* ignore */ }
-            try { localStorage.setItem('pm_username', user.displayName || fullname || email); } catch (e) {}
-            msgEl.textContent = 'Registration successful.';
+            // Check if user already exists in the users table
+            const { data: existingUsers, error: checkError } = await supabase.from('users').select('id').eq('email', email);
+            if (existingUsers && existingUsers.length > 0) {
+                msgEl.textContent = 'Account already exists. Please sign in.';
+                return;
+            }
+            if (checkError) {
+                // Log the error but continue
+                console.error('Error checking for existing user', checkError);
+            }
+
+            // Sign up with Supabase Auth - email confirmation will be required
+            const confirmRedirectUrl = window.location.origin + '/FrameEmailConfirm.html';
+            const { data, error } = await supabase.auth.signUp({ 
+                email, 
+                password,
+                options: {
+                    emailRedirectTo: confirmRedirectUrl,
+                    data: {
+                        full_name: fullname
+                    }
+                }
+            });
+            if (error) throw error;
+
+            // Store user info for confirmation page
+            try { 
+                localStorage.setItem('pm_registration_email', email);
+                localStorage.setItem('pm_registration_fullname', fullname);
+            } catch (e) {}
+
+            // Show confirmation message and do NOT redirect
+            msgEl.textContent = 'Registration successful! Please check your email to confirm your account.';
             msgEl.classList.add('success');
-            setTimeout(function(){ window.location.href = 'FrameDashboard.html'; }, 600);
         } catch (err) {
             console.error('Registration error', err);
-            // Demo fallback: store locally
-            try {
-                const usersKey = 'pm_users';
-                const users = JSON.parse(localStorage.getItem(usersKey) || '[]');
-                const newUser = { id: Date.now().toString(), name: fullname, username: username, email: email, provider: 'local' };
-                users.push(newUser);
-                localStorage.setItem(usersKey, JSON.stringify(users));
-                localStorage.setItem('pm_username', fullname || email);
-                msgEl.textContent = 'Registration successful (demo).';
-                msgEl.classList.add('success');
-                setTimeout(function(){ window.location.href = 'FrameDashboard.html'; }, 600);
-            } catch (e2) {
-                msgEl.textContent = 'Registration failed.';
-            }
+            msgEl.textContent = 'Registration failed: ' + (err.message || 'Unknown error');
         }
     });
 }
@@ -70,29 +91,17 @@ if (form) {
 if (googleBtn) {
     googleBtn.addEventListener('click', async function () {
         try {
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            // ensure local demo record exists
-            try {
-                const usersKey = 'pm_users';
-                const users = JSON.parse(localStorage.getItem(usersKey) || '[]');
-                const existing = users.find(u => u.email === user.email);
-                if (!existing) {
-                    users.push({ id: user.uid, name: user.displayName, email: user.email, provider: 'google' });
-                    localStorage.setItem(usersKey, JSON.stringify(users));
-                }
-            } catch (e) {}
-            try { localStorage.setItem('pm_username', user.displayName || user.email); } catch (e) {}
-            window.location.href = 'FrameDashboard.html';
+            // Use Supabase OAuth for Google sign-in; redirect returns to this page where
+            // `supabase-auth.js` handles the session and onLoginSuccess will create a profile.
+            const redirectTo = window.location.origin + '/FrameRegister.html';
+            const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+            if (error) throw error;
+            // Browser will redirect to Google for consent. Further handling occurs on redirect.
+            return;
         } catch (err) {
             console.error('Google sign-up error', err);
             if (msgEl) {
-                if (err && err.code === 'auth/unauthorized-domain') {
-                    msgEl.innerHTML = 'Sign-in blocked: unauthorized domain. Serve the app over HTTP(S) (not file://) and add <strong>localhost</strong> (or your host) to <em>Authorized domains</em> in the Firebase console (Authentication → Sign-in method → Authorized domains).';
-                } else {
-                    msgEl.textContent = 'Google sign-up failed: ' + (err.message || err.code || 'unknown error');
-                }
+                msgEl.innerHTML = 'Sign-in blocked or failed. Serve the app over HTTP(S) (not file://) and verify OAuth redirect/authorized domains in your Supabase/Google settings.';
             }
         }
     });

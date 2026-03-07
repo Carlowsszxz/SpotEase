@@ -4,17 +4,47 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Make a Reservation</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
   <link rel="stylesheet" href="CSS/frames.css">
   <link rel="stylesheet" href="CSS/reservation.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
   <div class="reservation-page">
     <header>
       <h1>Reserve a Resource</h1>
       <p class="small-muted">Select type, resource, date and time, then check availability.</p>
     </header>
 
+    <!-- status bar: last-updated and retry on errors -->
+    <div id="statusBar" class="status-bar" aria-live="polite"></div>
+
     <main class="reservation-card">
+      <div class="resource-details" id="resourceDetails" style="display:none;">
+        <div class="detail-header">
+          <h2 id="detailResourceName">Select a resource</h2>
+          <span id="detailStatusBadge" class="status-badge status-free">Free</span>
+        </div>
+        <div class="detail-info">
+          <p><strong>Type:</strong> <span id="detailResourceType">—</span></p>
+          <p><strong>Location:</strong> <span id="detailResourceLocation">—</span></p>
+        </div>
+      </div>
+
       <form id="reservationForm">
         <label for="resType">Resource Type</label>
         <select id="resType" required>
@@ -28,15 +58,9 @@
           <!-- populated by JS -->
         </select>
 
-        <div class="row">
-          <div>
-            <label for="resDate">Date</label>
-            <input type="date" id="resDate" required>
-          </div>
-          <div>
-            <label for="resTime">Time</label>
-            <input type="time" id="resTime" required>
-          </div>
+        <div>
+          <label for="resTime">Time</label>
+          <input type="time" id="resTime" required>
         </div>
 
         <div class="actions-row">
@@ -46,9 +70,26 @@
 
         <div id="statusArea" class="status-area" aria-live="polite"></div>
       </form>
+
+      <!-- retry button for quick reloads if something fails -->
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+        <button id="retryBtn" class="btn" style="display:none">Retry</button>
+        <div id="lastUpdated" class="small-muted" style="font-size:12px"></div>
+      </div>
     </main>
   </div>
 
-  <script src="JS/reservation.js"></script>
+  <!-- loading overlay / spinner -->
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="spinner" role="status" aria-live="polite">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="loading-text">Loading…</div>
+    </div>
+  </div>
+
+  <script type="module" src="JS/auth.js"></script>
+  <script type="module" src="JS/reservation.js"></script>
 </body>
 </html>

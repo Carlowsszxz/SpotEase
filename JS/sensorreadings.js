@@ -3,16 +3,6 @@
 */
 (function(){
   var storageKey = 'pm_sensor_readings';
-  function seed(){
-    var now = new Date();
-    var sample = [
-      {ts:'2026-03-04T13:01:15', sensor:'sensor-b21-iot001', resource:'Seat B21', value:57.1, payload:{rssi:-70, temp:22.1}, status:'ok'},
-      {ts:'2026-03-04T13:02:10', sensor:'sensor-b21-iot001', resource:'Seat B21', value:0.0, payload:{err:'no_data'}, status:'error'},
-      {ts:'2026-03-04T13:05:00', sensor:'sensor-r12-iot002', resource:'Room 12', value:3.4, payload:{temp:19.4}, status:'ok'},
-      {ts:'2026-03-04T14:10:00', sensor:'sensor-p03-iot010', resource:'Parking P03', value:1.0, payload:{voltage:3.3}, status:'warn'}
-    ];
-    try{ if(!localStorage.getItem(storageKey)) localStorage.setItem(storageKey, JSON.stringify(sample)); }catch(e){}
-  }
 
   function load(){ try{ return JSON.parse(localStorage.getItem(storageKey) || '[]'); }catch(e){ return []; } }
   function save(list){ try{ localStorage.setItem(storageKey, JSON.stringify(list)); }catch(e){} }
@@ -90,6 +80,6 @@
   function drawLine(canvas, labels, values){ if(!canvas) return; var ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); var w=canvas.width, h=canvas.height; var max = Math.max.apply(null, values.concat([1])); ctx.strokeStyle='#2563eb'; ctx.lineWidth=2; ctx.beginPath(); values.forEach(function(v,i){ var x = 40 + (i*(w-60)/(values.length-1 || 1)); var y = (h-40) - ((v/max)*(h-60)); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke(); }
 
   // init
-  seed(); render();
+  render();
 
 })();

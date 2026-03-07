@@ -4,15 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>My Reservations</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
   <link rel="stylesheet" href="CSS/frames.css">
   <link rel="stylesheet" href="CSS/myreservations.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
+
+
   <div class="my-reservations">
+    <div id="statusBar" class="status-bar" aria-live="polite"></div>
+
     <header>
       <h1>My Reservations</h1>
       <p class="small-muted">Manage your upcoming, active and past reservations.</p>
     </header>
+
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+      <button id="retryBtn" class="btn" style="display:none">Retry</button>
+      <div id="lastUpdated" class="small-muted" style="font-size:12px"></div>
+    </div>
 
     <section class="summary-row">
       <div class="summary-item">Upcoming: <span id="countUpcoming">0</span></div>
@@ -41,6 +66,16 @@
     </section>
   </div>
 
-  <script src="JS/myreservations.js"></script>
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="spinner" role="status" aria-live="polite">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="loading-text">Loading…</div>
+    </div>
+  </div>
+
+  <script type="module" src="JS/auth.js"></script>
+  <script type="module" src="JS/myreservations.js"></script>
 </body>
 </html>

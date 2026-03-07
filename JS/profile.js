@@ -1,5 +1,10 @@
 // Profile form: load/save user info to localStorage (pm_user). Basic password change logic (demo only).
-(function(){
+import { checkAuth } from './auth.js'
+
+(async function(){
+  // ensure authenticated before showing profile
+  const ok = await checkAuth('FrameLogin.html');
+  if (!ok) return;
   var key = 'pm_user';
   var form = document.getElementById('profileForm');
   var fullName = document.getElementById('fullName');

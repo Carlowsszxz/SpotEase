@@ -31,13 +31,13 @@ Deploy options
 - Vercel: connect your GitHub repo to Vercel (Import Project) — Vercel will auto-deploy on pushes to `main`.
 - GitHub Pages: enable from the repository Settings → Pages and select the branch/folder (for a simple static site you can publish from `main` / root or use `gh-pages` branch). You can also configure a GitHub Action to automatically deploy to Pages.
 
-Firebase & Auth
+Authentication
 
-- Make sure to add your deployed origin(s) to Firebase Authorized domains (Authentication → Sign-in method → Authorized domains) and to your Google OAuth client's Authorized JavaScript origins.
+- This project uses Supabase for auth in the provided code. If you use OAuth (Google), make sure your deployed origin(s) are configured in your OAuth provider and in the Supabase project settings.
 
 Notes
 
-- Keep `JS/firebase-init.js` configured with your Firebase web config.
+- Remove or update any Firebase-related files if you are not using Firebase (the template previously referenced `JS/firebase-init.js`).
 - For production, you should implement server-side token verification for sensitive operations.
 
 If you want, I can create a GitHub Actions workflow to auto-deploy to GitHub Pages, or provide a ready-to-run `vercel.json`. Tell me which option you prefer and I'll add it.

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotEase</title>
+        <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+    <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+    <link rel="stylesheet" href="CSS/home.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-text">SpotEase</span>
+            </div>
+            <div class="nav-menu">
+                <a href="FrameLogin.html" class="nav-signin">Sign in</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        IoT-Powered <span class="highlight">Occupancy Management</span> for Campus Spaces
+                    </h1>
+                    <p class="hero-subtitle">SpotEase is an IoT-driven solution for managing shared spaces such as parking spots, library seats, and meeting rooms. Check availability in real-time before you arrive and reduce congestion on campus.</p>
+                    <a href="FrameRegister.html" class="btn btn-primary">Get Started</a>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&h=500&fit=crop" alt="Workspace illustration" class="illustration">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">↓ 40%</div>
+                <div class="stat-label">Search Time Reduction</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-number">100+</div>
+                <div class="stat-label">IoT Sensors Network</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-number">↓ CO₂</div>
+                <div class="stat-label">Reduced Carbon Footprint</div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Automated Monitoring</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-container">
+            <h2>Optimize Campus Space Utilization</h2>
+            <p>Reduce congestion, improve time management, and enhance campus safety with real-time occupancy data and analytics</p>
+            <a href="FrameRegister.html" class="btn btn-primary">Get Started Now</a>
+        </div>
+    </section>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <p>&copy; 2026 SpotEase. All rights reserved.</p>
+            </div>
+            <div class="footer-contact">
+           
+                <div class="contact-icons">
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                        <i data-lucide="github"></i>
+                    </a>
+                    <button class="email-copy-btn" aria-label="Copy email to clipboard" title="Click to copy email">
+                        <i data-lucide="mail"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="JS/supabase-auth.js"></script>
+    <script type="module" src="JS/home.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
+
+        // Copy email to clipboard
+        document.querySelector('.email-copy-btn').addEventListener('click', function() {
+            const email = 'contact@spotease.com';
+            navigator.clipboard.writeText(email).then(() => {
+                const btn = this;
+                const originalLabel = btn.getAttribute('aria-label');
+                btn.setAttribute('aria-label', 'Email copied!');
+                btn.classList.add('copied');
+                
+                // Show toast notification
+                const toast = document.getElementById('toast');
+                toast.textContent = 'Copied!';
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    btn.setAttribute('aria-label', originalLabel);
+                    btn.classList.remove('copied');
+                    toast.classList.remove('show');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

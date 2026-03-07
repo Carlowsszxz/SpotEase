@@ -5,9 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Audit Logs</title>
   <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
   <link rel="stylesheet" href="CSS/auditlogs.css">
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameAdminNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/admin-navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
+
   <div class="audit-page">
     <header>
       <h1>Audit Logs</h1>
@@ -49,6 +63,12 @@
     </section>
   </div>
 
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+
+    // Check authentication and admin role
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
   <script src="JS/auditlogs.js"></script>
 </body>
 </html>

@@ -4,37 +4,55 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>Dashboard</title>
+	<link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+	<link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
 	<link rel="stylesheet" href="CSS/frames.css">
 	<link rel="stylesheet" href="CSS/dashboard.css">
+	<link rel="stylesheet" href="CSS/navbar.css">
+	<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
 	<div class="dashboard">
 		<header>
 			<div>
 				<h2 class="greeting">Welcome, <span id="userName">User</span>!</h2>
 				<p class="small-muted">This is your project dashboard.</p>
 			</div>
-			<div>
-				<button id="logout" class="logout-btn">Logout</button>
-			</div>
+			
 		</header>
+
+		<!-- status bar: last-updated and retry on errors -->
+		<div id="statusBar" class="status-bar" aria-live="polite"></div>
+
 
 		<section class="quick-stats">
 			<div class="stat">
-				<div class="stat-value" id="spotsCount">0</div>
-				<div class="stat-label">Available Spots</div>
+				<div class="stat-value" id="activeReservationsCount">0</div>
+				<div class="stat-label">Active Today</div>
 			</div>
 			<div class="stat">
-				<div class="stat-value" id="seatsCount">0</div>
-				<div class="stat-label">Available Seats</div>
+				<div class="stat-value" id="upcomingCount">0</div>
+				<div class="stat-label">Upcoming (7 days)</div>
 			</div>
 			<div class="stat">
-				<div class="stat-value" id="roomsCount">0</div>
-				<div class="stat-label">Available Rooms</div>
+				<div class="stat-value" id="totalCount">0</div>
+				<div class="stat-label">Total This Month</div>
 			</div>
 			<div class="stat">
-				<div class="stat-value" id="activeReservations">0</div>
-				<div class="stat-label">Active Reservations</div>
+				<div class="stat-value" id="nextReservationTime">—</div>
+				<div class="stat-label">Next Reservation</div>
 			</div>
 		</section>
 
@@ -42,7 +60,7 @@
 			<div class="panel upcoming">
 				<h3>Upcoming Reservations</h3>
 				<ul id="upcomingList" class="list"></ul>
-				<p id="noUpcoming" class="small-muted">No upcoming reservations.</p>
+				<p id="noUpcoming" class="small-muted"></p>
 			</div>
 
 			<div class="panel actions">
@@ -54,10 +72,31 @@
 
 				<h3 style="margin-top:18px">Alerts / Notifications</h3>
 				<ul id="alertsList" class="alerts"></ul>
+
+				<!-- retry button for quick reloads if something fails -->
+				<div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+					<button id="retryBtn" class="btn" style="display:none">Retry</button>
+					<div id="lastUpdated" class="small-muted" style="font-size:12px"></div>
+				</div>
 			</div>
 		</section>
 	</div>
 
-	<script src="JS/dashboard.js"></script>
+	<!-- loading overlay / spinner -->
+	<div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+		<div class="spinner" role="status" aria-live="polite">
+			<div class="dot"></div>
+			<div class="dot"></div>
+			<div class="dot"></div>
+			<div class="loading-text">Loading…</div>
+		</div>
+	</div>
+
+	<script type="module">
+		import { checkAuth } from './JS/auth.js';
+		// run auth check — redirects to login if not authenticated
+		checkAuth('FrameLogin.html');
+	</script>
+	<script type="module" src="JS/dashboard.js"></script>
 </body>
 </html>

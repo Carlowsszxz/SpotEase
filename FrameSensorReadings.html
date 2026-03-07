@@ -5,9 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sensor Readings</title>
   <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
   <link rel="stylesheet" href="CSS/sensorreadings.css">
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameAdminNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/admin-navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
+
   <div class="sensor-page">
     <header>
       <h1>Sensor Readings</h1>
@@ -50,6 +64,12 @@
     </section>
   </div>
 
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+
+    // Check authentication and admin role
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
   <script src="JS/sensorreadings.js"></script>
 </body>
 </html>

@@ -5,9 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Analytics</title>
   <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
   <link rel="stylesheet" href="CSS/analytics.css">
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameAdminNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/admin-navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
+
   <div class="analytics-page">
     <header>
       <h1>Analytics</h1>
@@ -17,12 +31,12 @@
     <section class="charts">
       <div class="chart-card">
         <h3>Usage Over Time</h3>
-        <canvas id="usageChart" width="800" height="240"></canvas>
+        <canvas id="usageChart"></canvas>
       </div>
 
       <div class="chart-card">
         <h3>Peak Hours (by hour of day)</h3>
-        <canvas id="peakChart" width="400" height="240"></canvas>
+        <canvas id="peakChart"></canvas>
       </div>
     </section>
 
@@ -36,6 +50,12 @@
 
   </div>
 
-  <script src="JS/analytics.js"></script>
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+
+    // Check authentication and admin role
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
+  <script type="module" src="JS/analytics.js"></script>
 </body>
 </html>

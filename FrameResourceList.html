@@ -4,15 +4,38 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Resources</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js';
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html');
+  </script>
   <link rel="stylesheet" href="CSS/frames.css">
   <link rel="stylesheet" href="CSS/resourcelist.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameAdminNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
   <div class="resource-list-page">
     <header class="rl-header">
       <h1>Resources</h1>
       <p class="small-muted">Browse and search available resources.</p>
     </header>
+
+    <!-- status bar: last-updated and retry on errors -->
+    <div id="statusBar" class="status-bar" aria-live="polite"></div>
 
     <section class="rl-controls">
       <input id="searchInput" type="search" placeholder="Search by name or keyword">
@@ -30,8 +53,24 @@
         <tbody id="resourceTbody"></tbody>
       </table>
     </section>
+
+    <!-- retry button for quick reloads if something fails -->
+    <div style="margin-top:16px;display:flex;gap:8px;align-items:center;">
+      <button id="retryBtn" class="btn" style="display:none">Retry</button>
+      <div id="lastUpdated" class="small-muted" style="font-size:12px"></div>
+    </div>
   </div>
 
-  <script src="JS/resourcelist.js"></script>
+  <!-- loading overlay / spinner -->
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="spinner" role="status" aria-live="polite">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="loading-text">Loading…</div>
+    </div>
+  </div>
+
+  <script type="module" src="JS/resourcelist.js"></script>
 </body>
 </html>

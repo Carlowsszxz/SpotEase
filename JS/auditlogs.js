@@ -4,16 +4,6 @@
 (function(){
   var storageKey = 'pm_audit_logs';
 
-  function seed(){
-    var sample = [
-      {ts:'2026-03-04T10:20:00', user:'Jane Dela Cruz', action:'login', resource:'', details:{msg:'Login Successful', ip:'192.0.2.1'}},
-      {ts:'2026-03-04T10:23:11', user:'Jane Dela Cruz', action:'reserve', resource:'Library Seat B21', details:{reserved_from:'13:00', reserved_until:'15:00'}},
-      {ts:'2026-03-04T11:05:34', user:'Admin', action:'admin_edit', resource:'Parking Spot A12', details:{change:'status->occupied'}},
-      {ts:'2026-03-04T12:10:00', user:'John Doe', action:'cancel', resource:'Meeting Room 1', details:{reason:'No longer needed'}}
-    ];
-    try{ if(!localStorage.getItem(storageKey)) localStorage.setItem(storageKey, JSON.stringify(sample.concat([]))); }catch(e){}
-  }
-
   function load(){ try{ return JSON.parse(localStorage.getItem(storageKey) || '[]'); }catch(e){ return []; } }
   function save(list){ try{ localStorage.setItem(storageKey, JSON.stringify(list)); }catch(e){} }
 
@@ -78,6 +68,6 @@
   prevPage.addEventListener('click', function(){ if(currentPage>1){ currentPage--; render(); } }); nextPage.addEventListener('click', function(){ currentPage++; render(); });
 
   // init
-  seed(); render();
+  render();
 
 })();

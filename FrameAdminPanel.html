@@ -5,13 +5,62 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin Panel</title>
   <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
   <link rel="stylesheet" href="CSS/adminpanel.css">
+  <link rel="stylesheet" href="CSS/modal.css">
 </head>
 <body>
+	<div id="navbar"></div>
+	<script>
+  fetch('FrameAdminNavbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar').innerHTML = html;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = 'JS/admin-navbar.js';
+      document.body.appendChild(s);
+    });
+</script>
+
+  <!-- Modal overlay - must be outside admin-panel for proper stacking -->
+  <div id="resourceOverlay" class="modal-overlay"></div>
+  <div id="resourceModal" class="modal-panel" aria-hidden="true">
+    <button id="closeModal" class="close-btn">×</button>
+    <h3 id="modalTitle">Add Resource</h3>
+    <div class="reservation-form">
+      <div class="form-group">
+        <label>Name</label>
+        <input id="modalName" type="text">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="modalType">
+          <option value="parking">Parking</option>
+          <option value="seat">Seat</option>
+          <option value="room">Room</option>
+          <option value="other">Other</option>
+        </select>
+        <input id="modalTypeCustom" type="text" placeholder="Enter custom type" style="display:none; margin-top: 8px;">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input id="modalLocation" type="text">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="modalStatus"> Active</label>
+      </div>
+      <div class="form-actions"><button id="saveResource" class="btn btn-primary">Save</button></div>
+    </div>
+  </div>
+
   <div class="admin-panel">
     <header>
       <h1>Admin Panel</h1>
       <p class="small-muted">Resource management, sensor health, reservations and analytics.</p>
+      <div class="header-actions">
+        <button id="logoutBtn" class="btn btn-logout">Logout</button>
+      </div>
     </header>
 
     <section class="admin-grid">
@@ -34,8 +83,37 @@
 
       <div class="panel reservations-panel">
         <h3>All Reservations</h3>
-        <div class="res-actions"><button id="viewAllRes" class="btn">View Reservations</button></div>
-        <ul id="recentRes" class="recent-res"></ul>
+        
+        <div class="res-stats">
+          <div class="stat-item"><span class="stat-label">Total:</span> <span id="totalResCount">0</span></div>
+          <div class="stat-item"><span class="stat-label">Pending:</span> <span id="pendingResCount">0</span></div>
+          <div class="stat-item"><span class="stat-label">Confirmed:</span> <span id="confirmedResCount">0</span></div>
+          <div class="stat-item"><span class="stat-label">Cancelled:</span> <span id="cancelledResCount">0</span></div>
+        </div>
+
+        <div class="res-controls">
+          <select id="resFilterStatus">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <table class="reservations-table" id="reservationsTable">
+          <thead>
+            <tr>
+              <th>Resource</th>
+              <th>User</th>
+              <th>From</th>
+              <th>Until</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <p id="noReservations" class="small-muted" style="display:none;">No reservations found.</p>
       </div>
 
       <div class="panel analytics-panel">
@@ -48,25 +126,14 @@
       </div>
     </section>
 
-    <!-- simple modal for add/edit resource -->
-    <div id="resourceModal" class="modal" aria-hidden="true">
-      <div class="modal-content">
-        <button id="closeModal" class="close-btn">×</button>
-        <h3 id="modalTitle">Add Resource</h3>
-        <label>Name</label>
-        <input id="modalName" type="text">
-        <label>Type</label>
-        <select id="modalType"><option value="parking">Parking</option><option value="seat">Seat</option><option value="room">Room</option></select>
-        <label>Location</label>
-        <input id="modalLocation" type="text">
-        <label>Status</label>
-        <select id="modalStatus"><option value="free">Free</option><option value="occupied">Occupied</option><option value="pending">Pending</option></select>
-        <div class="actions-row"><button id="saveResource" class="btn btn-primary">Save</button></div>
-      </div>
-    </div>
-
   </div>
 
-  <script src="JS/adminpanel.js"></script>
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+
+    // Check authentication and admin role
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
+  <script src="JS/adminpanel.js" type="module"></script>
 </body>
 </html>
