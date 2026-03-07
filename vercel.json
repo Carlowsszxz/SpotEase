@@ -5,7 +5,15 @@
     { "src": "**/*.{js,css,png,jpg,svg,ico,json}", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/", "dest": "/Frames.html" },
+    { "src": "/", "dest": "/FrameHome.html" },
+    { "src": "/login", "dest": "/FrameLogin.html" },
+    { "src": "/register", "dest": "/FrameRegister.html" },
+    { "src": "/dashboard", "dest": "/FrameDashboard.html" },
+    { "src": "/map", "dest": "/FrameMap.html" },
+    { "src": "/resources", "dest": "/FrameResourceList.html" },
+    { "src": "/my-reservations", "dest": "/FrameMyReservations.html" },
+    { "src": "/profile", "dest": "/FrameProfile.html" },
+    { "src": "/reserve", "dest": "/FrameReservation.html" },
     { "src": "(.*)", "dest": "$1" }
   ]
 }
