@@ -13,12 +13,16 @@ async function syncUserRecord(user) {
   const name = user.user_metadata?.full_name || user.user_metadata?.name || email || null
 
   try {
-    const { data: existingUsers, error } = await supabase
+    const { data: existingUsers, error: selectErr } = await supabase
       .from('users')
       .select('id, name, email, role')
       .eq('id', user.id)
 
-    if (!error && existingUsers && existingUsers.length > 0) {
+    if (selectErr) {
+      console.warn('User sync select failed', selectErr)
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
       const current = existingUsers[0]
       const patch = {
         name,
@@ -46,6 +50,16 @@ async function syncUserRecord(user) {
     const { error: insertErr } = await supabase.from('users').insert([newUser])
     if (insertErr) {
       console.warn('User sync insert failed', insertErr)
+
+      // If this failed due to a race (e.g. DB trigger already inserted), treat as success
+      // if the row now exists.
+      try {
+        const { data: check } = await supabase.from('users').select('id').eq('id', user.id)
+        if (check && check.length > 0) return true
+      } catch (e) {
+        // ignore
+      }
+
       return false
     }
 
@@ -54,6 +68,21 @@ async function syncUserRecord(user) {
     console.warn('syncUserRecord failed', err)
     return false
   }
+}
+
+export async function ensureUserRecord(user, { retries = 8, delayMs = 250 } = {}) {
+  if (!user) return false
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const ok = await syncUserRecord(user)
+    if (ok) return true
+
+    // If sync couldn't confirm, still check if the row exists now.
+    const exists = await validateUserRecord(user)
+    if (exists) return true
+
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+  }
+  return false
 }
 
 const gBtn = document.getElementById('gSignUpBtn')
@@ -188,10 +217,16 @@ export async function ensureValidAuth() {
   
   const hasUserRecord = await validateUserRecord(user)
   if (!hasUserRecord) {
-    // Session exists but no user record - sign out and redirect
-    await supabase.auth.signOut()
-    window.location.href = '/FrameLogin.html'
-    return false
+    // Session exists but profile row may still be syncing (OAuth / trigger race).
+    await ensureUserRecord(user)
+
+    const hasUserRecordAfter = await validateUserRecord(user)
+    if (!hasUserRecordAfter) {
+      // Still missing: sign out and redirect
+      await supabase.auth.signOut()
+      window.location.href = '/FrameLogin.html'
+      return false
+    }
   }
   
   return true

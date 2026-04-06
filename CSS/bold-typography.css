@@ -1,0 +1,405 @@
+/* Bold Typography Design System (global overrides)
+   Goal: keep existing content/structure, modernize visuals site-wide.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  /* Colors (dark mode) */
+  --bt-background: #0A0A0A;
+  --bt-foreground: #FAFAFA;
+  --bt-muted: #1A1A1A;
+  --bt-muted-foreground: #737373;
+  --bt-accent: #FF3D00;
+  --bt-accent-foreground: #0A0A0A;
+  --bt-border: #262626;
+  --bt-input: #1A1A1A;
+  --bt-card: #0F0F0F;
+  --bt-card-foreground: #FAFAFA;
+  --bt-ring: #FF3D00;
+
+  /* Typography */
+  --bt-font-sans: "Inter Tight", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --bt-font-serif: "Playfair Display", Georgia, serif;
+  --bt-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Geometry */
+  --bt-radius: 0px;
+  --bt-border-width: 1px;
+  --bt-border-thick: 2px;
+
+  /* Motion */
+  --bt-ease: cubic-bezier(0.25, 0, 0, 1);
+  --bt-fast: 150ms;
+}
+
+html{ color-scheme: dark; }
+
+/* Base reset-ish overrides (do not fight layout display properties) */
+body{
+  background: var(--bt-background) !important;
+  color: var(--bt-foreground) !important;
+  font-family: var(--bt-font-sans) !important;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/* Subtle noise grain overlay */
+body::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  opacity: 0.015;
+  background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22200%22 height=%22200%22 filter=%22url(%23n)%22 opacity=%221%22/%3E%3C/svg%3E');
+}
+
+/* Typography hierarchy (sizes stay mostly page-controlled; we handle feel) */
+h1,h2,h3,h4{
+  font-family: var(--bt-font-sans);
+  letter-spacing: -0.04em;
+  color: var(--bt-foreground);
+}
+
+p,li{
+  color: var(--bt-muted-foreground);
+  line-height: 1.7;
+}
+
+small,.small-muted,.muted{ color: var(--bt-muted-foreground) !important; }
+
+a{
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+
+a:hover{ text-decoration: underline; text-decoration-color: var(--bt-accent); }
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline: 2px solid var(--bt-ring);
+  outline-offset: 2px;
+}
+
+/* Kill rounded corners + shadows globally for common UI */
+button, input, select, textarea,
+.login-wrapper, .register-wrapper,
+.frame-card, .card, .panel, .stat,
+.modal, .modal-content{
+  border-radius: var(--bt-radius) !important;
+  box-shadow: none !important;
+}
+
+hr, .divider::before, .divider::after{
+  border-color: var(--bt-border) !important;
+  background: var(--bt-border) !important;
+}
+
+/* Inputs */
+input, select, textarea{
+  background: var(--bt-input) !important;
+  color: var(--bt-foreground) !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+}
+
+input::placeholder, textarea::placeholder{ color: var(--bt-muted-foreground) !important; }
+
+input:focus, select:focus, textarea:focus{
+  border-color: var(--bt-accent) !important;
+  outline: none;
+}
+
+label{
+  font-family: var(--bt-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--bt-muted-foreground) !important;
+}
+
+/* Buttons */
+.btn{
+  border-radius: var(--bt-radius) !important;
+  box-shadow: none !important;
+}
+
+.btn-secondary,
+a.btn-secondary,
+button.btn-secondary{
+  background: transparent !important;
+  color: var(--bt-foreground) !important;
+  border: var(--bt-border-width) solid var(--bt-foreground) !important;
+  border-radius: var(--bt-radius) !important;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background-color var(--bt-fast) var(--bt-ease), color var(--bt-fast) var(--bt-ease), transform var(--bt-fast) var(--bt-ease);
+}
+
+.btn-secondary:hover{
+  background: var(--bt-foreground) !important;
+  color: var(--bt-background) !important;
+}
+
+.btn-secondary:active{ transform: translateY(1px); }
+
+.btn-primary,
+button.btn-primary,
+a.btn-primary{
+  background: transparent !important;
+  color: var(--bt-accent) !important;
+  border: none !important;
+  border-radius: var(--bt-radius) !important;
+  position: relative;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color var(--bt-fast) var(--bt-ease), transform var(--bt-fast) var(--bt-ease);
+}
+
+.btn-primary::after{
+  content:"";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  height: 2px;
+  background: var(--bt-accent);
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: transform var(--bt-fast) var(--bt-ease);
+}
+
+
+.btn-primary:active{ transform: translateY(1px); }
+
+/* Google button becomes an outline/secondary with sharp inversion */
+.btn-google,
+button.btn-google{
+  background: transparent !important;
+  color: var(--bt-foreground) !important;
+  border: var(--bt-border-width) solid var(--bt-foreground) !important;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color var(--bt-fast) var(--bt-ease), color var(--bt-fast) var(--bt-ease), border-color var(--bt-fast) var(--bt-ease), transform var(--bt-fast) var(--bt-ease);
+}
+
+.btn-google:hover{
+  background: var(--bt-foreground) !important;
+  color: var(--bt-background) !important;
+}
+
+.btn-google:active{ transform: translateY(1px); }
+
+/* Navigation (both .main-nav and home page .navbar) */
+.main-nav,
+.navbar{
+  background: var(--bt-background) !important;
+  border-bottom: var(--bt-border-width) solid var(--bt-border) !important;
+}
+
+.main-nav .nav-inner,
+.navbar .nav-container{
+  max-width: 1200px;
+}
+
+.logo-text{ letter-spacing: -0.04em !important; }
+
+.nav-links a{
+  border-bottom: 2px solid transparent !important;
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 12px !important;
+  color: var(--bt-foreground) !important;
+}
+
+.nav-links a:hover,
+.nav-links a.active{
+  border-bottom-color: var(--bt-accent) !important;
+  color: var(--bt-foreground) !important;
+}
+
+.nav-link{
+  background: transparent !important;
+  border: var(--bt-border-width) solid var(--bt-foreground) !important;
+  color: var(--bt-foreground) !important;
+  border-radius: var(--bt-radius) !important;
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.nav-link:hover{
+  background: var(--bt-foreground) !important;
+  color: var(--bt-background) !important;
+}
+
+/* Home page top-right sign-in */
+.nav-signin{
+  color: var(--bt-foreground) !important;
+  text-decoration: underline;
+  text-decoration-color: var(--bt-accent);
+  text-underline-offset: 6px;
+  font-family: var(--bt-font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.logout-btn{
+  background: transparent !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+  color: var(--bt-foreground) !important;
+  border-radius: var(--bt-radius) !important;
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.logout-btn:hover{
+  border-color: var(--bt-accent) !important;
+  color: var(--bt-accent) !important;
+  background: transparent !important;
+}
+
+/* Auth pages: convert white cards to dark editorial surfaces */
+.login-wrapper,
+.register-wrapper{
+  background: var(--bt-card) !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+}
+
+/* Inline-styled auth utility pages */
+.confirm-container,
+.reset-container{
+  background: var(--bt-card) !important;
+  color: var(--bt-card-foreground) !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+  border-radius: var(--bt-radius) !important;
+  box-shadow: none !important;
+}
+
+.login-form-section,
+.register-form-section{
+  background: transparent !important;
+}
+
+.login-form-section h1,
+.register-form-section h1{
+  letter-spacing: -0.06em;
+}
+
+.signup-link a,
+.signin-link a{
+  color: var(--bt-foreground) !important;
+  text-decoration: underline;
+  text-decoration-color: var(--bt-accent);
+}
+
+.message{ color: var(--bt-accent) !important; }
+.message.success{ color: var(--bt-foreground) !important; }
+
+/* Home page: hero gets the typographic drama using existing classes */
+.hero,
+.stats,
+.cta,
+.footer{
+  background: var(--bt-background) !important;
+}
+
+.hero-title,
+.cta-container h2{
+  color: var(--bt-foreground) !important;
+  letter-spacing: -0.06em !important;
+}
+
+.hero-subtitle,
+.cta-container p,
+.stat-label,
+.footer p{
+  color: var(--bt-muted-foreground) !important;
+}
+
+.stats-container .stat-item,
+.cta-container{
+  background: var(--bt-card) !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+  border-radius: var(--bt-radius) !important;
+  box-shadow: none !important;
+}
+
+.illustration{
+  border-radius: var(--bt-radius) !important;
+  box-shadow: none !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+}
+
+.hero-title{
+  letter-spacing: -0.06em !important;
+}
+
+.hero-title .highlight{
+  color: var(--bt-accent) !important;
+}
+
+.stat-number{
+  font-family: var(--bt-font-mono) !important;
+  letter-spacing: 0.08em;
+}
+
+/* Make common white backgrounds dark without touching layout */
+section, header, footer,
+.dashboard, .container,
+.frame-root,
+.frame-card,
+.panel{
+  background: transparent;
+}
+
+/* Any obvious “card” blocks */
+.frame-card,
+.panel,
+.stat,
+.card{
+  background: var(--bt-card) !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+  color: var(--bt-card-foreground) !important;
+}
+
+/* Tables (admin) */
+table{
+  border-collapse: collapse;
+  width: 100%;
+  color: var(--bt-foreground);
+}
+
+th, td{
+  border-bottom: 1px solid var(--bt-border);
+}
+
+th{
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  color: var(--bt-muted-foreground);
+}
+
+/* Collapse empty status bars */
+.status-bar:empty{ display:none !important; }
+
+/* Status bar (loading/errors) in dark theme */
+.status-bar{
+  background: var(--bt-muted) !important;
+  border: var(--bt-border-width) solid var(--bt-border) !important;
+  color: var(--bt-foreground) !important;
+  border-radius: var(--bt-radius) !important;
+}
+
+.status-bar.error{
+  border-color: var(--bt-accent) !important;
+  color: var(--bt-accent) !important;
+}

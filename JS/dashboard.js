@@ -65,7 +65,7 @@ import { supabase, getCurrentUser, ensureValidAuth } from './supabase-auth.js'
         if(upcomingList) upcomingList.innerHTML = '';
         if(noUpcoming){ noUpcoming.style.display = 'block'; noUpcoming.textContent = 'loading...'; }
         if(alertsList){ alertsList.innerHTML = '<li class="small-muted">loading...</li>'; }
-        if(statusBar) statusBar.textContent = '';
+        if(statusBar) { statusBar.textContent = ''; statusBar.classList.remove('error'); statusBar.style.display = 'none'; }
         if(lastUpdatedEl) lastUpdatedEl.textContent = '';
         setButtonsDisabled(true);
     }
@@ -82,7 +82,19 @@ import { supabase, getCurrentUser, ensureValidAuth } from './supabase-auth.js'
 
     function setStatus(msg, isError){
         if(!statusBar) return;
-        statusBar.textContent = msg || '';
+        var text = (msg == null) ? '' : String(msg);
+        var trimmed = text.trim();
+
+        if(!trimmed){
+            statusBar.textContent = '';
+            statusBar.classList.remove('error');
+            statusBar.style.display = 'none';
+            if(retryBtn) retryBtn.style.display = 'none';
+            return;
+        }
+
+        statusBar.textContent = text;
+        statusBar.style.display = '';
         if(isError) statusBar.classList.add('error'); else statusBar.classList.remove('error');
         if(retryBtn) retryBtn.style.display = isError ? 'inline-block' : 'none';
     }
@@ -273,7 +285,8 @@ import { supabase, getCurrentUser, ensureValidAuth } from './supabase-auth.js'
             hideLoading();
             var updateTime = new Date();
             if(lastUpdatedEl) lastUpdatedEl.textContent = 'Updated: ' + updateTime.toLocaleString();
-            setStatus('Data loaded', false);
+            // Success: hide the status bar (reserve it for loading/errors)
+            setStatus('', false);
         }catch(err){
             console.error('loadData error', err);
             hideLoading();

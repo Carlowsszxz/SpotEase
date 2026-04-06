@@ -1,4 +1,4 @@
-import { supabase } from './supabase-auth.js';
+import { supabase, ensureUserRecord } from './supabase-auth.js';
 
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('loginForm');
@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', function () {
           }
 
           try { localStorage.setItem('pm_username', data.user?.email || data.user?.id || ''); } catch (e) {}
+
+          // Ensure profile row exists (OAuth trigger can be slightly delayed)
+          await ensureUserRecord(user)
           
           // Check user role
           const { data: userData, error: roleError } = await supabase
@@ -98,28 +101,14 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('User ID:', data.session.user?.id);
         console.log('User Email:', data.session.user?.email);
         
-        // Check if user exists in users table
-        const { data: userData, error: userCheckError } = await supabase
+        // Ensure profile row exists (especially after OAuth)
+        await ensureUserRecord(data.session.user)
+
+        const { data: userData } = await supabase
           .from('users')
-          .select('id, role')
+          .select('role')
           .eq('id', data.session.user.id);
-        
-        // If user doesn't exist in users table
-        if (!userData || userData.length === 0) {
-          console.log('⚠️ User not found in users table. Signing out.');
-          // Sign out completely
-          await supabase.auth.signOut();
-          // Clear any stored auth data
-          try { 
-            localStorage.removeItem('pm_username'); 
-            localStorage.removeItem('pm_registration_email');
-            localStorage.removeItem('pm_registration_fullname');
-          } catch (e) {}
-          
-          await showMessage('Account does not exist. Please register first.', true);
-          return;
-        }
-        
+
         const userRole = (userData && userData.length > 0) ? userData[0].role : 'unknown';
         const isAdmin = (userRole || '').toLowerCase() === 'admin';
         

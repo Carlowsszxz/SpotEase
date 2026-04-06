@@ -1,7 +1,65 @@
 import { supabase, getCurrentUser } from './supabase-auth.js'
 
+function isLocalhostHost(hostname) {
+  const host = (hostname || '').toLowerCase()
+  return host === '' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')
+}
+
+function normalizeNavbarLinks() {
+  const isLocal = isLocalhostHost(window.location.hostname)
+
+  // For local dev, prefer Frame*.html files.
+  // For deployed hosts, prefer clean routes (Vercel shortcuts).
+  const cleanToFile = {
+    '/': 'FrameHome.html',
+    '/login': 'FrameLogin.html',
+    '/register': 'FrameRegister.html',
+    '/dashboard': 'FrameDashboard.html',
+    '/map': 'FrameMap.html',
+    '/resources': 'FrameResourceList.html',
+    '/my-reservations': 'FrameMyReservations.html',
+    '/profile': 'FrameProfile.html',
+    '/reserve': 'FrameReservation.html'
+  }
+
+  const fileToClean = {
+    'FrameHome.html': '/',
+    'FrameLogin.html': '/login',
+    'FrameRegister.html': '/register',
+    'FrameDashboard.html': '/dashboard',
+    'FrameMap.html': '/map',
+    'FrameResourceList.html': '/resources',
+    'FrameMyReservations.html': '/my-reservations',
+    'FrameProfile.html': '/profile',
+    'FrameReservation.html': '/reserve'
+  }
+
+  const links = document.querySelectorAll('.main-nav a')
+  links.forEach(a => {
+    try {
+      const raw = a.getAttribute('href') || ''
+      if (!raw) return
+
+      if (isLocal) {
+        // Backward compatible: if link is using clean route, convert to file.
+        const mapped = cleanToFile[raw]
+        if (mapped) a.setAttribute('href', mapped)
+        return
+      }
+
+      // Deployed host: if link points to a Frame*.html file, convert to clean route.
+      const mapped = fileToClean[raw]
+      if (mapped) a.setAttribute('href', mapped)
+    } catch (e) {
+      // ignore
+    }
+  })
+}
+
 // Initialize navbar: populate username and wire logout/login links
 (async function initNavbar(){
+  normalizeNavbarLinks()
+
   const logoutBtn = document.getElementById('navLogout');
   const loginLink = document.getElementById('navLoginLink');
   const registerLink = document.getElementById('navRegisterLink');

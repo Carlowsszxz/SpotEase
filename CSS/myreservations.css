@@ -1,26 +1,204 @@
 
-/* My Reservations styles */
-.my-reservations{max-width:1000px;margin:28px auto;padding:18px}
-.summary-row{display:flex;gap:12px;margin-bottom:18px}
-.summary-item{background:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);font-weight:600}
-.lists-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.list-panel{background:linear-gradient(180deg,#fff,#fbfdff);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.04);min-height:160px}
-.list-panel.full{grid-column:span 3}
-.res-list{list-style:none;padding:0;margin:8px 0}
-.res-list li{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(15,23,42,0.03);margin-bottom:8px}
-.res-meta{display:flex;flex-direction:column}
-.res-title{font-weight:700}
-.res-sub{font-size:13px;color:#6b7280}
-.badge{padding:6px 8px;border-radius:8px;font-size:13px;font-weight:700}
-.badge-confirmed{background:rgba(16,185,129,0.12);color:#065f46}
-.badge-pending{background:rgba(249,115,22,0.08);color:#7c2d12}
-.badge-cancelled{background:rgba(239,68,68,0.08);color:#7f1d1d}
-.badge-expired{background:rgba(107,114,128,0.08);color:#374151}
-.action-group{display:flex;gap:8px}
-.action-btn{padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
-.action-edit{background:transparent;border:1px solid rgba(37,99,235,0.12);color:#1e40af}
-.action-cancel{background:transparent;border:1px solid rgba(239,68,68,0.12);color:#ef4444}
+/* My Reservations (Bold Typography-aligned) */
+.my-reservations{
+	max-width: 1200px;
+	margin: 40px auto;
+	padding: 24px;
+}
 
-@media (max-width:900px){.lists-grid{grid-template-columns:1fr 1fr}.list-panel.full{grid-column:span 2}}
-@media (max-width:640px){.lists-grid{grid-template-columns:1fr}.list-panel.full{grid-column:span 1}}
+.my-reservations header{
+	padding: 18px 0 8px;
+	border-bottom: 1px solid var(--bt-border);
+	margin-bottom: 18px;
+}
+
+.my-reservations header h1{
+	margin: 0;
+	font-size: 56px;
+	line-height: 1.05;
+	letter-spacing: -0.06em;
+}
+
+.my-reservations header .small-muted{
+	margin-top: 10px;
+	max-width: 64ch;
+}
+
+/* Status + updated row */
+.my-reservations .status-bar{
+	margin-bottom: 14px;
+}
+
+/* Summary stats (typographic, restrained) */
+.summary-row{
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	margin: 18px 0 22px;
+}
+
+.summary-item{
+	background: var(--bt-card);
+	border: 1px solid var(--bt-border);
+	padding: 14px 16px;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+	font-size: 12px;
+	color: var(--bt-muted-foreground);
+}
+
+.summary-item span{
+	display: inline-block;
+	margin-left: 8px;
+	font-family: var(--bt-font-sans);
+	text-transform: none;
+	letter-spacing: -0.04em;
+	font-size: 28px;
+	line-height: 1;
+	color: var(--bt-foreground);
+}
+
+/* Panels */
+.lists-grid{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+}
+
+.list-panel{
+	background: var(--bt-card);
+	border: 1px solid var(--bt-border);
+	padding: 16px;
+	min-height: 220px;
+	position: relative;
+}
+
+.list-panel::before{
+	content: "";
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	width: 56px;
+	height: 2px;
+	background: var(--bt-accent);
+}
+
+.list-panel.full{
+	grid-column: 1 / -1;
+}
+
+.list-panel h3{
+	margin: 0 0 12px;
+	padding-top: 18px;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 12px;
+	color: var(--bt-foreground);
+}
+
+/* Lists */
+.res-list{
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.res-list li{
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 12px;
+	padding: 14px 0;
+	border-top: 1px solid var(--bt-border);
+}
+
+.res-meta{display:flex;flex-direction:column;gap:6px;min-width:0}
+
+.res-title{
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--bt-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.res-sub{
+	font-size: 13px;
+	color: var(--bt-muted-foreground);
+}
+
+/* Right side: status + actions */
+.action-group{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:8px}
+
+.action-btn{
+	appearance: none;
+	background: transparent;
+	border: 1px solid var(--bt-border);
+	color: var(--bt-foreground);
+	padding: 10px 12px;
+	cursor: pointer;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+	font-size: 12px;
+	transition: border-color var(--bt-fast) var(--bt-ease), color var(--bt-fast) var(--bt-ease), transform var(--bt-fast) var(--bt-ease);
+}
+
+.action-btn:hover{
+	border-color: var(--bt-foreground);
+}
+
+.action-btn:active{ transform: translateY(1px); }
+
+.action-cancel{
+	border-color: var(--bt-accent);
+	color: var(--bt-accent);
+}
+
+.action-cancel:hover{
+	border-color: var(--bt-accent);
+	color: var(--bt-accent);
+}
+
+/* Badges: single-accent palette */
+.badge{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--bt-border);
+	padding: 6px 10px;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
+	background: transparent;
+}
+
+.badge-confirmed{
+	border-color: var(--bt-accent);
+	color: var(--bt-accent);
+}
+
+.badge-pending{ color: var(--bt-foreground); }
+.badge-cancelled{ color: var(--bt-muted-foreground); }
+.badge-expired{ color: var(--bt-muted-foreground); }
+
+/* Empty-state text */
+#noActive,#noUpcoming,#noPast{
+	margin: 12px 0 0;
+}
+
+@media (max-width: 900px){
+	.my-reservations header h1{ font-size: 44px; }
+	.summary-row{ grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px){
+	.my-reservations{ padding: 18px; margin: 24px auto; }
+	.lists-grid{ grid-template-columns: 1fr; }
+	.res-list li{ grid-template-columns: 1fr; }
+}
 

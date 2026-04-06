@@ -1,287 +1,152 @@
-/* Login page styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Login (Bold Typography-aligned)
+   Keep markup/behavior intact; only restyle.
+*/
+
+*{ box-sizing: border-box; }
+
+body{
+	margin: 0;
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	background: var(--bt-background);
+	color: var(--bt-foreground);
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
+.login-wrapper{
+	width: 100%;
+	max-width: 1040px;
+	min-height: 620px;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	border: 1px solid var(--bt-border);
+	background: var(--bt-card);
+	overflow: hidden;
 }
 
-.login-wrapper {
-  display: flex;
-  width: 100%;
-  max-width: 1000px;
-  height: 600px;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+.login-image-section{
+	position: relative;
+	border-right: 1px solid var(--bt-border);
+	min-height: 280px;
 }
 
-.login-image-section {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
+.login-image{
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	filter: grayscale(15%) contrast(105%);
 }
 
-.login-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.login-image-overlay{
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.75));
+	pointer-events: none;
 }
 
-.login-image-overlay {
-  position: absolute;
-  bottom: 30px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 20px;
+.login-form-section{
+	padding: 34px 30px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 14px;
+	min-width: 0;
 }
 
-.university-name {
-  color: #fff;
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
+/* If viewport height is short, allow scrolling inside the form column */
+@media (max-height: 720px){
+	.login-form-section{
+		justify-content: flex-start;
+		max-height: calc(100vh - 64px);
+		overflow: auto;
+	}
 }
 
-.login-form-section {
-  flex: 1;
-  padding: 50px 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  overflow-y: auto;
-  overflow-x: hidden;
+.logo-home-link{
+	display: inline-flex;
+	align-items: baseline;
+	gap: 10px;
+	text-decoration: none;
+	color: var(--bt-foreground);
+	width: fit-content;
 }
 
-/* Custom scrollbar styling */
-.login-form-section::-webkit-scrollbar {
-  width: 8px;
+.login-form-section h1{
+	margin: 0;
+	font-size: 52px;
+	line-height: 1.05;
+	letter-spacing: -0.06em;
 }
 
-.login-form-section::-webkit-scrollbar-track {
-  background: #f9f9f9;
+.form-group{ margin: 0 0 10px; }
+.form-group label{ margin-bottom: 8px; }
+
+.form-group input{
+	width: 100%;
+	padding: 12px 12px;
 }
 
-.login-form-section::-webkit-scrollbar-thumb {
-  background: #d0d0d0;
-  border-radius: 4px;
+button.btn-primary,
+button.btn-google{
+	width: 100%;
+	padding: 12px 14px;
 }
 
-.login-form-section::-webkit-scrollbar-thumb:hover {
-  background: #999;
+.signup-link{
+	margin: 6px 0 0;
+	font-size: 13px;
+	color: var(--bt-muted-foreground);
+	text-align: center;
 }
 
-.logo-home-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #1e40af;
-  font-weight: 600;
-  font-size: 18px;
-  margin-bottom: 30px;
-  transition: all 0.3s ease;
-  width: fit-content;
-}
+.signup-link a{ color: var(--bt-foreground); }
 
-.logo-home-link:hover {
-  color: #1e3a8a;
-}
-
-.logo-home-link .logo-icon {
-  font-size: 24px;
-}
-
-.login-form-section h1 {
-  font-size: 32px;
-  color: #222;
-  margin-bottom: 40px;
-  font-weight: 500;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: #f9f9f9;
-  transition: border-color 0.3s, background-color 0.3s;
-}
-
-.form-group input:focus {
-  outline: none;
-  background-color: #fff;
-  border-color: #999;
-}
-
-.form-group input::placeholder {
-  color: #aaa;
-}
-
-.btn-primary {
-  width: 100%;
-  padding: 12px;
-  background-color: #ffeb3b;
-  color: #222;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.3s;
-}
-
-.btn-primary:hover {
-  background-color: #fdd835;
-}
-
-.signup-link {
-  text-align: center;
-  margin-top: 16px;
-  font-size: 14px;
-  color: #555;
-}
-
-.signup-link a {
-  color: #ffeb3b;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.signup-link a:hover {
-  text-decoration: underline;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 24px 0;
-  color: #999;
-  font-size: 12px;
+.divider{
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 10px 0;
+	color: var(--bt-muted-foreground);
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
 }
 
 .divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #ddd;
+.divider::after{
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--bt-border);
 }
 
-.divider span {
-  margin: 0 12px;
-  color: #999;
+.google-icon{ width: 18px; height: 18px; flex-shrink: 0; }
+
+.university-footer{
+	margin-top: 10px;
+	text-align: center;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
 }
 
-.btn-google {
-  width: 100%;
-  padding: 12px;
-  background-color: #fff;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: background-color 0.3s, border-color 0.3s;
+.message{
+	min-height: 18px;
+	margin: 6px 0 0;
+	color: var(--bt-accent);
+	text-align: center;
+	font-size: 13px;
 }
 
-.btn-google:hover {
-  background-color: #f9f9f9;
-  border-color: #ccc;
-}
+.message.success{ color: var(--bt-foreground); }
 
-.google-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.university-footer {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 13px;
-  color: #777;
-}
-
-.message {
-  margin-top: 10px;
-  color: #d9534f;
-  text-align: center;
-  font-size: 13px;
-}
-
-.message.success {
-  color: #28a745;
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 768px) {
-  .login-wrapper {
-    flex-direction: column;
-    height: auto;
-    max-width: 100%;
-  }
-
-  .login-image-section {
-    height: 200px;
-  }
-
-  .login-form-section {
-    padding: 30px 20px;
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-
-  .login-form-section h1 {
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-form-section {
-    padding: 24px 16px;
-    max-height: 80vh;
-  }
-
-  .login-form-section h1 {
-    font-size: 20px;
-    margin-bottom: 24px;
-  }
-
-  .logo-home-link {
-    font-size: 16px;
-    margin-bottom: 20px;
-  }
+@media (max-width: 900px){
+	.login-wrapper{ grid-template-columns: 1fr; }
+	.login-image-section{ border-right: none; border-bottom: 1px solid var(--bt-border); }
+	.login-form-section h1{ font-size: 44px; }
 }

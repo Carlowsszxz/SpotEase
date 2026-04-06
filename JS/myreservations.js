@@ -83,7 +83,9 @@ import { showLoading, hideLoading, setStatus } from './loading-utils.js'
         if(noUpcoming) noUpcoming.style.display = 'block';
         if(noPast) noPast.style.display = 'block';
         hideLoading(loadingOverlay);
-        setStatus('No reservations found', false, statusBar, retryBtn);
+        // Keep the status bar for loading + errors only.
+        // Success / empty states are communicated by the page content itself.
+        setStatus('', false, statusBar, retryBtn);
         if(lastUpdatedEl) lastUpdatedEl.textContent = 'Updated: ' + new Date().toLocaleString();
         return;
       }
@@ -111,7 +113,7 @@ import { showLoading, hideLoading, setStatus } from './loading-utils.js'
       if(noPast) noPast.style.display = past.length? 'none':'block';
       
       hideLoading(loadingOverlay);
-      setStatus('Reservations loaded', false, statusBar, retryBtn);
+      setStatus('', false, statusBar, retryBtn);
       if(lastUpdatedEl) lastUpdatedEl.textContent = 'Updated: ' + new Date().toLocaleString();
     } catch(err) {
       hideLoading(loadingOverlay);
