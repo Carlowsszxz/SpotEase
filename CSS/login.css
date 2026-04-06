@@ -94,6 +94,43 @@ button.btn-google{
 	padding: 12px 14px;
 }
 
+button.btn-google{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	min-height: 48px;
+	background: var(--bt-card) !important;
+	color: var(--bt-foreground) !important;
+	border: 1px solid var(--bt-border) !important;
+	font-family: var(--bt-font-mono);
+	font-size: 12px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	padding-inline: 16px;
+	transition: border-color var(--bt-fast) var(--bt-ease), background-color var(--bt-fast) var(--bt-ease), color var(--bt-fast) var(--bt-ease), transform var(--bt-fast) var(--bt-ease);
+}
+
+button.btn-google:hover{
+	background: var(--bt-muted) !important;
+	border-color: var(--bt-foreground) !important;
+	color: var(--bt-foreground) !important;
+	transform: translateY(-1px);
+}
+
+button.btn-google .google-icon{
+	width: 18px;
+	height: 18px;
+	flex: 0 0 18px;
+	display: block;
+}
+
+button.btn-google span{
+	line-height: 1;
+	margin-top: 1px;
+}
+
 .signup-link{
 	margin: 6px 0 0;
 	font-size: 13px;
