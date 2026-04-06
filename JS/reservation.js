@@ -66,7 +66,7 @@ import { supabase } from './supabase-auth.js'
         .from('reservations')
         .select('id, reserved_from, reserved_until, status, resource_id, resources(resource_type)')
         .eq('user_id', currentUserId)
-        .in('status', ['pending', 'confirmed', 'approved']);
+        .in('status', ['pending', 'confirmed']);
       
       if (error) throw error;
       

@@ -6,6 +6,56 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+async function syncUserRecord(user) {
+  if (!user) return false
+
+  const email = user.email || (user.user_metadata && user.user_metadata.email) || null
+  const name = user.user_metadata?.full_name || user.user_metadata?.name || email || null
+
+  try {
+    const { data: existingUsers, error } = await supabase
+      .from('users')
+      .select('id, name, email, role')
+      .eq('id', user.id)
+
+    if (!error && existingUsers && existingUsers.length > 0) {
+      const current = existingUsers[0]
+      const patch = {
+        name,
+        email,
+        updated_at: new Date().toISOString()
+      }
+
+      if (current.name !== patch.name || current.email !== patch.email) {
+        await supabase.from('users').update(patch).eq('id', user.id)
+      }
+
+      return true
+    }
+
+    const now = new Date().toISOString()
+    const newUser = {
+      id: user.id,
+      name,
+      email,
+      role: null,
+      created_at: now,
+      updated_at: now
+    }
+
+    const { error: insertErr } = await supabase.from('users').insert([newUser])
+    if (insertErr) {
+      console.warn('User sync insert failed', insertErr)
+      return false
+    }
+
+    return true
+  } catch (err) {
+    console.warn('syncUserRecord failed', err)
+    return false
+  }
+}
+
 const gBtn = document.getElementById('gSignUpBtn')
 const messageEl = document.getElementById('register-message')
 
@@ -97,46 +147,15 @@ async function onLoginSuccess(session) {
     }
   }
 
-  // If on register page with OAuth, create user record
-  if (isRegisterPage && isOAuthSignUp) {
-    try {
-      const { data: existingUsers, error } = await supabase.from('users').select('id').eq('id', user.id)
-      if (existingUsers && existingUsers.length > 0) {
-        // User already exists, proceed normally
-        showMessage('Account already exists.', false)
-        return
-      }
-    } catch (e) {
-      // Continue with normal flow
-    }
+  const synced = await syncUserRecord(user)
 
-    // Create user record for OAuth signup instantly
-    try {
-      const newUser = {
-        id: user.id,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email || null,
-        email: email || null,
-        role: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-      const { data: inserted, error: insertErr } = await supabase.from('users').insert([newUser])
-      if (insertErr) {
-        console.warn('User insert failed', insertErr)
-        showMessage('Sign up successful! Redirecting...', false)
-      } else {
-        showMessage('Account created successfully! Redirecting...', false)
-      }
-      // Redirect to dashboard after successful signup
-      setTimeout(() => { window.location.href = 'FrameDashboard.html'; }, 1500);
-    } catch (e) {
-      console.error('User creation error', e)
-      showMessage('Sign up successful! Redirecting...', false)
-      setTimeout(() => { window.location.href = 'FrameDashboard.html'; }, 1500);
-    }
-  } else {
-    showMessage('Signed in as ' + (email || user.id), false)
+  if (isRegisterPage) {
+    showMessage(synced ? 'Account created successfully! Redirecting...' : 'Signed in. Redirecting...', false)
+    setTimeout(() => { window.location.href = 'FrameDashboard.html'; }, 1500)
+    return
   }
+
+  showMessage('Signed in as ' + (email || user.id), false)
   
   console.log('Supabase session:', session)
 }

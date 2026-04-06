@@ -47,17 +47,6 @@ if (form) {
         }
 
         try {
-            // Check if user already exists in the users table
-            const { data: existingUsers, error: checkError } = await supabase.from('users').select('id').eq('email', email);
-            if (existingUsers && existingUsers.length > 0) {
-                msgEl.textContent = 'Account already exists. Please sign in.';
-                return;
-            }
-            if (checkError) {
-                // Log the error but continue
-                console.error('Error checking for existing user', checkError);
-            }
-
             // Sign up with Supabase Auth - email confirmation will be required
             const confirmRedirectUrl = window.location.origin + '/FrameEmailConfirm.html';
             const { data, error } = await supabase.auth.signUp({ 
@@ -83,7 +72,12 @@ if (form) {
             msgEl.classList.add('success');
         } catch (err) {
             console.error('Registration error', err);
-            msgEl.textContent = 'Registration failed: ' + (err.message || 'Unknown error');
+            const msg = (err && err.message) ? err.message : 'Unknown error';
+            if (/already\s+registered|already\s+exists/i.test(msg)) {
+                msgEl.textContent = 'Account already exists. Please sign in.';
+            } else {
+                msgEl.textContent = 'Registration failed: ' + msg;
+            }
         }
     });
 }

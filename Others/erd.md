@@ -49,7 +49,7 @@ This schema defines tables and relationships for a resource management system: u
 | id           | `uuid`      | Primary Key                    |
 | resource_id  | `uuid`      | References `resources(id)`     |
 | sensor_id    | `uuid`      | References `sensors(id)`       |
-| status       | `varchar`   | `'occupied'`, `'free'`         |
+| occupancy_change | `smallint` | `+1` = occupied, `-1` = freed |
 | recorded_at  | `timestamp` |                                |
 
 **Indexes:**

@@ -48,6 +48,10 @@
         <input id="modalLocation" type="text">
       </div>
       <div class="form-group">
+        <label>Capacity</label>
+        <input id="modalCapacity" type="number" min="1" value="1">
+      </div>
+      <div class="form-group">
         <label><input type="checkbox" id="modalStatus"> Active</label>
       </div>
       <div class="form-actions"><button id="saveResource" class="btn btn-primary">Save</button></div>
@@ -71,7 +75,7 @@
           <input id="searchResource" type="search" placeholder="Search resources">
         </div>
         <table class="resource-table" id="resourceTable">
-          <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>

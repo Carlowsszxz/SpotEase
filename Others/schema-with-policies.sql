@@ -53,7 +53,7 @@ VALUES
   id uuid not null,
   resource_id uuid null,
   sensor_id uuid null,
-  status character varying null,
+  occupancy_change smallint not null check (occupancy_change in (1, -1)),
   recorded_at timestamp without time zone null,
   constraint occupancy_events_pkey primary key (id),
   constraint occupancy_events_resource_id_fkey foreign KEY (resource_id) references resources (id),

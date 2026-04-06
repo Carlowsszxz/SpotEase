@@ -20,6 +20,7 @@ import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHa
     var modalType = document.getElementById('modalType');
     var modalTypeCustom = document.getElementById('modalTypeCustom');
     var modalLocation = document.getElementById('modalLocation');
+    var modalCapacity = document.getElementById('modalCapacity');
     var modalStatus = document.getElementById('modalStatus');
     var saveResource = document.getElementById('saveResource');
 
@@ -64,7 +65,7 @@ import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHa
       
       resources.forEach(function(r){
         var tr = document.createElement('tr');
-        tr.innerHTML = '<td>'+r.name+'</td><td>'+r.resource_type+'</td><td>'+r.location+'</td><td><span class="badge s-'+(r.is_active?'free':'occupied')+'">'+(r.is_active?'Active':'Inactive')+'</span></td>';
+        tr.innerHTML = '<td>'+r.name+'</td><td>'+r.resource_type+'</td><td>'+r.location+'</td><td>'+(r.capacity || 1)+'</td><td><span class="badge s-'+(r.is_active?'free':'occupied')+'">+'+(r.is_active?'Active':'Inactive')+'</span></td>';
         var actionsTd = document.createElement('td');
         
         var edit = document.createElement('button');
@@ -124,6 +125,7 @@ import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHa
       }
       
       modalLocation.value = r ? r.location : '';
+      modalCapacity.value = r ? (r.capacity || 1) : 1;
       modalStatus.checked = r ? r.is_active : true;
       openModalUtil(modal, modalOverlay);
     }
@@ -138,6 +140,7 @@ import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHa
       var name = modalName.value.trim();
       var type = modalType.value === 'other' ? modalTypeCustom.value.trim() : modalType.value;
       var location = modalLocation.value.trim();
+      var capacity = parseInt(modalCapacity.value) || 1;
       var isActive = modalStatus.checked;
 
       if (!name || !location) {
@@ -159,6 +162,7 @@ import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHa
               name: name,
               resource_type: type,
               location: location,
+              capacity: capacity,
               is_active: isActive
             })
             .eq('id', editingId);
@@ -174,6 +178,7 @@ import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHa
               name: name,
               resource_type: type,
               location: location,
+              capacity: capacity,
               is_active: isActive
             }]);
           

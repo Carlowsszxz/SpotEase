@@ -95,7 +95,7 @@ import { showLoading, hideLoading, setStatus } from './loading-utils.js'
         return isActive(r) && r.status !== 'cancelled'; 
       });
       var past = all.filter(function(r){ 
-        return (isExpired(r) && r.status !== 'approved') || r.status === 'cancelled'; 
+        return isExpired(r) || r.status === 'cancelled'; 
       });
 
       renderList(upcomingListEl, upcoming, 'upcoming');
@@ -123,7 +123,6 @@ import { showLoading, hideLoading, setStatus } from './loading-utils.js'
   function statusBadge(r){
     if(r.status === 'cancelled') return '<span class="badge badge-cancelled">Cancelled</span>';
     if(r.status === 'pending') return '<span class="badge badge-pending">Pending</span>';
-    if(r.status === 'approved') return '<span class="badge badge-confirmed">Approved</span>';
     if(isExpired(r)) return '<span class="badge badge-expired">Expired</span>';
     return '<span class="badge badge-confirmed">Confirmed</span>';
   }

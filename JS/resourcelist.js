@@ -71,7 +71,7 @@ import { checkAuth } from './auth.js'
   function renderTable(){
     // show loading placeholder if resources not yet loaded
     if(!resources){
-      tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
       return;
     }
 
@@ -91,7 +91,7 @@ import { checkAuth } from './auth.js'
     tbody.innerHTML = '';
     filtered.forEach(function(r){
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td>'+r.name+'</td><td>'+r.type+'</td><td>'+r.location+'</td><td><span class="status-badge '+statusClass(r.status)+'">'+r.status.charAt(0).toUpperCase()+r.status.slice(1)+'</span></td>';
+      tr.innerHTML = '<td>'+r.name+'</td><td>'+r.type+'</td><td>'+r.location+'</td><td>'+(r.capacity || '—')+'</td><td><span class="status-badge '+statusClass(r.status)+'">'+r.status.charAt(0).toUpperCase()+r.status.slice(1)+'</span></td>';
       var actions = document.createElement('td');
       var view = document.createElement('button'); view.className='action-btn action-view'; view.textContent='View';
       view.addEventListener('click', function(){ viewDetails(r); });
@@ -116,7 +116,7 @@ import { checkAuth } from './auth.js'
     setStatus('Loading resources...', false);
     try {
       tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
-      const { data, error } = await supabase.from('resources').select('*');
+      const { data, error } = await supabase.from('resources').select('*').eq('is_active', true);
       if (!error && data) {
         // map DB rows to UI fields expected by the table
         resources = data.map(function(r){
@@ -125,8 +125,9 @@ import { checkAuth } from './auth.js'
             name: r.name || r.resource_name || '',
             type: mapType(r.resource_type || r.type),
             location: r.location || '',
+            capacity: r.capacity || 1,
             // determine status: prefer current_status, then reservation/occupancy, then is_active
-            status: (r.current_status || r.reservation_status || r.occupancy_status) || (r.is_active===false ? 'inactive' : 'free')
+            status: (r.current_status || r.reservation_status || r.occupancy_status) || 'free'
           };
         });
         hideLoading();

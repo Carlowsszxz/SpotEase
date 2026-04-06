@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
           }
 
-          try { localStorage.setItem('pm_username', data.user?.email || username); } catch (e) {}
+          try { localStorage.setItem('pm_username', data.user?.email || data.user?.id || ''); } catch (e) {}
           
           // Check user role
           const { data: userData, error: roleError } = await supabase
@@ -65,16 +65,8 @@ document.addEventListener('DOMContentLoaded', function () {
           const redirectUrl = isAdmin ? 'FrameAdminPanel.html' : 'FrameDashboard.html';
           console.log('Redirecting to:', redirectUrl);
           setTimeout(() => { window.location.href = redirectUrl; }, 600);
-          
         } else {
-          // fallback demo credential
-          if (username === 'admin' && password === 'password') {
-            try { localStorage.setItem('pm_username', username); } catch (e) {}
-            await showMessage('Login successful (demo).', false);
-            setTimeout(() => { window.location.href = 'FrameDashboard.html'; }, 600);
-          } else {
-            await showMessage('Invalid username or password.');
-          }
+          await showMessage('Invalid email or password.');
         }
       } catch (err) {
         console.error('Supabase signInWithPassword error', err);
