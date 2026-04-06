@@ -189,60 +189,6 @@
 	color: var(--bt-muted-foreground);
 }
 
-/* Loading overlay and spinner */
-.loading-overlay{
-	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.72);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 60;
-	visibility: hidden;
-	opacity: 0;
-	transition: opacity 0.18s var(--bt-ease);
-}
-
-.loading-overlay[aria-hidden="false"]{
-	visibility: visible;
-	opacity: 1;
-}
-
-.spinner{
-	border: 1px solid var(--bt-border);
-	background: var(--bt-card);
-	padding: 18px 20px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 10px;
-}
-
-.spinner .dot{
-	width: 10px;
-	height: 10px;
-	background: var(--bt-accent);
-	border-radius: 999px;
-	display: inline-block;
-	animation: dot-bounce 0.9s infinite ease-in-out;
-}
-
-.spinner .dot:nth-child(2){ animation-delay: 0.12s; }
-.spinner .dot:nth-child(3){ animation-delay: 0.24s; }
-
-.loading-text{
-	font-family: var(--bt-font-mono);
-	text-transform: uppercase;
-	letter-spacing: 0.16em;
-	font-size: 11px;
-	color: var(--bt-muted-foreground);
-}
-
-@keyframes dot-bounce{
-	0%, 80%, 100%{ transform: translateY(0); opacity: 0.55; }
-	40%{ transform: translateY(-8px); opacity: 1; }
-}
-
 @media (max-width: 768px){
 	.reservation-page{ margin: 20px auto; padding: 16px; }
 	.reservation-page header h1{ font-size: 44px; }

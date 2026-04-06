@@ -403,3 +403,53 @@ th{
   border-color: var(--bt-accent) !important;
   color: var(--bt-accent) !important;
 }
+
+/* Shared loading overlay + spinner (used across frames) */
+.loading-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  background: color-mix(in srgb, var(--bt-background) 65%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.18s var(--bt-ease);
+}
+
+.loading-overlay[aria-hidden="false"]{ visibility: visible; opacity: 1; }
+
+.loading-overlay .spinner{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-overlay .spinner .dot{
+  width: 10px;
+  height: 10px;
+  background: var(--bt-accent);
+  border-radius: 999px;
+  display: inline-block;
+  animation: dot-bounce 0.9s infinite ease-in-out;
+}
+
+.loading-overlay .spinner .dot:nth-child(2){ animation-delay: 0.12s; }
+.loading-overlay .spinner .dot:nth-child(3){ animation-delay: 0.24s; }
+
+.loading-overlay .loading-text{
+  color: var(--bt-foreground);
+  font-weight: 600;
+  font-size: 14px;
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+@keyframes dot-bounce{
+  0%,80%,100%{ transform: translateY(0); opacity: 0.6; }
+  40%{ transform: translateY(-8px); opacity: 1; }
+}
