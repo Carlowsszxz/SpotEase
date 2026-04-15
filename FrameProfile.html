@@ -14,55 +14,63 @@
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
 
   <div class="profile-page">
     <header>
       <h1>Account Profile</h1>
-      <p class="small-muted">Update your account details and view your reservation history.</p>
+      <p class="small-muted">Update your account details and security settings.</p>
     </header>
 
-    <main class="profile-card">
-      <form id="profileForm">
-        <label for="fullName">Full Name</label>
-        <input id="fullName" type="text" required>
+    <form id="profileForm">
+      <section class="main-grid">
+        <div class="panel profile-details">
+          <h3>Details</h3>
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" required>
 
-        <label for="email">Email</label>
-        <input id="email" type="email" required>
-
-        <label for="role">Role / Status</label>
-        <select id="role">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-          <option value="guest">Guest</option>
-        </select>
-
-        <h3>Change Password</h3>
-        <label for="currentPassword">Current Password</label>
-        <input id="currentPassword" type="password" placeholder="Current password">
-        <label for="newPassword">New Password</label>
-        <input id="newPassword" type="password" placeholder="New password">
-        <label for="confirmPassword">Confirm New Password</label>
-        <input id="confirmPassword" type="password" placeholder="Confirm new password">
-
-        <div class="actions-row">
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-          <a class="btn btn-secondary" href="FrameMyReservations.html">View Reservation History</a>
+          <label for="email">Email</label>
+		  <input id="email" type="email" required readonly aria-readonly="true">
+		  <p id="emailHelp" class="small-muted">Email can’t be changed here.</p>
         </div>
 
-        <div id="profileMsg" class="small-muted" aria-live="polite"></div>
-      </form>
-    </main>
+        <div class="panel profile-security">
+          <h3>Security</h3>
+		  <p id="securityHelp" class="small-muted"></p>
+          <label for="currentPassword">Current Password</label>
+          <input id="currentPassword" type="password" placeholder="Current password">
+          <label for="newPassword">New Password</label>
+          <input id="newPassword" type="password" placeholder="New password">
+          <label for="confirmPassword">Confirm New Password</label>
+          <input id="confirmPassword" type="password" placeholder="Confirm new password">
+        </div>
+      </section>
+
+      <div class="actions-row">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+
+      <div id="profileMsg" class="small-muted" aria-live="polite"></div>
+    </form>
+
+    <section class="panel rfid-activity" aria-labelledby="rfidActivityTitle">
+      <h3 id="rfidActivityTitle">RFID Activity</h3>
+      <p class="small-muted">Quick status for your assigned RFID tag.</p>
+
+      <div class="rfid-summary">
+        <div class="rfid-metric">
+          <div class="rfid-label">Last tap</div>
+          <div id="rfidLastTap" class="rfid-value">Loading…</div>
+        </div>
+      </div>
+
+      <a id="rfidHistoryLink" class="btn btn-secondary" href="FrameAccessHistory.html">View access history</a>
+      <div id="rfidEmpty" class="small-muted" style="display:none;">No RFID taps found yet for your assigned tag.</div>
+      <div id="rfidErr" class="small-muted" style="display:none;"></div>
+    </section>
   </div>
 
   <script type="module" src="JS/profile.js"></script>

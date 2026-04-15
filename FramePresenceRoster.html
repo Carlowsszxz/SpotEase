@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Presence Roster</title>
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
+  <link rel="stylesheet" href="CSS/presenceroster.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+</head>
+<body>
+  <div id="navbar"></div>
+  <script type="module">
+    import { injectAdminNavbar } from './JS/app-shell.js';
+    injectAdminNavbar();
+  </script>
+
+  <div class="presence-page">
+    <header>
+      <h1>Presence Roster</h1>
+      <p class="small-muted">Phase A (RFID-based): estimated person presence and recent movement from RFID taps.</p>
+    </header>
+
+    <section class="presence-controls" aria-label="Presence roster controls">
+      <input id="presenceSearch" type="search" placeholder="Search by user, email, or resource">
+      <label>Likely present window:
+        <select id="presenceWindowMinutes">
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+          <option value="30" selected>30 min</option>
+          <option value="60">60 min</option>
+          <option value="120">120 min</option>
+        </select>
+      </label>
+      <button id="presenceRefresh" class="btn">Refresh</button>
+      <span id="presenceUpdated" class="small-muted">Updated: —</span>
+    </section>
+
+    <section class="presence-summary" aria-label="Presence summary">
+      <div class="summary-card">
+        <div class="summary-label">Tracked users</div>
+        <div id="sumTracked" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Likely present now</div>
+        <div id="sumLikelyPresent" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Last seen only</div>
+        <div id="sumLastSeen" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">No activity</div>
+        <div id="sumNoActivity" class="summary-value">0</div>
+      </div>
+    </section>
+
+    <section class="presence-note panel">
+      <p class="small-muted">
+        This roster combines RFID scan recency and BLE presence sessions. If BLE is unavailable, it falls back to RFID history.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h3>Person Presence (RFID + BLE)</h3>
+      <table class="presence-table" id="presenceTable">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Last Seen</th>
+            <th>Last Resource</th>
+            <th>Recent Movement</th>
+          </tr>
+        </thead>
+        <tbody id="presenceTbody"></tbody>
+      </table>
+      <p id="presenceEmpty" class="small-muted" style="display:none;">No users found for current filter.</p>
+      <p id="presenceError" class="small-muted" style="display:none;"></p>
+    </section>
+  </div>
+
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
+  <script type="module" src="JS/presenceroster.js"></script>
+</body>
+</html>

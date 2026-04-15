@@ -26,7 +26,7 @@ import { supabase, getCurrentUser } from './supabase-auth.js'
     logoutBtn.addEventListener('click', async function(){
       try { await supabase.auth.signOut(); } catch(e){}
       try { localStorage.removeItem('pm_username'); } catch(e){}
-      window.location.href = 'FrameLogin.html';
+      window.location.href = 'FrameHome.html';
     })
   }
   // Highlight the active nav link and wire clicks to set active state

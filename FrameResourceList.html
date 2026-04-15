@@ -7,28 +7,20 @@
   <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
   <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
   <script type="module">
-    import { checkAdminAuth } from './JS/admin-auth.js';
-    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html');
+    import { checkAuth } from './JS/auth.js';
+    checkAuth('FrameLogin.html');
   </script>
   <link rel="stylesheet" href="CSS/frames.css">
   <link rel="stylesheet" href="CSS/resourcelist.css">
-  <link rel="stylesheet" href="CSS/navbar.css">
   <link rel="stylesheet" href="CSS/bold-typography.css">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameAdminNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
   <div class="resource-list-page">
     <header class="rl-header">
       <h1>Resources</h1>
@@ -43,7 +35,28 @@
       <select id="filterType"><option value="all">All types</option></select>
       <select id="filterStatus"><option value="all">All status</option></select>
       <select id="filterLocation"><option value="all">All locations</option></select>
+      <select id="sortBy">
+        <option value="name-asc">Sort: Name (A-Z)</option>
+        <option value="name-desc">Sort: Name (Z-A)</option>
+        <option value="available-first">Sort: Available First</option>
+        <option value="capacity-desc">Sort: Capacity (High-Low)</option>
+      </select>
       <button id="clearFilters" class="btn">Clear</button>
+    </section>
+
+    <section class="rl-summary" aria-label="Resource summary">
+      <div class="summary-card">
+        <div class="summary-label">Total</div>
+        <div id="sumTotal" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Available</div>
+        <div id="sumAvailable" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Occupied</div>
+        <div id="sumOccupied" class="summary-value">0</div>
+      </div>
     </section>
 
     <section class="rl-table">

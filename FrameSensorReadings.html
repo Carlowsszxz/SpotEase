@@ -11,23 +11,48 @@
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameAdminNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/admin-navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectAdminNavbar } from './JS/app-shell.js';
+		injectAdminNavbar();
+	</script>
 
   <div class="sensor-page">
     <header>
       <h1>Sensor Readings</h1>
       <p class="small-muted">Inspect raw IoT sensor data for troubleshooting and validation.</p>
     </header>
+
+    <section class="sr-health" aria-label="Resource health dashboard">
+      <div class="health-grid">
+        <div class="health-card">
+          <div class="health-label">Total sensors</div>
+          <div id="healthTotalSensors" class="health-value">0</div>
+        </div>
+        <div class="health-card">
+          <div class="health-label">Healthy (24h)</div>
+          <div id="healthHealthySensors" class="health-value">0</div>
+        </div>
+        <div class="health-card">
+          <div class="health-label">Stale (24h+)</div>
+          <div id="healthStaleSensors" class="health-value">0</div>
+        </div>
+        <div class="health-card">
+          <div class="health-label">No data</div>
+          <div id="healthNoDataSensors" class="health-value">0</div>
+        </div>
+      </div>
+
+      <div class="health-table-wrap">
+        <h3>Stale or Missing Sensors</h3>
+        <table class="health-table">
+          <thead>
+            <tr><th>Sensor</th><th>Resource</th><th>Last seen</th><th>Status</th></tr>
+          </thead>
+          <tbody id="healthTbody"></tbody>
+        </table>
+        <p id="healthEmpty" class="small-muted" style="display:none; margin-top: 10px;">All sensors are reporting recently.</p>
+      </div>
+    </section>
 
     <section class="sr-filters">
       <label>Sensor:
@@ -71,6 +96,6 @@
     // Check authentication and admin role
     checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
   </script>
-  <script src="JS/sensorreadings.js"></script>
+  <script type="module" src="JS/sensorreadings.js"></script>
 </body>
 </html>

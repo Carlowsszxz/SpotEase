@@ -1,13 +1,122 @@
-/* Profile page styles */
-.profile-page{max-width:820px;margin:28px auto;padding:18px}
-.profile-card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 10px 30px rgba(2,6,23,0.06)}
-.profile-card label{display:block;margin-top:10px;font-size:14px;color:#0f172a}
-.profile-card input, .profile-card select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;margin-top:6px}
-.profile-card h3{margin-top:14px}
-.actions-row{display:flex;gap:10px;margin-top:14px}
-.small-muted{color:#6b7280}
-.btn{padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
-.btn-primary{background:linear-gradient(180deg,#2563eb,#1e40af);color:#fff}
-.btn-secondary{background:transparent;border:1px solid rgba(37,99,235,0.12);color:#1e40af;padding:10px 12px;text-decoration:none;display:inline-flex;align-items:center}
+/* Profile (Bold Typography-aligned) */
+.profile-page{
+	max-width: 980px;
+	margin: 40px auto;
+	padding: 24px;
+}
 
-@media(max-width:640px){.actions-row{flex-direction:column}}
+.profile-page header{
+	padding: 18px 0 12px;
+	border-bottom: 1px solid var(--bt-border);
+	margin-bottom: 16px;
+}
+
+.profile-page h1{
+	margin: 0;
+	font-size: 56px;
+	line-height: 1.05;
+	letter-spacing: -0.06em;
+}
+
+.profile-page .small-muted{ margin: 0; }
+
+/* Helper notes inside panels */
+#emailHelp,
+#securityHelp{
+	margin-top: 8px;
+}
+
+.main-grid{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+}
+
+.panel{
+	position: relative;
+	padding: 16px;
+}
+
+.panel::before{
+	content: "";
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	width: 56px;
+	height: 2px;
+	background: var(--bt-accent);
+}
+
+.profile-details h3,
+.profile-security h3{
+	margin: 0 0 12px;
+	padding-top: 18px;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 12px;
+	color: var(--bt-foreground);
+}
+
+.rfid-activity h3{
+	margin: 0 0 12px;
+	padding-top: 18px;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 12px;
+	color: var(--bt-foreground);
+}
+
+.rfid-summary{
+	display: flex;
+	gap: 14px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.rfid-metric{
+	flex: 1;
+	border: 1px solid var(--bt-border);
+	padding: 12px;
+}
+
+.rfid-label{
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-family: var(--bt-font-mono);
+	color: var(--bt-muted);
+}
+
+.rfid-value{
+	margin-top: 6px;
+	font-size: 18px;
+	color: var(--bt-foreground);
+}
+
+.rfid-activity .btn{
+	margin-top: 4px;
+}
+
+/* Keep form spacing clean */
+label{ display: block; margin-top: 12px; }
+input{ width: 100%; margin-top: 6px; padding: 10px; }
+
+.actions-row{
+	display: flex;
+	gap: 10px;
+	margin-top: 14px;
+	align-items: center;
+}
+
+#profileMsg{ margin-top: 10px; }
+
+@media (max-width: 900px){
+	.main-grid{ grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px){
+	.profile-page{ margin: 24px auto; padding: 18px; }
+	.profile-page h1{ font-size: 44px; }
+}

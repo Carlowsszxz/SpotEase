@@ -16,7 +16,7 @@ function normalizeNavbarLinks() {
     '/register': 'FrameRegister.html',
     '/dashboard': 'FrameDashboard.html',
     '/map': 'FrameMap.html',
-    '/resources': 'FrameResourceList.html',
+    '/emergency': 'FrameEmergency.html',
     '/my-reservations': 'FrameMyReservations.html',
     '/profile': 'FrameProfile.html',
     '/reserve': 'FrameReservation.html'
@@ -28,7 +28,7 @@ function normalizeNavbarLinks() {
     'FrameRegister.html': '/register',
     'FrameDashboard.html': '/dashboard',
     'FrameMap.html': '/map',
-    'FrameResourceList.html': '/resources',
+    'FrameEmergency.html': '/emergency',
     'FrameMyReservations.html': '/my-reservations',
     'FrameProfile.html': '/profile',
     'FrameReservation.html': '/reserve'
@@ -56,9 +56,105 @@ function normalizeNavbarLinks() {
   })
 }
 
+async function loadAppPillNav() {
+  const host = document.getElementById('appPillNavRoot')
+  if (!host) return
+  try {
+    await import('./react-nav/app-pill-nav.js')
+  } catch (e) {
+    console.error('Failed to load app PillNav bundle', e)
+  }
+}
+
+function initStaggeredMenuNavigationFallback() {
+  if (window.__smNavFallbackBound) return;
+  window.__smNavFallbackBound = true;
+
+  document.addEventListener('click', function (event) {
+    try {
+      const item = event.target && event.target.closest ? event.target.closest('.sm-panel-item') : null;
+      if (!item) return;
+
+      const href = item.getAttribute('href');
+      if (!href) return;
+
+      // Let normal navigation happen, but force it if a library handler blocks it.
+      setTimeout(function () {
+        try {
+          if (window.location.href.indexOf(href) === -1) {
+            window.location.href = href;
+          }
+        } catch (e) {
+          window.location.href = href;
+        }
+      }, 0);
+    } catch (e) {
+      // ignore
+    }
+  }, true);
+}
+
+function initEmergencyCta(){
+  var el = document.getElementById('emergencyCta');
+  if(!el) return;
+
+  var holdMs = 800;
+  var timer = null;
+  var href = el.getAttribute('href') || 'FrameEmergency.html';
+
+  function clear(){
+    if(timer){
+      clearTimeout(timer);
+      timer = null;
+    }
+    el.classList.remove('holding');
+  }
+
+  function start(){
+    clear();
+    el.classList.add('holding');
+    timer = setTimeout(function(){
+      try{ window.location.href = href; }catch(e){}
+    }, holdMs);
+  }
+
+  // Prevent accidental short taps from navigating.
+  el.addEventListener('click', function(e){
+    try{ e.preventDefault(); }catch(_e){}
+  });
+
+  // Pointer / touch long-press
+  el.addEventListener('mousedown', function(e){
+    if(e && typeof e.button === 'number' && e.button !== 0) return;
+    start();
+  });
+  el.addEventListener('mouseup', clear);
+  el.addEventListener('mouseleave', clear);
+  el.addEventListener('touchstart', function(){ start(); }, { passive: true });
+  el.addEventListener('touchend', clear);
+  el.addEventListener('touchcancel', clear);
+
+  // Keyboard long-press (Space/Enter)
+  el.addEventListener('keydown', function(e){
+    var key = (e && (e.key || e.code)) || '';
+    if(key === 'Enter' || key === ' ' || key === 'Space' || key === 'Spacebar'){
+      try{ e.preventDefault(); }catch(_e){}
+      start();
+    }
+  });
+  el.addEventListener('keyup', function(e){
+    var key = (e && (e.key || e.code)) || '';
+    if(key === 'Enter' || key === ' ' || key === 'Space' || key === 'Spacebar'){
+      clear();
+    }
+  });
+}
+
 // Initialize navbar: populate username and wire logout/login links
 (async function initNavbar(){
   normalizeNavbarLinks()
+  await loadAppPillNav()
+  initStaggeredMenuNavigationFallback()
 
   const logoutBtn = document.getElementById('navLogout');
   const loginLink = document.getElementById('navLoginLink');
@@ -84,35 +180,48 @@ function normalizeNavbarLinks() {
     logoutBtn.addEventListener('click', async function(){
       try { await supabase.auth.signOut(); } catch(e){}
       try { localStorage.removeItem('pm_username'); } catch(e){}
-      window.location.href = 'FrameLogin.html';
+      window.location.href = 'FrameHome.html';
     })
   }
-  // Highlight the active nav link and wire clicks to set active state
+  // Highlight active link for whichever nav renderer is present
   try {
-    const links = document.querySelectorAll('.main-nav .nav-links a');
+    const links = document.querySelectorAll('.main-nav .nav-links a, .main-nav .sm-panel-item');
     function setActiveLink(target) {
-      links.forEach(l => l.classList.remove('active'));
-      if (target) target.classList.add('active');
+      links.forEach(l => {
+        l.classList.remove('active');
+        l.classList.remove('is-active');
+      });
+      if (!target) return;
+      target.classList.add('active');
+      target.classList.add('is-active');
     }
 
-    // Determine current filename (e.g., FrameDashboard.html)
+    const currentPath = (window.location.pathname || '').toLowerCase();
     const currentFile = (window.location.pathname.split('/').pop() || '').toLowerCase();
     let matched = null;
+
     links.forEach(function(link){
       try {
-        const href = link.getAttribute('href') || '';
-        const hrefFile = href.split('/').pop().toLowerCase();
+        const href = (link.getAttribute('href') || '').toLowerCase();
+        if (!href) return;
+
+        const hrefFile = href.split('/').pop();
+        if (href.startsWith('/') && href === currentPath) matched = link;
         if (hrefFile && hrefFile === currentFile) matched = link;
-        // wire click to activate (useful for single-page nav or to show active state immediately)
+
         link.addEventListener('click', function(){ setActiveLink(link); });
       } catch(e){}
     });
+
     if (matched) setActiveLink(matched);
   } catch (e) {
     // ignore if navbar not present
   }
 
 })();
+
+// Emergency CTA behavior
+try{ initEmergencyCta(); }catch(e){}
 
 // Initialize Lucide icons
 console.log('=== NAVBAR.JS LOADED ===');
@@ -133,55 +242,3 @@ function initLucideIcons() {
 // Wait a bit for Lucide to load, then initialize
 setTimeout(initLucideIcons, 50);
 
-// Hamburger menu functionality
-function initHamburgerMenu() {
-  console.log('=== HAMBURGER MENU INIT ===');
-  const hamburgerBtn = document.getElementById('hamburgerBtn');
-  const navLinks = document.getElementById('navLinks');
-  const navOverlay = document.getElementById('navOverlay');
-  
-  console.log('hamburgerBtn:', hamburgerBtn);
-  console.log('navLinks:', navLinks);
-  console.log('navOverlay:', navOverlay);
-  
-  if (hamburgerBtn && navLinks && navOverlay) {
-    console.log('All elements found, setting up click handlers');
-    
-    // Toggle menu on hamburger click
-    hamburgerBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      console.log('Hamburger clicked!');
-      navLinks.classList.toggle('active');
-      hamburgerBtn.classList.toggle('active');
-      navOverlay.classList.toggle('active');
-    });
-    
-    // Close menu when overlay is clicked
-    navOverlay.addEventListener('click', function() {
-      console.log('Overlay clicked, closing menu');
-      navLinks.classList.remove('active');
-      hamburgerBtn.classList.remove('active');
-      navOverlay.classList.remove('active');
-    });
-    
-    // Close menu when a link is clicked
-    const links = navLinks.querySelectorAll('a');
-    console.log('Found', links.length, 'nav links');
-    
-    links.forEach(link => {
-      link.addEventListener('click', function() {
-        console.log('Nav link clicked, closing menu');
-        navLinks.classList.remove('active');
-        hamburgerBtn.classList.remove('active');
-        navOverlay.classList.remove('active');
-      });
-    });
-    
-    console.log('Hamburger menu initialized successfully');
-  } else {
-    console.error('Failed to find hamburgerBtn, navLinks, or navOverlay!');
-  }
-}
-
-// Initialize hamburger after navbar is loaded
-setTimeout(initHamburgerMenu, 50);

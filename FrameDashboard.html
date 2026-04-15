@@ -14,21 +14,15 @@
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
 	<div class="dashboard">
 		<header>
 			<div>
-				<h2 class="greeting">Welcome, <span id="userName">User</span>!</h2>
+				<h2 class="greeting">Welcome, <span id="dashboardGreetingRoot" class="greeting-decrypt-root">User</span>!</h2>
+				<span id="userName" hidden>User</span>
 				<p class="small-muted">This is your project dashboard.</p>
 			</div>
 			
@@ -40,35 +34,107 @@
 
 		<section class="quick-stats">
 			<div class="stat">
-				<div class="stat-value" id="activeReservationsCount">0</div>
-				<div class="stat-label">Active Today</div>
+				<div class="stat-value" id="peopleInsideNow">—</div>
+				<div class="stat-label">People Inside Now</div>
 			</div>
 			<div class="stat">
-				<div class="stat-value" id="upcomingCount">0</div>
-				<div class="stat-label">Upcoming (7 days)</div>
+				<div class="stat-value" id="activeSpacesCount">—</div>
+				<div class="stat-label">Active Spaces</div>
 			</div>
 			<div class="stat">
-				<div class="stat-value" id="totalCount">0</div>
-				<div class="stat-label">Total This Month</div>
+				<div class="stat-value" id="nearFullSpacesCount">—</div>
+				<div class="stat-label">Near Full</div>
 			</div>
 			<div class="stat">
-				<div class="stat-value" id="nextReservationTime">—</div>
-				<div class="stat-label">Next Reservation</div>
+				<div class="stat-value" id="fullSpacesCount">—</div>
+				<div class="stat-label">Full</div>
+			</div>
+		</section>
+
+		<section class="main-grid main-grid-single" style="margin-top: 0;">
+			<div class="panel occupancy">
+				<h3>Live Occupancy</h3>
+				<div id="occupancyCards" class="occupancy-cards" aria-live="polite"></div>
+				<div id="occupancySample" class="occupancy-sample" aria-hidden="false">
+					<p class="small-muted" style="margin-top:12px">Sample data (demo only) — connect resources to see live occupancy.</p>
+					<div class="occupancy-cards" aria-hidden="true">
+						<div class="occupancy-card">
+							<div class="occupancy-top">
+								<div>
+									<div class="occupancy-name">Library</div>
+									<div class="meta">2nd Floor · Admin Bldg.</div>
+								</div>
+								<div class="occupancy-status">Available</div>
+							</div>
+							<div class="occupancy-value-row">
+								<div class="roll-number">0</div>
+								<div class="capacity-suffix">/ 20</div>
+							</div>
+						</div>
+						<div class="occupancy-card">
+							<div class="occupancy-top">
+								<div>
+									<div class="occupancy-name">Study Area</div>
+									<div class="meta">1st Floor · Main Hall</div>
+								</div>
+								<div class="occupancy-status">Near full</div>
+							</div>
+							<div class="occupancy-value-row">
+								<div class="roll-number">16</div>
+								<div class="capacity-suffix">/ 20</div>
+							</div>
+						</div>
+						<div class="occupancy-card">
+							<div class="occupancy-top">
+								<div>
+									<div class="occupancy-name">Computer Lab</div>
+									<div class="meta">3rd Floor · Tech Wing</div>
+								</div>
+								<div class="occupancy-status">Full</div>
+							</div>
+							<div class="occupancy-value-row">
+								<div class="roll-number">30</div>
+								<div class="capacity-suffix">/ 30</div>
+							</div>
+						</div>
+						<div class="occupancy-card">
+							<div class="occupancy-top">
+								<div>
+									<div class="occupancy-name">Conference Room</div>
+									<div class="meta">Ground Floor · East Wing</div>
+								</div>
+								<div class="occupancy-status">Available</div>
+							</div>
+							<div class="occupancy-value-row">
+								<div class="roll-number">5</div>
+								<div class="capacity-suffix">/ 12</div>
+							</div>
+						</div>
+						<div class="occupancy-card">
+							<div class="occupancy-top">
+								<div>
+									<div class="occupancy-name">Cafeteria</div>
+									<div class="meta">1st Floor · South Hall</div>
+								</div>
+								<div class="occupancy-status">Near full</div>
+							</div>
+							<div class="occupancy-value-row">
+								<div class="roll-number">42</div>
+								<div class="capacity-suffix">/ 50</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<p id="noOccupancy" class="small-muted"></p>
 			</div>
 		</section>
 
 		<section class="main-grid">
-			<div class="panel upcoming">
-				<h3>Upcoming Reservations</h3>
-				<ul id="upcomingList" class="list"></ul>
-				<p id="noUpcoming" class="small-muted"></p>
-			</div>
-
 			<div class="panel actions">
 				<h3>Quick Actions</h3>
 				<div class="action-row">
-					<button id="reserveBtn" class="btn btn-primary">Reserve a Spot/Seat/Room</button>
 					<button id="viewMapBtn" class="btn btn-secondary">View Map / Resource List</button>
+					<button id="openEmergencyBtn" class="btn btn-secondary">Emergency</button>
 				</div>
 
 				<h3 style="margin-top:18px">Alerts / Notifications</h3>
@@ -79,6 +145,18 @@
 					<button id="retryBtn" class="btn" style="display:none">Retry</button>
 					<div id="lastUpdated" class="small-muted" style="font-size:12px"></div>
 				</div>
+			</div>
+
+			<div class="panel activity">
+				<div class="activity-header-row">
+					<h3>Recent Activity</h3>
+					<button id="toggleActivityPanelBtn" type="button" class="activity-toggle">Show activity</button>
+				</div>
+				<ul id="activityList" class="activity"></ul>
+				<div id="activityFooter" class="activity-footer">
+					<button id="toggleActivityBtn" type="button" class="activity-toggle" style="display:none">View all</button>
+				</div>
+				<p id="noActivity" class="small-muted"></p>
 			</div>
 		</section>
 	</div>
@@ -98,6 +176,7 @@
 		// run auth check — redirects to login if not authenticated
 		checkAuth('FrameLogin.html');
 	</script>
+	<script type="module" src="JS/react-dashboard/dashboard-greeting.js"></script>
 	<script type="module" src="JS/dashboard.js"></script>
 </body>
 </html>

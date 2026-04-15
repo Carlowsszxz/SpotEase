@@ -88,6 +88,27 @@ body{
 	padding: 12px 12px;
 }
 
+.form-meta{
+	display: flex;
+	justify-content: flex-end;
+	margin: -2px 0 10px;
+}
+
+.forgot-link{
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
+	text-decoration: none;
+}
+
+.forgot-link:hover{
+	color: var(--bt-foreground);
+	text-decoration: underline;
+	text-decoration-color: var(--bt-accent);
+}
+
 button.btn-primary,
 button.btn-google{
 	width: 100%;

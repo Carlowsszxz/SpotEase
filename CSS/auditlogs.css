@@ -1,15 +1,149 @@
-/* Audit logs page styles */
-.audit-page{max-width:1200px;margin:28px auto;padding:18px}
-.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0}
-.filters label{font-size:14px;color:#0f172a}
-.filters select,input[type=search],input[type=date]{padding:8px;border-radius:8px;border:1px solid #e6e9ef}
-.log-table table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
-.log-table th,.log-table td{padding:10px;border-bottom:1px solid rgba(15,23,42,0.04);text-align:left;vertical-align:top}
-.log-table tbody tr:hover{background:rgba(37,99,235,0.03)}
-.details-row{background:#f9fafb}
-.details-cell{padding:12px;font-family:monospace;font-size:13px;white-space:pre-wrap;word-break:break-word}
-.badge-action{padding:6px 8px;border-radius:8px;font-weight:700}
-.pagination{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px}
-.small-muted{color:#6b7280}
+/* Audit Logs (Bold Typography-aligned) */
+.audit-page{
+	max-width: 1200px;
+	margin: 40px auto;
+	padding: 24px;
+}
 
-@media(max-width:900px){.filters{flex-direction:column;align-items:stretch}.filters label{width:100%}}
+.audit-page header{
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 16px;
+	padding: 18px 0 12px;
+	border-bottom: 1px solid var(--bt-border);
+	margin-bottom: 16px;
+}
+
+.audit-page header h1{
+	margin: 0;
+	font-size: 56px;
+	line-height: 1.05;
+	letter-spacing: -0.06em;
+	color: var(--bt-foreground);
+}
+
+.audit-page header .small-muted{ margin: 6px 0 0; }
+
+.filters{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: end;
+	margin: 18px 0 12px;
+	padding: 12px;
+	border: 1px solid var(--bt-border);
+	background: var(--bt-card);
+}
+
+.filters label{
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 160px;
+}
+
+.filters input[type=search]{
+	flex: 1;
+	min-width: 220px;
+}
+
+.filters .btn{ align-self: end; }
+
+.log-table{
+	border: 1px solid var(--bt-border);
+	background: var(--bt-card);
+}
+
+.log-table table{
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	min-width: 920px;
+}
+
+.log-table{
+	max-height: 560px;
+	overflow: auto;
+}
+
+.log-table thead th{
+	position: sticky;
+	top: 0;
+	background: var(--bt-card);
+	z-index: 1;
+	padding: 12px 10px;
+	text-align: left;
+	border-bottom: 1px solid var(--bt-border);
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
+}
+
+.log-table td{
+	padding: 12px 10px;
+	border-bottom: 1px solid var(--bt-border);
+	text-align: left;
+	vertical-align: top;
+	color: var(--bt-foreground);
+}
+
+.log-table tbody tr:hover{ background: var(--bt-muted); }
+
+.details-row{ background: var(--bt-muted); }
+
+.details-cell{
+	padding: 12px;
+	font-family: var(--bt-font-mono);
+	font-size: 12px;
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: var(--bt-foreground);
+}
+
+.badge-action{
+	display:inline-flex;
+	padding: 6px 8px;
+	border: 1px solid var(--bt-border);
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
+}
+
+.badge-source{
+	display: inline-flex;
+	padding: 4px 8px;
+	border: 1px solid var(--bt-border);
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+	font-size: 10px;
+	color: var(--bt-muted-foreground);
+}
+
+.src-audit{ color: var(--bt-foreground); }
+.src-security{ color: var(--bt-foreground); }
+.src-occupancy{ color: var(--bt-muted-foreground); }
+.src-rfid{ color: var(--bt-muted-foreground); }
+
+.pagination{
+	display:flex;
+	gap: 10px;
+	align-items:center;
+	justify-content:center;
+	margin-top: 12px;
+}
+
+@media(max-width: 900px){
+	.filters{ flex-direction: column; align-items: stretch; }
+	.filters label{ width: 100%; min-width: 0; }
+}
+
+@media (max-width: 480px){
+	.audit-page{ margin: 24px auto; padding: 18px; }
+	.audit-page header h1{ font-size: 44px; }
+}

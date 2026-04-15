@@ -11,25 +11,21 @@
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameAdminNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/admin-navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectAdminNavbar } from './JS/app-shell.js';
+		injectAdminNavbar();
+	</script>
 
   <div class="audit-page">
     <header>
       <h1>Audit Logs</h1>
-      <p class="small-muted">View system events (logins, reservations, cancellations, admin edits, etc.).</p>
+      <p class="small-muted">Unified incident timeline across audit, security, occupancy, and RFID events.</p>
     </header>
 
     <section class="filters">
+      <label>Source:
+        <select id="filterSource"><option value="all">All</option></select>
+      </label>
       <label>Action:
         <select id="filterAction"><option value="all">All</option></select>
       </label>
@@ -51,7 +47,7 @@
     <section class="log-table">
       <table>
         <thead>
-          <tr><th>Timestamp</th><th>User</th><th>Action</th><th>Resource</th><th>Details</th></tr>
+          <tr><th>Timestamp</th><th>Source</th><th>User</th><th>Action</th><th>Resource</th><th>Details</th></tr>
         </thead>
         <tbody id="logsTbody"></tbody>
       </table>
@@ -70,6 +66,6 @@
     // Check authentication and admin role
     checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
   </script>
-  <script src="JS/auditlogs.js"></script>
+  <script type="module" src="JS/auditlogs.js"></script>
 </body>
 </html>

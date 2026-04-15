@@ -1,12 +1,7 @@
 /* Resource list script: populate table, filters, search, and view details */
 import { supabase } from './supabase-auth.js'
-import { checkAuth } from './auth.js'
 
 (async function(){
-  // require auth
-  const ok = await checkAuth('FrameLogin.html');
-  if (!ok) return;
-
   // ===== UX Helpers =====
   var loadingOverlay = document.getElementById('loadingOverlay');
   var statusBar = document.getElementById('statusBar');
@@ -49,8 +44,12 @@ import { checkAuth } from './auth.js'
   var filterType = document.getElementById('filterType');
   var filterStatus = document.getElementById('filterStatus');
   var filterLocation = document.getElementById('filterLocation');
+  var sortBy = document.getElementById('sortBy');
   var searchInput = document.getElementById('searchInput');
   var clearBtn = document.getElementById('clearFilters');
+  var sumTotal = document.getElementById('sumTotal');
+  var sumAvailable = document.getElementById('sumAvailable');
+  var sumOccupied = document.getElementById('sumOccupied');
 
   function unique(values){ return values.filter(function(v,i,a){return a.indexOf(v)===i}); }
 
@@ -68,6 +67,44 @@ import { checkAuth } from './auth.js'
 
   function statusClass(s){ if(s==='free') return 's-free'; if(s==='occupied') return 's-occupied'; if(s==='inactive') return 's-inactive'; return 's-pending'; }
 
+  function deriveStatus(resource){
+    if(!resource) return 'inactive';
+    if(resource.is_active === false) return 'inactive';
+    var cap = Number(resource.capacity || 0);
+    var occ = Number(resource.current_occupancy || 0);
+    if(cap > 0 && occ >= cap) return 'occupied';
+    var fallback = (resource.current_status || resource.reservation_status || resource.occupancy_status || '').toString().toLowerCase();
+    if(fallback === 'inactive') return 'inactive';
+    if(fallback === 'occupied' || fallback === 'full') return 'occupied';
+    return 'free';
+  }
+
+  function updateSummary(items){
+    var list = items || [];
+    var total = list.length;
+    var available = list.filter(function(r){ return r.status === 'free'; }).length;
+    var occupied = list.filter(function(r){ return r.status === 'occupied'; }).length;
+    if(sumTotal) sumTotal.textContent = String(total);
+    if(sumAvailable) sumAvailable.textContent = String(available);
+    if(sumOccupied) sumOccupied.textContent = String(occupied);
+  }
+
+  function applySort(list){
+    var mode = (sortBy && sortBy.value) ? sortBy.value : 'name-asc';
+    var arr = (list || []).slice();
+    arr.sort(function(a,b){
+      if(mode === 'name-desc') return String(b.name || '').localeCompare(String(a.name || ''), undefined, { sensitivity: 'base' });
+      if(mode === 'capacity-desc') return Number(b.capacity || 0) - Number(a.capacity || 0);
+      if(mode === 'available-first'){
+        var ar = a.status === 'free' ? 0 : (a.status === 'occupied' ? 1 : 2);
+        var br = b.status === 'free' ? 0 : (b.status === 'occupied' ? 1 : 2);
+        if(ar !== br) return ar - br;
+      }
+      return String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' });
+    });
+    return arr;
+  }
+
   function renderTable(){
     // show loading placeholder if resources not yet loaded
     if(!resources){
@@ -84,9 +121,15 @@ import { checkAuth } from './auth.js'
       if(t!=='all' && r.type!==t) return false;
       if(s!=='all' && r.status!==s) return false;
       if(l!=='all' && r.location!==l) return false;
-      if(q && !(r.name.toLowerCase().indexOf(q) > -1)) return false;
+      if(q){
+        var haystack = [r.name, r.type, r.location, r.status].join(' ').toLowerCase();
+        if(haystack.indexOf(q) === -1) return false;
+      }
       return true;
     });
+
+    filtered = applySort(filtered);
+    updateSummary(filtered);
 
     tbody.innerHTML = '';
     filtered.forEach(function(r){
@@ -107,15 +150,15 @@ import { checkAuth } from './auth.js'
     setTimeout(function(){ alert(r.name + '\n' + r.type + ' • ' + r.location + '\nStatus: ' + r.status); }, 300);
   }
 
-  if (clearBtn) clearBtn.addEventListener('click', function(){ if(searchInput) searchInput.value=''; if(filterType) filterType.value='all'; if(filterStatus) filterStatus.value='all'; if(filterLocation) filterLocation.value='all'; renderTable(); });
-  [filterType,filterStatus,filterLocation,searchInput].forEach(function(el){ if(el) el.addEventListener('input', renderTable); });
+  if (clearBtn) clearBtn.addEventListener('click', function(){ if(searchInput) searchInput.value=''; if(filterType) filterType.value='all'; if(filterStatus) filterStatus.value='all'; if(filterLocation) filterLocation.value='all'; if(sortBy) sortBy.value='name-asc'; renderTable(); });
+  [filterType,filterStatus,filterLocation,searchInput,sortBy].forEach(function(el){ if(el) el.addEventListener('input', renderTable); });
 
   // Separate function to load resources with UX feedback
   async function loadResources() {
     showLoading();
     setStatus('Loading resources...', false);
     try {
-      tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
       const { data, error } = await supabase.from('resources').select('*').eq('is_active', true);
       if (!error && data) {
         // map DB rows to UI fields expected by the table
@@ -126,8 +169,9 @@ import { checkAuth } from './auth.js'
             type: mapType(r.resource_type || r.type),
             location: r.location || '',
             capacity: r.capacity || 1,
-            // determine status: prefer current_status, then reservation/occupancy, then is_active
-            status: (r.current_status || r.reservation_status || r.occupancy_status) || 'free'
+            current_occupancy: r.current_occupancy || 0,
+            is_active: r.is_active,
+            status: deriveStatus(r)
           };
         });
         hideLoading();

@@ -135,19 +135,194 @@ if (document.readyState === 'loading') {
 
 // ===== SMOOTH SCROLL =====
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+    document.addEventListener('click', function (e) {
+        const anchor = e.target.closest('a[href^="#"]');
+        if (!anchor) return;
+
+        const href = anchor.getAttribute('href');
+        if (!href || href === '#') return;
+
+        const target = document.querySelector(href);
+        if (!target) return;
+
+        e.preventDefault();
+        target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
         });
     });
 });
+
+// ===== PARALLAX + SCROLL REVEAL =====
+const parallaxSections = Array.from(document.querySelectorAll('[data-parallax]'));
+const revealItems = Array.from(document.querySelectorAll('.reveal'));
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function updateParallax() {
+    const viewportH = window.innerHeight || 1;
+
+    parallaxSections.forEach(section => {
+        const media = section.querySelector('.home-parallax-media');
+        if (!media) return;
+
+        const speedAttr = parseFloat(media.getAttribute('data-speed') || '0.2');
+        const rect = section.getBoundingClientRect();
+
+        if (rect.bottom < 0 || rect.top > viewportH) {
+            return;
+        }
+
+        const centerOffset = (rect.top + rect.height / 2) - (viewportH / 2);
+        const translateY = centerOffset * speedAttr * -1;
+        media.style.transform = `translate3d(0, ${translateY.toFixed(2)}px, 0)`;
+    });
+}
+
+if (revealItems.length > 0) {
+    if (prefersReducedMotion) {
+        revealItems.forEach(item => item.classList.add('visible'));
+    } else {
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, {
+        threshold: 0.16,
+        rootMargin: '0px 0px -8% 0px'
+    });
+
+    revealItems.forEach(item => revealObserver.observe(item));
+    }
+}
+
+let parallaxTicking = false;
+function onParallaxScroll() {
+    if (prefersReducedMotion) return;
+    if (parallaxTicking) return;
+    parallaxTicking = true;
+    window.requestAnimationFrame(() => {
+        updateParallax();
+        parallaxTicking = false;
+    });
+}
+
+if (prefersReducedMotion) {
+    parallaxSections.forEach(section => {
+        const media = section.querySelector('.home-parallax-media');
+        if (media) media.style.transform = 'translate3d(0, 0, 0)';
+    });
+} else {
+    window.addEventListener('scroll', onParallaxScroll, { passive: true });
+    window.addEventListener('resize', updateParallax);
+    window.addEventListener('load', updateParallax);
+    updateParallax();
+}
+
+// ===== HERO TILTED CARD =====
+function initTiltedCards() {
+    const cards = Array.from(document.querySelectorAll('[data-tilt-card]'));
+    if (cards.length === 0) return;
+    if (prefersReducedMotion) return;
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+
+    cards.forEach(card => {
+        const inner = card.querySelector('.tilted-card-inner');
+        if (!inner) return;
+
+        const amplitude = Number(card.getAttribute('data-tilt-amplitude') || 6);
+        const hoverScale = Number(card.getAttribute('data-tilt-scale') || 1.02);
+
+        let rafId = 0;
+        let isHovering = false;
+
+        let targetX = 0;
+        let targetY = 0;
+        let targetScale = 1;
+
+        let currentX = 0;
+        let currentY = 0;
+        let currentScale = 1;
+
+        function easeOutPower(value) {
+            const sign = value < 0 ? -1 : 1;
+            const abs = Math.min(1, Math.abs(value));
+            return sign * Math.pow(abs, 0.85);
+        }
+
+        function updateTargets(clientX, clientY) {
+            const rect = card.getBoundingClientRect();
+            const halfW = rect.width / 2;
+            const halfH = rect.height / 2;
+
+            const offsetX = clientX - rect.left - halfW;
+            const offsetY = clientY - rect.top - halfH;
+
+            const normX = easeOutPower(offsetX / halfW);
+            const normY = easeOutPower(offsetY / halfH);
+
+            targetX = normY * -amplitude;
+            targetY = normX * amplitude;
+        }
+
+        function animate() {
+            const follow = isHovering ? 0.16 : 0.1;
+
+            currentX += (targetX - currentX) * follow;
+            currentY += (targetY - currentY) * follow;
+            currentScale += (targetScale - currentScale) * follow;
+
+            card.style.setProperty('--tilt-x', `${currentX.toFixed(3)}deg`);
+            card.style.setProperty('--tilt-y', `${currentY.toFixed(3)}deg`);
+            card.style.setProperty('--tilt-scale', `${currentScale.toFixed(4)}`);
+
+            const settled =
+                Math.abs(targetX - currentX) < 0.02 &&
+                Math.abs(targetY - currentY) < 0.02 &&
+                Math.abs(targetScale - currentScale) < 0.002;
+
+            if (isHovering || !settled) {
+                rafId = window.requestAnimationFrame(animate);
+            } else {
+                rafId = 0;
+            }
+        }
+
+        function ensureAnimating() {
+            if (rafId) return;
+            rafId = window.requestAnimationFrame(animate);
+        }
+
+        card.addEventListener('mouseenter', (event) => {
+            isHovering = true;
+            card.classList.add('is-active');
+            targetScale = hoverScale;
+            updateTargets(event.clientX, event.clientY);
+            ensureAnimating();
+        });
+
+        card.addEventListener('mousemove', (event) => {
+            updateTargets(event.clientX, event.clientY);
+            ensureAnimating();
+        });
+
+        card.addEventListener('mouseleave', () => {
+            isHovering = false;
+            card.classList.remove('is-active');
+            targetX = 0;
+            targetY = 0;
+            targetScale = 1;
+            ensureAnimating();
+        });
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTiltedCards);
+} else {
+    initTiltedCards();
+}
 
 // ===== SESSION CHECK & REDIRECT =====
 (async function() {

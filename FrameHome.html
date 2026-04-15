@@ -6,22 +6,14 @@
     <title>SpotEase</title>
         <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
     <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+    <link rel="stylesheet" href="JS/react-nav/home-pill-nav.css">
+    <link rel="stylesheet" href="JS/react-hero/home-hero-tilted.css">
     <link rel="stylesheet" href="CSS/home.css">
         <link rel="stylesheet" href="CSS/bold-typography.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <span class="logo-text">SpotEase</span>
-            </div>
-            <div class="nav-menu">
-                <a href="FrameLogin.html" class="nav-signin">Sign in</a>
-            </div>
-        </div>
-    </nav>
+    <div id="homePillNavRoot" class="home-pill-nav-host" aria-label="Primary navigation"></div>
 
     <!-- Hero Section -->
     <section class="hero" id="home">
@@ -29,39 +21,82 @@
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">
-                        IoT-Powered <span class="highlight">Occupancy Management</span> for Campus Spaces
+                        Find Available Campus Spaces <span class="highlight">Faster</span>
                     </h1>
-                    <p class="hero-subtitle">SpotEase is an IoT-driven solution for managing shared spaces such as parking spots, library seats, and meeting rooms. Check availability in real-time before you arrive and reduce congestion on campus.</p>
-                    <a href="FrameRegister.html" class="btn btn-primary">Get Started</a>
+                    <p class="hero-subtitle">SpotEase gives students and staff real-time occupancy visibility for shared resources like study areas, labs, and meeting rooms.</p>
+                    <div class="hero-actions">
+                        <a href="FrameRegister.html" class="btn btn-primary">Get Started</a>
+                        <a href="#about" class="btn btn-secondary">Learn More</a>
+                    </div>
+                    <div class="hero-signals">
+                        <span>Live occupancy</span>
+                        <span>RFID activity logs</span>
+                        <span>Smart alerts</span>
+                    </div>
                 </div>
                 <div class="hero-image">
-                    <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&h=500&fit=crop" alt="Workspace illustration" class="illustration">
+                    <div id="heroTiltRoot" aria-label="Interactive hero card"></div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="stats-container">
-            <div class="stat-item">
-                <div class="stat-number">↓ 40%</div>
-                <div class="stat-label">Search Time Reduction</div>
+    <section class="how-it-works" aria-label="How SpotEase works">
+        <div class="how-inner">
+            <div class="how-step reveal">
+                <p class="step-kicker">01</p>
+                <h2>See</h2>
+                <p>Check live occupancy by room before you walk there.</p>
             </div>
-
-            <div class="stat-item">
-                <div class="stat-number">100+</div>
-                <div class="stat-label">IoT Sensors Network</div>
+            <div class="how-step reveal">
+                <p class="step-kicker">02</p>
+                <h2>Decide</h2>
+                <p>Pick available spaces quickly with less guesswork.</p>
             </div>
-
-            <div class="stat-item">
-                <div class="stat-number">↓ CO₂</div>
-                <div class="stat-label">Reduced Carbon Footprint</div>
+            <div class="how-step reveal">
+                <p class="step-kicker">03</p>
+                <h2>Act</h2>
+                <p>Use reservations and alerts to avoid congestion.</p>
             </div>
+        </div>
+    </section>
 
-            <div class="stat-item">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">Automated Monitoring</div>
+    <section class="home-about-intro" id="about">
+        <div class="about-inner reveal">
+            <p class="about-eyebrow">About SpotEase</p>
+            <h2 class="about-title">One platform for real-time occupancy visibility and smarter campus flow.</h2>
+            <p class="about-lead">The system combines IoT sensing, RFID activity, and analytics so users find spaces faster while administrators improve utilization and safety.</p>
+        </div>
+    </section>
+
+    <section class="home-parallax" data-parallax>
+        <div class="home-parallax-media" data-speed="0.24">
+            <img src="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=2200&q=80" alt="Smart campus occupancy scene">
+        </div>
+        <div class="home-parallax-overlay"></div>
+        <div class="home-parallax-content reveal">
+            <h3>Parallax Experience</h3>
+            <p>Depth-aware scrolling keeps the landing page visually engaging while still focusing attention on key actions.</p>
+        </div>
+    </section>
+
+    <section class="home-features" aria-label="Core capabilities">
+        <div class="home-features-heading reveal">
+            <h2>Core capabilities</h2>
+            <p>Focused feature set designed for speed, clarity, and reliability.</p>
+        </div>
+        <div class="home-features-inner">
+            <div class="home-feature-card reveal">
+                <h3>Interactive UI</h3>
+                <p>Scroll-triggered animation and hover feedback guide attention without overwhelming the interface.</p>
+            </div>
+            <div class="home-feature-card reveal">
+                <h3>Responsive Design</h3>
+                <p>Layouts adapt from mobile to desktop for consistent usability across devices and screen sizes.</p>
+            </div>
+            <div class="home-feature-card reveal">
+                <h3>Technologies Used</h3>
+                <p>Built with HTML, CSS, and JavaScript for maintainable structure, styling, and interaction logic.</p>
             </div>
         </div>
     </section>
@@ -82,24 +117,25 @@
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-content">
-                <p>&copy; 2026 SpotEase. All rights reserved.</p>
+                <p class="footer-brand">SpotEase</p>
+                <p class="footer-copy">Smarter space decisions for students, faculty, and campus operations.</p>
             </div>
             <div class="footer-contact">
-           
-                <div class="contact-icons">
-                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                        <i data-lucide="github"></i>
-                    </a>
-                    <button class="email-copy-btn" aria-label="Copy email to clipboard" title="Click to copy email">
-                        <i data-lucide="mail"></i>
-                    </button>
+                <div class="footer-links" aria-label="Footer links">
+                    <a href="#home">Home</a>
+                    <a href="#about">About</a>
+                    <a href="FrameLogin.html">Sign in</a>
                 </div>
+           
+                
             </div>
         </div>
     </footer>
 
     <script type="module" src="JS/supabase-auth.js"></script>
     <script type="module" src="JS/home.js"></script>
+    <script type="module" src="JS/react-nav/home-pill-nav.js"></script>
+    <script type="module" src="JS/react-hero/home-hero-tilted.js"></script>
     <script>
         window.addEventListener('load', function() {
             if (window.lucide) {
@@ -107,27 +143,30 @@
             }
         });
 
-        // Copy email to clipboard
-        document.querySelector('.email-copy-btn').addEventListener('click', function() {
-            const email = 'contact@spotease.com';
-            navigator.clipboard.writeText(email).then(() => {
-                const btn = this;
-                const originalLabel = btn.getAttribute('aria-label');
-                btn.setAttribute('aria-label', 'Email copied!');
-                btn.classList.add('copied');
-                
-                // Show toast notification
-                const toast = document.getElementById('toast');
-                toast.textContent = 'Copied!';
-                toast.classList.add('show');
-                
-                setTimeout(() => {
-                    btn.setAttribute('aria-label', originalLabel);
-                    btn.classList.remove('copied');
-                    toast.classList.remove('show');
-                }, 2000);
+        // Copy email to clipboard (only if footer email button exists)
+        const emailCopyBtn = document.querySelector('.email-copy-btn');
+        if (emailCopyBtn) {
+            emailCopyBtn.addEventListener('click', function() {
+                const email = 'contact@spotease.com';
+                navigator.clipboard.writeText(email).then(() => {
+                    const btn = this;
+                    const originalLabel = btn.getAttribute('aria-label');
+                    btn.setAttribute('aria-label', 'Email copied!');
+                    btn.classList.add('copied');
+                    
+                    // Show toast notification
+                    const toast = document.getElementById('toast');
+                    toast.textContent = 'Copied!';
+                    toast.classList.add('show');
+                    
+                    setTimeout(() => {
+                        btn.setAttribute('aria-label', originalLabel);
+                        btn.classList.remove('copied');
+                        toast.classList.remove('show');
+                    }, 2000);
+                });
             });
-        });
+        }
     </script>
 </body>
 </html>

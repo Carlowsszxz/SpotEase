@@ -42,8 +42,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
           }
 
-          try { localStorage.setItem('pm_username', data.user?.email || data.user?.id || ''); } catch (e) {}
-
           // Ensure profile row exists (OAuth trigger can be slightly delayed)
           await ensureUserRecord(user)
           
@@ -114,8 +112,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         console.log('User Role from DB:', userRole);
         console.log('Is Admin?', isAdmin);
-        
-        try { localStorage.setItem('pm_username', data.session.user?.email || data.session.user?.id); } catch (e) {}
         
         // Redirect based on role
         const redirectUrl = isAdmin ? 'FrameAdminPanel.html' : 'FrameDashboard.html';

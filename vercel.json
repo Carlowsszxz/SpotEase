@@ -10,10 +10,19 @@
     { "src": "/register", "dest": "/FrameRegister.html" },
     { "src": "/dashboard", "dest": "/FrameDashboard.html" },
     { "src": "/map", "dest": "/FrameMap.html" },
+    { "src": "/about", "dest": "/FrameHome.html" },
+    { "src": "/emergency", "dest": "/FrameEmergency.html" },
     { "src": "/resources", "dest": "/FrameResourceList.html" },
+    { "src": "/sensors", "dest": "/FrameSensorReadings.html" },
+    { "src": "/analytics", "dest": "/FrameAnalytics.html" },
+    { "src": "/audit-logs", "dest": "/FrameAuditLogs.html" },
+    { "src": "/admin", "dest": "/FrameAdminPanel.html" },
     { "src": "/my-reservations", "dest": "/FrameMyReservations.html" },
     { "src": "/profile", "dest": "/FrameProfile.html" },
+    { "src": "/access-history", "dest": "/FrameAccessHistory.html" },
     { "src": "/reserve", "dest": "/FrameReservation.html" },
+    { "src": "/forgot-password", "dest": "/FrameForgotPassword.html" },
+    { "src": "/reset-password", "dest": "/FrameResetPassword.html" },
     { "src": "(.*)", "dest": "$1" }
   ]
 }

@@ -229,7 +229,7 @@ import { supabase } from './supabase-auth.js'
     const existingReservation = await checkExistingReservationByType(resType.value);
     if (existingReservation) {
       const typeLabel = resType.value.charAt(0).toUpperCase() + resType.value.slice(1);
-      statusArea.innerHTML = '<div class="status-warning">You already have an active ' + typeLabel.toLowerCase() + ' reservation. You can replace it by making a new reservation.</div>';
+      statusArea.innerHTML = '<div class="status-warning">You already have an active ' + typeLabel.toLowerCase() + ' reservation. Cancel it first or wait for it to end before creating another.</div>';
       statusArea.className = 'status-area warning';
     } else {
       statusArea.innerHTML = '';
@@ -320,7 +320,7 @@ import { supabase } from './supabase-auth.js'
         const existingReservation = await checkExistingReservationByType(preSelectedResource.type);
         if (existingReservation) {
           const typeLabel = preSelectedResource.type.charAt(0).toUpperCase() + preSelectedResource.type.slice(1);
-          statusArea.innerHTML = '<div class="status-warning">You already have an active ' + typeLabel.toLowerCase() + ' reservation. Submitting this form will cancel the previous one.</div>';
+          statusArea.innerHTML = '<div class="status-warning">You already have an active ' + typeLabel.toLowerCase() + ' reservation. Cancel it first or wait for it to end before creating another.</div>';
         }
       }
     }

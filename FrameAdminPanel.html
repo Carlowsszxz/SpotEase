@@ -12,17 +12,10 @@
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameAdminNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/admin-navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectAdminNavbar } from './JS/app-shell.js';
+		injectAdminNavbar();
+	</script>
 
   <!-- Modal overlay - must be outside admin-panel for proper stacking -->
   <div id="resourceOverlay" class="modal-overlay"></div>
@@ -75,10 +68,12 @@
           <button id="addResource" class="btn btn-primary">Add Resource</button>
           <input id="searchResource" type="search" placeholder="Search resources">
         </div>
-        <table class="resource-table" id="resourceTable">
-          <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody></tbody>
-        </table>
+		<div class="table-wrap" aria-label="Resources table">
+			<table class="resource-table" id="resourceTable">
+			  <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+			  <tbody></tbody>
+			</table>
+		</div>
       </div>
 
       <div class="panel sensor-panel">
@@ -105,19 +100,21 @@
           </select>
         </div>
         
-        <table class="reservations-table" id="reservationsTable">
-          <thead>
-            <tr>
-              <th>Resource</th>
-              <th>User</th>
-              <th>From</th>
-              <th>Until</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+		<div class="table-wrap" aria-label="Reservations table">
+			<table class="reservations-table" id="reservationsTable">
+			  <thead>
+			    <tr>
+			      <th>Resource</th>
+			      <th>User</th>
+			      <th>From</th>
+			      <th>Until</th>
+			      <th>Status</th>
+			      <th>Actions</th>
+			    </tr>
+			  </thead>
+			  <tbody></tbody>
+			</table>
+		</div>
         <p id="noReservations" class="small-muted" style="display:none;">No reservations found.</p>
       </div>
 
@@ -128,6 +125,45 @@
           <li><a href="#">Peak Times</a></li>
           <li><a href="#">Heatmaps</a></li>
         </ul>
+      </div>
+
+	  <div class="panel security-panel">
+		<h3>After-hours Security</h3>
+		<p class="small-muted" style="margin: 0 0 12px;">Flags entries after 5:00 PM and before 6:00 AM. Identity may be unknown; security can verify via patrol/CCTV.</p>
+		<ul id="securityEventsList" class="security-list"></ul>
+		<p id="noSecurityEvents" class="small-muted" style="display:none;">No after-hours events.</p>
+
+    <div class="rfid-assign">
+      <h3>RFID Assignment</h3>
+      <p class="small-muted" style="margin: 0 0 12px;">Assign an RC522 card UID to a user (admin only). Optional: give the tag a friendly name.</p>
+      <div class="rfid-controls">
+      <select id="rfidUserSelect" aria-label="Select user">
+        <option value="">Select a user...</option>
+      </select>
+      <input id="rfidUidInput" type="text" placeholder="UID (e.g. A4845B82)" autocomplete="off" spellcheck="false">
+      <input id="rfidTagNameInput" type="text" placeholder="Tag name (optional)" autocomplete="off">
+      <button id="assignRfidBtn" class="btn btn-primary" type="button">Assign</button>
+      </div>
+      <p id="rfidAssignStatus" class="small-muted" style="display:none;"></p>
+    </div>
+	  </div>
+
+      <div class="panel notifications-panel">
+        <h3>Student Notifications</h3>
+        <p class="small-muted" style="margin: 0 0 12px;">Post notices shown on student dashboard alerts (e.g. maintenance, closures).</p>
+        <div class="notif-form">
+          <input id="notifTitle" type="text" placeholder="Title (e.g. Library Maintenance)">
+          <textarea id="notifMessage" rows="3" placeholder="Message"></textarea>
+          <div class="notif-time-row">
+            <label>Start <input id="notifStartAt" type="datetime-local"></label>
+            <label>End <input id="notifEndAt" type="datetime-local"></label>
+            <label class="notif-active"><input id="notifIsActive" type="checkbox" checked> Active</label>
+            <button id="notifAddBtn" class="btn btn-primary" type="button">Add Notice</button>
+          </div>
+        </div>
+        <p id="notifStatus" class="small-muted" style="display:none;"></p>
+        <ul id="notifList" class="notif-list"></ul>
+        <p id="noNotifs" class="small-muted" style="display:none;">No notifications yet.</p>
       </div>
     </section>
 

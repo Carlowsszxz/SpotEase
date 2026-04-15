@@ -8,9 +8,30 @@ const confirmPasswordEl = document.getElementById('confirmPassword');
 
 let sessionValid = false;
 
+async function processRecoveryUrlIfPresent(){
+    try{
+        // supabase-js v2 supports this helper.
+        if(typeof supabase.auth.getSessionFromUrl === 'function'){
+            try{
+                const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+                if(error && !/No URL parameters found/i.test(error.message || '')){
+                    console.warn('getSessionFromUrl warning', error);
+                }
+            }catch(e){
+                // ignore
+            }
+        }
+    }catch(e){
+        // ignore
+    }
+}
+
 // Check if we have a valid session (from the reset email link)
 async function checkSession() {
     try {
+        // Ensure the recovery link params (hash/query) are processed and stored.
+        await processRecoveryUrlIfPresent();
+
         // Supabase will automatically process the URL parameters and create a session
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         const session = sessionData?.session;

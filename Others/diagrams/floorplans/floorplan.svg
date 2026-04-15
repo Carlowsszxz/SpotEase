@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1280" height="832" viewBox="0 0 1280 832" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clip-path="url(#clip0_1_6)">
+        <rect width="1280" height="832" fill="white"/>
+        <path d="M1270 -82H-10V750H1270V-82Z" fill="white"/>
+        <path d="M1174.5 160.5H85.5V508.5H1174.5V160.5Z" stroke="black" stroke-width="3"/>
+        
+        <!-- First Section: Structural table + 8 seats -->
+        <path id="table-001" class="structural-element" d="M1056 314H978V344H1056V314Z" fill="black"/>
+        <path id="seat-001" class="seat status-free" d="M1037 305.2H1050C1050.99 305.2 1051.8 306.006 1051.8 307V313.8H1035.2V307C1035.2 306.006 1036.01 305.2 1037 305.2Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-002" class="seat status-free" d="M1064.8 323V336C1064.8 336.994 1063.99 337.8 1063 337.8H1056.2V321.2H1063C1063.99 321.2 1064.8 322.006 1064.8 323Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-003" class="seat status-free" d="M1050 352.8H1037C1036.01 352.8 1035.2 351.994 1035.2 351V344.2H1051.8V351C1051.8 351.994 1050.99 352.8 1050 352.8Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-004" class="seat status-free" d="M1024 352.8H1011C1010.01 352.8 1009.2 351.994 1009.2 351V344.2H1025.8V351C1025.8 351.994 1024.99 352.8 1024 352.8Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-005" class="seat status-free" d="M998 352.8H985C984.006 352.8 983.2 351.994 983.2 351V344.2H999.8V351C999.8 351.994 998.99 352.8 998 352.8Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-006" class="seat status-free" d="M969.2 336V323C969.2 322.006 970.006 321.2 971 321.2H977.8V337.8H971C970.006 337.8 969.2 336.994 969.2 336Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-007" class="seat status-free" d="M985 305.2H998C998.99 305.2 999.8 306.006 999.8 307V313.8H983.2V307C983.2 306.006 984.006 305.2 985 305.2Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-008" class="seat status-free" d="M1011 305.2H1024C1024.99 305.2 1025.8 306.006 1025.8 307V313.8H1009.2V307C1009.2 306.006 1010.01 305.2 1011 305.2Z" fill="black" stroke="black" stroke-width="0.4"/>
+        
+        <!-- Second Section: Structural table + 8 seats -->
+        <path id="table-002" class="structural-element" d="M1055.8 398.8H977.8V428.8H1055.8V398.8Z" fill="black"/>
+        <path id="seat-009" class="seat status-free" d="M1036.8 390H1049.8C1050.79 390 1051.6 390.806 1051.6 391.8V398.6H1035V391.8C1035 390.806 1035.81 390 1036.8 390Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-010" class="seat status-free" d="M1064.6 407.8V420.8C1064.6 421.794 1063.79 422.6 1062.8 422.6H1056V406H1062.8C1063.79 406 1064.6 406.806 1064.6 407.8Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-011" class="seat status-free" d="M1049.8 437.6H1036.8C1035.81 437.6 1035 436.794 1035 435.8V429H1051.6V435.8C1051.6 436.794 1050.79 437.6 1049.8 437.6Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-012" class="seat status-free" d="M1023.8 437.6H1010.8C1009.81 437.6 1009 436.794 1009 435.8V429H1025.6V435.8C1025.6 436.794 1024.79 437.6 1023.8 437.6Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-013" class="seat status-free" d="M997.8 437.6H984.8C983.806 437.6 983 436.794 983 435.8V429H999.6V435.8C999.6 436.794 998.79 437.6 997.8 437.6Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-014" class="seat status-free" d="M969 420.8V407.8C969 406.806 969.806 406 970.8 406H977.6V422.6H970.8C969.806 422.6 969 421.794 969 420.8Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-015" class="seat status-free" d="M984.8 390H997.8C998.79 390 999.6 390.806 999.6 391.8V398.6H983V391.8C983 390.806 983.806 390 984.8 390Z" fill="black" stroke="black" stroke-width="0.4"/>
+        <path id="seat-016" class="seat status-free" d="M1010.8 390H1023.8C1024.79 390 1025.6 390.806 1025.6 391.8V398.6H1009V391.8C1009 390.806 1009.81 390 1010.8 390Z" fill="black" stroke="black" stroke-width="0.4"/>
+    </g>
+    <defs>
+        <clipPath id="clip0_1_6">
+            <rect width="1280" height="832" fill="white"/>
+        </clipPath>
+    </defs>
+</svg>

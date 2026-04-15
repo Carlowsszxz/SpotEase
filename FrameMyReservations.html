@@ -14,17 +14,10 @@
 </head>
 <body>
 	<div id="navbar"></div>
-	<script>
-  fetch('FrameNavbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar').innerHTML = html;
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = 'JS/navbar.js';
-      document.body.appendChild(s);
-    });
-</script>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
 
 
   <div class="my-reservations">

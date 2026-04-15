@@ -24,14 +24,34 @@ async function syncUserRecord(user) {
 
     if (existingUsers && existingUsers.length > 0) {
       const current = existingUsers[0]
+
+
+      // IMPORTANT: do not overwrite a user's chosen display name.
+      // Only set name if it's empty or looks like the default (same as email).
       const patch = {
-        name,
-        email,
         updated_at: new Date().toISOString()
       }
 
-      if (current.name !== patch.name || current.email !== patch.email) {
-        await supabase.from('users').update(patch).eq('id', user.id)
+      const currentName = (current && current.name != null) ? String(current.name).trim() : ''
+      const currentEmail = (current && current.email != null) ? String(current.email).trim() : ''
+      const nextEmail = email ? String(email).trim() : ''
+      const nextName = name ? String(name).trim() : ''
+
+      if (nextEmail && nextEmail !== currentEmail) {
+        patch.email = nextEmail
+      }
+
+      const nameIsDefault = !currentName || (currentEmail && currentName === currentEmail)
+      if (nextName && nameIsDefault && nextName !== currentName) {
+        patch.name = nextName
+      }
+
+      const shouldUpdate = Object.prototype.hasOwnProperty.call(patch, 'name') || Object.prototype.hasOwnProperty.call(patch, 'email')
+      if (shouldUpdate) {
+        const { error: updateErr } = await supabase.from('users').update(patch).eq('id', user.id)
+        if (updateErr) {
+          console.warn('User sync update failed', updateErr)
+        }
       }
 
       return true

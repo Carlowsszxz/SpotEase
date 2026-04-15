@@ -1,6 +1,11 @@
 // Forgot Password - using Supabase Auth
 import { supabase } from './supabase-auth.js';
 
+function isLocalhostHost(hostname) {
+  const host = (hostname || '').toLowerCase();
+  return host === '' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+}
+
 (async function(){
   const form = document.getElementById('forgotForm');
   const emailEl = document.getElementById('email');
@@ -17,7 +22,9 @@ import { supabase } from './supabase-auth.js';
     }
 
     try {
-      const redirectUrl = window.location.origin + '/FrameResetPassword.html';
+      const isLocal = isLocalhostHost(window.location.hostname);
+      const redirectPath = isLocal ? '/FrameResetPassword.html' : '/reset-password';
+      const redirectUrl = window.location.origin + redirectPath;
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl
       });

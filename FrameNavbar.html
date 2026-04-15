@@ -1,22 +1,9 @@
 <!-- navbar.html - shared navigation for the app -->
 <link rel="stylesheet" href="CSS/navbar.css">
+<link rel="stylesheet" href="JS/react-nav/app-pill-nav.css">
 <nav class="main-nav">
   <div class="nav-inner">
-    <button class="hamburger-menu" id="hamburgerBtn" aria-label="Toggle menu">
-      <i data-lucide="menu"></i>
-    </button>
-    
-    <div class="nav-logo">
-      <img src="Images/SpotEase.png" alt="SpotEase" class="logo-image">
-      <span class="logo-text">SpotEase</span>
-    </div>
-    
-    <ul class="nav-links" id="navLinks">
-      <li><a href="FrameDashboard.html">Dashboard</a></li>
-      <li><a href="FrameMap.html">Map</a></li>
-      <li><a href="FrameMyReservations.html">My Reservations</a></li>
-      <li><a href="FrameReservation.html">Reserve</a></li>
-    </ul>
+    <div id="appPillNavRoot" class="app-pill-nav-root" aria-label="Primary app navigation"></div>
 
     <div class="nav-right">
       <span id="navUsername" class="nav-username" style="display:none"></span>
@@ -26,4 +13,12 @@
     </div>
   </div>
 </nav>
-<div class="nav-overlay" id="navOverlay"></div>
+
+<a
+  id="emergencyCta"
+  class="emergency-cta"
+  href="FrameEmergency.html"
+  role="button"
+  aria-label="Have an emergency? Hold for 1 second to open emergency help."
+  title="Hold for 1 second to open emergency help"
+>Have an emergency? Press me</a>
