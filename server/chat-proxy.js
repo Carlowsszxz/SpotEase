@@ -2,7 +2,27 @@ require('dotenv').config();
 const http = require('http');
 
 const PORT = Number(process.env.CHAT_PROXY_PORT || 8787);
-const PROVIDER = (process.env.AI_PROVIDER || 'auto').toLowerCase();
+
+function normalizeProvider(rawValue) {
+    const value = String(rawValue || 'auto').trim().toLowerCase();
+
+    if (value === 'auto') return 'auto';
+    if (value === 'ollama' || value === 'local') return 'ollama';
+
+    if (
+        value === 'huggingface' ||
+        value === 'hugging-face' ||
+        value === 'hf' ||
+        value === 'hugginface' ||
+        value === 'huggingfaceapi'
+    ) {
+        return 'huggingface';
+    }
+
+    return 'auto';
+}
+
+const PROVIDER = normalizeProvider(process.env.AI_PROVIDER);
 const MAX_INPUT_CHARS = Number(process.env.CHAT_MAX_INPUT_CHARS || 6000);
 const MAX_MESSAGES = Number(process.env.CHAT_MAX_MESSAGES || 12);
 const MAX_TOKENS = Number(process.env.CHAT_MAX_TOKENS || 400);
