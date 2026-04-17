@@ -1,5 +1,12 @@
 {
   "version": 2,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "rewrites": [
     { "source": "/", "destination": "/FrameHome.html" },
     { "source": "/login", "destination": "/FrameLogin.html" },
@@ -18,6 +25,7 @@
     { "source": "/access-history", "destination": "/FrameAccessHistory.html" },
     { "source": "/reserve", "destination": "/FrameReservation.html" },
     { "source": "/forgot-password", "destination": "/FrameForgotPassword.html" },
-    { "source": "/reset-password", "destination": "/FrameResetPassword.html" }
+    { "source": "/reset-password", "destination": "/FrameResetPassword.html" },
+    { "source": "/api/chat", "destination": "/api/chat" }
   ]
 }
