@@ -83,23 +83,4 @@ Notes
 - Proxy includes basic rate limiting, max message size, timeout, and keyword blocking.
 - Free API quotas are limited; local Ollama avoids recurring API cost.
 
-Deploying to Vercel
-
-1. Push this repo to GitHub.
-2. In Vercel, import the repository as a new project.
-3. Keep the project root as-is; Vercel will serve the static HTML files and the serverless function in [api/chat.js](api/chat.js).
-4. Add these environment variables in Vercel → Project Settings → Environment Variables:
-
-	- `AI_PROVIDER=huggingface`
-	- `HF_API_KEY=your_hugging_face_token`
-	- `HF_MODEL=your_supported_hf_model`
-
-5. Deploy.
-
-Notes
-
-- The chatbot button and panel are loaded from the static front end, so they will still appear on Vercel.
-- The chat will only work if the `/api/chat` function is deployed, which is handled by [api/chat.js](api/chat.js).
-- If a Hugging Face model is not supported by your enabled providers, the function will try a fallback model automatically.
-
 If you want, I can create a GitHub Actions workflow to auto-deploy to GitHub Pages, or provide a ready-to-run `vercel.json`. Tell me which option you prefer and I'll add it.

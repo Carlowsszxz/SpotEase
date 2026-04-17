@@ -63,10 +63,6 @@ const bannedPatterns = [
 
 const rateLimitStore = new Map();
 
-function getPathname(req) {
-    return String(req.url || '').split('?')[0];
-}
-
 function json(res, status, payload) {
     const body = JSON.stringify(payload);
     res.writeHead(status, {
@@ -363,8 +359,6 @@ async function resolveProvider(messages) {
 }
 
 const server = http.createServer(async (req, res) => {
-    const pathname = getPathname(req);
-
     if (req.method === 'OPTIONS') {
         res.writeHead(204, {
             'Access-Control-Allow-Origin': getCorsOrigin(req),
@@ -376,7 +370,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    if (req.method === 'GET' && pathname === '/health') {
+    if (req.method === 'GET' && req.url === '/health') {
         json(res, 200, {
             ok: true,
             provider: PROVIDER,
@@ -384,7 +378,7 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    if (req.method !== 'POST' || pathname !== '/api/chat') {
+    if (req.method !== 'POST' || req.url !== '/api/chat') {
         json(res, 404, { error: 'Not found' });
         return;
     }
