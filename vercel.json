@@ -23,6 +23,7 @@
     { "src": "/reserve", "dest": "/FrameReservation.html" },
     { "src": "/forgot-password", "dest": "/FrameForgotPassword.html" },
     { "src": "/reset-password", "dest": "/FrameResetPassword.html" },
+    { "src": "/api/chat", "dest": "/api/chat.js" },
     { "src": "(.*)", "dest": "$1" }
   ]
 }
