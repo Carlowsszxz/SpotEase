@@ -1,4 +1,4 @@
-/* Admin panel: manage resources from Supabase, view reservations */
+/* Admin panel: manage resources from Supabase */
 import { supabase } from './supabase-auth.js'
 import { openModal as openModalUtil, closeModal as closeModalUtil, attachModalHandlers } from './modal-utils.js'
 import {
@@ -10,8 +10,6 @@ import {
   deleteResourceById,
   updateResourceById,
   createResource,
-  fetchReservations,
-  updateReservationStatus as updateReservationStatusData,
   fetchAnnouncements,
   createAnnouncement,
   deleteAnnouncementById
@@ -40,18 +38,16 @@ import {
     var saveResource = document.getElementById('saveResource');
 
     var sensorList = document.getElementById('sensorList');
-    var reservationsTable = document.getElementById('reservationsTable');
-    var reservationsTableBody = reservationsTable ? reservationsTable.querySelector('tbody') : null;
-    var noReservations = document.getElementById('noReservations');
-    var resFilterStatus = document.getElementById('resFilterStatus');
-    var totalResCount = document.getElementById('totalResCount');
-    var pendingResCount = document.getElementById('pendingResCount');
-    var confirmedResCount = document.getElementById('confirmedResCount');
-    var cancelledResCount = document.getElementById('cancelledResCount');
     var logoutBtn = document.getElementById('logoutBtn');
 
     var securityEventsList = document.getElementById('securityEventsList');
     var noSecurityEvents = document.getElementById('noSecurityEvents');
+    var exportSecurityBtn = document.getElementById('exportSecurityBtn');
+    var securityExportContainer = document.getElementById('securityExportContainer');
+    var securityExportText = document.getElementById('securityExportText');
+    var copySecurityTextBtn = document.getElementById('copySecurityTextBtn');
+    var securityExportStatus = document.getElementById('securityExportStatus');
+    var currentSecurityEvents = [];
 
     var rfidUserSelect = document.getElementById('rfidUserSelect');
     var rfidUidInput = document.getElementById('rfidUidInput');
@@ -71,8 +67,6 @@ import {
 
     var resources = [];
     var editingId = null;
-    var allReservations = [];
-    var filteredReservations = [];
     var announcements = [];
 
     function escapeHtml(s){
@@ -365,12 +359,14 @@ import {
     function renderSecurityEvents(items){
       if(!securityEventsList) return;
       securityEventsList.innerHTML = '';
+      currentSecurityEvents = items || [];
 
       if(!items || items.length === 0){
         if(noSecurityEvents){
           noSecurityEvents.style.display = 'block';
           noSecurityEvents.textContent = 'No after-hours events.';
         }
+        if(securityExportContainer) securityExportContainer.style.display = 'none';
         return;
       }
 
@@ -439,6 +435,84 @@ import {
       }catch(err){
         console.error('Failed to update security event', err);
         alert('Failed to update event: ' + (err.message || err));
+      }
+    }
+
+    function formatSecurityEventsAsText(){
+      if(!currentSecurityEvents || currentSecurityEvents.length === 0){
+        return 'No security events to export.';
+      }
+
+      var lines = [];
+      lines.push('========================================');
+      lines.push('AFTER-HOURS SECURITY EVENTS REPORT');
+      lines.push('Generated: ' + new Date().toLocaleString());
+      lines.push('========================================');
+      lines.push('');
+
+      currentSecurityEvents.forEach(function(ev, idx){
+        lines.push('EVENT ' + (idx + 1) + ':');
+        lines.push('-' .repeat(40));
+        
+        var resName = ev.resources && ev.resources.name ? ev.resources.name : (ev.resource_id || 'Unknown space');
+        var loc = ev.resources && ev.resources.location ? ev.resources.location : 'Location not specified';
+        
+        lines.push('Room/Space: ' + resName);
+        lines.push('Location: ' + loc);
+        lines.push('Triggered At: ' + formatWhen(ev.triggered_at));
+        lines.push('Severity: ' + (ev.severity || 'medium'));
+        lines.push('Status: ' + (ev.status || 'open'));
+        lines.push('');
+      });
+
+      lines.push('========================================');
+      lines.push('Total Events: ' + currentSecurityEvents.length);
+      lines.push('========================================');
+
+      return lines.join('\n');
+    }
+
+    function exportSecurityEventsAsText(){
+      if(!securityExportText || !securityExportContainer) return;
+
+      var text = formatSecurityEventsAsText();
+      securityExportText.value = text;
+      securityExportContainer.style.display = 'block';
+      
+      if(securityExportStatus){
+        securityExportStatus.style.display = 'block';
+        securityExportStatus.textContent = 'Text ready to copy. Click "Copy to Clipboard" button below.';
+        securityExportStatus.classList.remove('error');
+      }
+
+      securityExportText.select();
+    }
+
+    function copySecurityTextToClipboard(){
+      if(!securityExportText) return;
+
+      try{
+        securityExportText.select();
+        document.execCommand('copy');
+        
+        if(securityExportStatus){
+          securityExportStatus.style.display = 'block';
+          securityExportStatus.textContent = '✓ Copied to clipboard! You can now paste in your email.';
+          securityExportStatus.classList.remove('error');
+          
+          setTimeout(function(){
+            if(securityExportStatus){
+              securityExportStatus.textContent = 'Ready to copy. Click button again if needed.';
+            }
+          }, 3000);
+        }
+      }catch(err){
+        console.error('Copy failed:', err);
+        if(securityExportStatus){
+          securityExportStatus.style.display = 'block';
+          securityExportStatus.textContent = 'Copy failed. Please manually select and copy the text.';
+          securityExportStatus.classList.add('error');
+        }
       }
     }
 
@@ -609,146 +683,7 @@ import {
       });
     }
 
-    // Load reservations with user and resource info
-    async function loadReservations(){
-      try {
-        const reservations = await fetchReservations(supabase);
 
-        // Attach resource info client-side (does not require FK constraints in PostgREST).
-        var resourceMap = {};
-        (resources || []).forEach(function(r){
-          resourceMap[r.id] = { name: r.name };
-        });
-
-        var reservationsWithResources = (reservations || []).map(function(r){
-          var res = resourceMap[r.resource_id];
-          return {
-            ...r,
-            resources: res ? res : null
-          };
-        });
-
-        console.log('Reservations:', reservationsWithResources);
-
-        // Fetch users (prefer admin RPC so we can map all user_id values)
-        const users = await fetchUsersForAdminUi(supabase);
-        console.log('Users:', users);
-
-        // Create a user map for quick lookup
-        var userMap = {};
-        (users || []).forEach(function(u){
-          userMap[u.id] = {
-            email: u.email,
-            name: u.name
-          };
-          console.log('Mapping user', u.id, '->', u.name, '(', u.email, ')');
-        });
-        console.log('User map:', userMap);
-
-        // Combine reservation data with user info
-        allReservations = (reservationsWithResources || []).map(function(r){
-          var userInfo = userMap[r.user_id];
-          console.log('Processing reservation, user_id:', r.user_id, 'Found user:', userInfo);
-          return {
-            ...r,
-            userName: userInfo ? userInfo.name : 'Unknown',
-            userEmail: userInfo ? userInfo.email : 'Unknown'
-          };
-        });
-        console.log('Final reservations with user info:', allReservations);
-
-        filterAndRenderReservations();
-        updateReservationStats();
-      } catch (err) {
-        console.error('Error loading reservations:', err);
-      }
-    }
-
-    function updateReservationStats(){
-      var total = allReservations.length;
-      var pending = allReservations.filter(function(r){ return r.status === 'pending'; }).length;
-      var confirmed = allReservations.filter(function(r){ return r.status === 'confirmed'; }).length;
-      var cancelled = allReservations.filter(function(r){ return r.status === 'cancelled'; }).length;
-      
-      if(totalResCount) totalResCount.textContent = total;
-      if(pendingResCount) pendingResCount.textContent = pending;
-      if(confirmedResCount) confirmedResCount.textContent = confirmed;
-      if(cancelledResCount) cancelledResCount.textContent = cancelled;
-    }
-
-    function filterAndRenderReservations(){
-      var filterStatus = resFilterStatus ? resFilterStatus.value : 'all';
-      
-      if(filterStatus === 'all'){
-        filteredReservations = allReservations;
-      } else {
-        filteredReservations = allReservations.filter(function(r){ return r.status === filterStatus; });
-      }
-      
-      renderReservationsTable();
-    }
-
-    function renderReservationsTable(){
-      if (!reservationsTableBody) return;
-      reservationsTableBody.innerHTML = '';
-      
-      if (filteredReservations.length === 0) {
-        if(noReservations) noReservations.style.display = 'block';
-        if(reservationsTable) reservationsTable.style.display = 'none';
-        return;
-      }
-      
-      if(noReservations) noReservations.style.display = 'none';
-      if(reservationsTable) reservationsTable.style.display = 'table';
-      
-      filteredReservations.forEach(function(res){
-        var tr = document.createElement('tr');
-        var resourceName = res.resources ? res.resources.name : 'Unknown';
-        var userName = res.userName || 'Unknown';
-        var fromDate = new Date(res.reserved_from);
-        var untilDate = new Date(res.reserved_until);
-        var fromStr = fromDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        var untilStr = untilDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        
-        tr.innerHTML = '<td>'+resourceName+'</td><td>'+userName+'</td><td>'+fromStr+'</td><td>'+untilStr+'</td><td><span class="badge s-'+res.status+'">'+res.status+'</span></td>';
-        
-        var actionsTd = document.createElement('td');
-        
-        if(res.status === 'pending'){
-          var approveBtn = document.createElement('button');
-          approveBtn.className = 'action-btn action-approve';
-          approveBtn.textContent = 'Approve';
-          approveBtn.addEventListener('click', function(){ updateReservationStatus(res.id, 'confirmed'); });
-          
-          var rejectBtn = document.createElement('button');
-          rejectBtn.className = 'action-btn action-reject';
-          rejectBtn.textContent = 'Reject';
-          rejectBtn.addEventListener('click', function(){ updateReservationStatus(res.id, 'cancelled'); });
-          
-          actionsTd.appendChild(approveBtn);
-          actionsTd.appendChild(rejectBtn);
-        } else {
-          var viewBtn = document.createElement('button');
-          viewBtn.className = 'action-btn';
-          viewBtn.textContent = 'View';
-          viewBtn.addEventListener('click', function(){ alert('Reservation ID: ' + res.id + '\nStatus: ' + res.status); });
-          actionsTd.appendChild(viewBtn);
-        }
-        
-        tr.appendChild(actionsTd);
-        reservationsTableBody.appendChild(tr);
-      });
-    }
-
-    async function updateReservationStatus(resId, newStatus){
-      try {
-        await updateReservationStatusData(supabase, resId, newStatus);
-        loadReservations();
-      } catch (err) {
-        console.error('Error updating reservation:', err);
-        alert('Failed to update: ' + err.message);
-      }
-    }
 
     // Logout
     if (logoutBtn) {
@@ -764,7 +699,6 @@ import {
 
     // Initialize
     await loadResources();
-    await loadReservations();
     await loadSecurityEvents();
     await loadUsersForRfid();
     await loadAnnouncements();
@@ -776,14 +710,16 @@ import {
       notifAddBtn.addEventListener('click', addAnnouncement);
     }
 
+    if(exportSecurityBtn){
+      exportSecurityBtn.addEventListener('click', exportSecurityEventsAsText);
+    }
+    if(copySecurityTextBtn){
+      copySecurityTextBtn.addEventListener('click', copySecurityTextToClipboard);
+    }
+
     // Lightweight refresh (avoids needing realtime configuration)
     setInterval(loadSecurityEvents, 15000);
     setInterval(loadAnnouncements, 30000);
-
-    // Filter listener
-    if(resFilterStatus){
-      resFilterStatus.addEventListener('change', filterAndRenderReservations);
-    }
 
   } catch (err) {
     console.error('Admin panel error:', err);

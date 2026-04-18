@@ -8,6 +8,8 @@
     "chat:server": "node server/chat-proxy.js",
     "dev:chat": "node server/chat-proxy.js",
     "build": "vite build",
+    "build:map": "vite build --config vite.map.config.mjs",
+    "build:dashboard-page": "vite build --config vite.dashboard-page.config.mjs",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

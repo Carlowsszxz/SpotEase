@@ -249,6 +249,16 @@
 	color: var(--bt-foreground);
 }
 
+.roll-digit-slot{
+	display: inline-flex;
+	opacity: 1;
+	transition: opacity 220ms var(--bt-ease);
+}
+
+.roll-digit-slot.is-leading-empty{
+	opacity: 0;
+}
+
 .roll-col{
 	position: relative;
 	height: 1em;

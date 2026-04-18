@@ -39,14 +39,13 @@
 	gap: 14px;
 	grid-template-areas:
 		"resources sensors"
-		"reservations analytics"
+		"analytics analytics"
 		"security security"
 		"notifications notifications";
 }
 
 .resource-mgmt{ grid-area: resources; }
 .sensor-panel{ grid-area: sensors; }
-.reservations-panel{ grid-area: reservations; }
 .analytics-panel{ grid-area: analytics; }
 
 .security-panel{ grid-area: security; }
@@ -96,7 +95,6 @@
 
 .resource-mgmt h3,
 .sensor-panel h3,
-.reservations-panel h3,
 .analytics-panel h3,
 .security-panel h3{
 	margin: 0 0 12px;
@@ -146,6 +144,19 @@
 	justify-content: flex-end;
 	flex-wrap: wrap;
 	margin-bottom: 8px;
+}
+
+#securityExportContainer{
+	border: 1px solid var(--bt-border);
+	background: var(--bt-card);
+	padding: 12px;
+	border-radius: 4px;
+}
+
+#securityExportText{
+	background: var(--bt-background);
+	color: var(--bt-foreground);
+	border: 1px solid var(--bt-border);
 }
 
 .notif-form{
@@ -227,8 +238,7 @@ button.btn-logout{
 }
 
 /* Controls */
-.resource-controls,
-.res-controls{
+.resource-controls{
 	display: flex;
 	gap: 10px;
 	align-items: center;
@@ -248,16 +258,14 @@ button.btn-logout{
 	overflow: auto;
 }
 
-.resource-table,
-.reservations-table{
+.resource-table{
 	width: 100%;
 	border-collapse: collapse;
 	font-size: 13px;
 	min-width: 720px;
 }
 
-.resource-table thead th,
-.reservations-table thead th{
+.resource-table thead th{
 	position: sticky;
 	top: 0;
 	background: var(--bt-card);
@@ -272,16 +280,14 @@ button.btn-logout{
 	color: var(--bt-muted-foreground);
 }
 
-.resource-table td,
-.reservations-table td{
+.resource-table td{
 	padding: 12px 10px;
 	border-bottom: 1px solid var(--bt-border);
 	vertical-align: top;
 	color: var(--bt-foreground);
 }
 
-.resource-table tbody tr:hover,
-.reservations-table tbody tr:hover{
+.resource-table tbody tr:hover{
 	background: var(--bt-muted);
 }
 
@@ -341,32 +347,6 @@ button.btn-logout{
 
 .s-pending{ color: var(--bt-foreground); }
 
-/* Reservation stats */
-.res-stats{
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 10px;
-	margin-bottom: 12px;
-}
-
-.stat-item{
-	display:flex;
-	justify-content: space-between;
-	gap: 10px;
-	padding: 10px 12px;
-	border: 1px solid var(--bt-border);
-	background: var(--bt-card);
-	font-size: 13px;
-}
-
-.stat-label{
-	font-family: var(--bt-font-mono);
-	text-transform: uppercase;
-	letter-spacing: 0.16em;
-	font-size: 11px;
-	color: var(--bt-muted-foreground);
-}
-
 /* Action buttons (table row buttons) */
 .action-btn{
 	appearance: none;
@@ -412,13 +392,13 @@ button.btn-logout{
 		grid-template-areas:
 			"resources"
 			"sensors"
-			"reservations"
-			"analytics";
+			"analytics"
+			"security"
+			"notifications";
 	}
 }
 
 @media (max-width: 480px){
 	.admin-panel{ margin: 24px auto; padding: 18px; }
 	.admin-panel header h1{ font-size: 44px; }
-	.res-stats{ grid-template-columns: 1fr; }
 }

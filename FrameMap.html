@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="CSS/modal.css">
   <link rel="stylesheet" href="CSS/navbar.css">
   <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/ai-chatbot.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script type="module">
     import { checkAuth } from './JS/auth.js';
@@ -23,59 +24,11 @@
 		import { injectNavbar } from './JS/app-shell.js';
 		injectNavbar();
 	</script>
+  <div id="mapReactRoot"></div>
 
-
-  <div class="map-page">
-    <div id="statusBar" class="status-bar" aria-live="polite"></div>
-
-    <header class="map-header">
-      <div class="map-title-wrap">
-        <h1>Find a Space</h1>
-        <p>Pick what you need and where, then see available spots first.</p>
-      </div>
-      <div class="map-controls">
-        <label>What are you looking for?
-          <select id="filterType">
-            <option value="all">Select resource type</option>
-          </select>
-        </label>
-        <label>Where do you want to stay?
-          <select id="filterLocation">
-            <option value="all">Select location</option>
-          </select>
-        </label>
-      </div>
-    </header>
-
-    <section class="quick-filters" aria-label="Quick picks">
-      <p class="quick-filters-title">Quick picks</p>
-      <div class="quick-filter-list" role="group" aria-label="Popular resource types">
-        <button type="button" class="quick-filter-chip" data-resource-type="study_area">Study Area</button>
-        <button type="button" class="quick-filter-chip" data-resource-type="computer_lab">Computer Lab</button>
-        <button type="button" class="quick-filter-chip" data-resource-type="meeting_room">Meeting Room</button>
-      </div>
-    </section>
-
-    <div id="emptyStateMessage" class="empty-state">
-      <div class="empty-state-content">
-        <p>Choose a type and location to see available spaces.</p>
-      </div>
-    </div>
-
-    <section id="resourcesSection" class="resources-section" style="display:none;">
-      <div id="resourcesList" class="resources-list" role="list"></div>
-    </section>
-
-    <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
-      <div class="spinner" role="status" aria-live="polite">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="loading-text">Loading…</div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="JS/map-floorplan.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="module" src="JS/react-map/map-page.js"></script>
+  <script type="module" src="JS/ai-chatbot-react.js"></script>
 </body>
 </html>

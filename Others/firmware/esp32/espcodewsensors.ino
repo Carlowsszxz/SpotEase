@@ -2,6 +2,18 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
+// Arduino preprocessing can mis-handle __has_include in .ino files.
+// Use explicit backend selection instead.
+#define USE_NIMBLE_BACKEND 1
+
+#if USE_NIMBLE_BACKEND
+#include <NimBLEDevice.h>
+#else
+#include <BLEDevice.h>
+#include <BLEScan.h>
+#include <BLEAdvertisedDevice.h>
+#endif
+
 #include <SPI.h>
 #include <MFRC522.h>
 
@@ -49,6 +61,7 @@ const char* SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOi
 const char* SUPABASE_INGEST_RPC_PATH = "/rest/v1/rpc/ingest_occupancy_change";
 static const char* SUPABASE_INGEST_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co/rest/v1/rpc/ingest_occupancy_change";
 static const char* SUPABASE_RFID_INGEST_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co/rest/v1/rpc/ingest_rfid_scan";
+static const char* SUPABASE_BLE_INGEST_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co/rest/v1/rpc/ingest_ble_presence_event";
 
 // Occupancy-only diagnostics mode: reduce device load and isolate ultrasonic -> Supabase transport.
 static const bool OCCUPANCY_ONLY_DIAGNOSTICS = false;
@@ -58,7 +71,34 @@ const char* ENTRY_SENSOR_IDENTIFIER = "doorA_entry";
 const char* ENTRY_SENSOR_SECRET = "ENTRY_SECRET";
 const char* EXIT_SENSOR_IDENTIFIER = "doorA_exit";
 const char* EXIT_SENSOR_SECRET = "EXIT_SECRET";
+// BLE gateway credentials should map to an active row in public.sensors.
+// If you have a dedicated BLE gateway sensor row, set these to that sensor_identifier + secret.
+const char* BLE_SENSOR_IDENTIFIER = "doorA_entry";
+const char* BLE_SENSOR_SECRET = "ENTRY_SECRET";
+
+// --------- BLE LOGIC ---------
+static const bool BLE_ENABLED = true;
 static const bool RFID_ENABLED = true;
+static const bool DEBUG_BLE = true;
+static const unsigned long BLE_SCAN_EVERY_MS = 10000;
+static const uint32_t BLE_SCAN_SECONDS = 2;
+static const uint32_t BLE_SEND_COOLDOWN_MS = 60000;
+static const int BLE_MIN_RSSI = -95;
+static const size_t BLE_RECENT_SLOTS = 32;
+static const uint32_t MIN_HEAP_FOR_TLS = 22000;
+
+struct BleRecentEntry {
+  char device[32];
+  uint32_t lastSentMs;
+};
+
+static BleRecentEntry bleRecent[BLE_RECENT_SLOTS];
+#if USE_NIMBLE_BACKEND
+static NimBLEScan* bleScan = nullptr;
+#else
+static BLEScan* bleScan = nullptr;
+#endif
+static unsigned long lastBleScanMs = 0;
 
 // --------- SENSOR LOGIC ---------
 const float DETECT_THRESHOLD_CM = 25.0;
@@ -106,6 +146,7 @@ bool exitArmed = true;
 static bool ensureWiFiConnected();
 static bool sendOccupancyChangeToSupabase(const char* sensorIdentifier, const char* sensorSecret, int change, float distanceCm, int localCount);
 static bool sendRfidScanToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* uidHex);
+static bool sendBlePresenceToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* deviceIdentifier, int rssi);
 
 static size_t sanitizeJwtKey(char* out, size_t outLen, const char* in);
 static int countChar(const char* s, char ch);
@@ -116,8 +157,11 @@ static void noteHttpResult(int httpCode);
 static void pollRfid(unsigned long now);
 static String formatUidHex(const MFRC522::Uid& uid);
 static void rfidDiagnostics(unsigned long now);
+static void pollBle(unsigned long now);
+static bool shouldSendBleDevice(const char* deviceIdentifier, unsigned long now);
 
 static void rfidTask(void*);
+static void bleTask(void*);
 
 static SemaphoreHandle_t httpMutex = nullptr;
 
@@ -136,10 +180,11 @@ struct ScopedMutex {
   }
 };
 
-enum OutboundEventType : uint8_t { EVT_OCCUPANCY = 1, EVT_RFID = 2 };
+enum OutboundEventType : uint8_t { EVT_OCCUPANCY = 1, EVT_RFID = 2, EVT_BLE = 3 };
 
 struct OutboundEvent {
   uint8_t type;
+  uint8_t retryCount;
   char sensorIdentifier[32];
   char sensorSecret[64];
 
@@ -150,6 +195,10 @@ struct OutboundEvent {
 
   // RFID fields
   char rfidUid[32];
+
+  // BLE fields
+  char bleDevice[32];
+  int16_t bleRssi;
 
   uint32_t queuedAtMs;
 };
@@ -189,6 +238,7 @@ static bool enqueueOccupancyEvent(const char* sensorIdentifier, const char* sens
   OutboundEvent ev;
   memset(&ev, 0, sizeof(ev));
   ev.type = EVT_OCCUPANCY;
+  ev.retryCount = 0;
   strncpy(ev.sensorIdentifier, sensorIdentifier, sizeof(ev.sensorIdentifier) - 1);
   strncpy(ev.sensorSecret, sensorSecret, sizeof(ev.sensorSecret) - 1);
   ev.change = (int8_t)change;
@@ -212,6 +262,7 @@ static bool enqueueRfidScanEvent(const char* sensorIdentifier, const char* senso
   OutboundEvent ev;
   memset(&ev, 0, sizeof(ev));
   ev.type = EVT_RFID;
+  ev.retryCount = 0;
   strncpy(ev.sensorIdentifier, sensorIdentifier, sizeof(ev.sensorIdentifier) - 1);
   strncpy(ev.sensorSecret, sensorSecret, sizeof(ev.sensorSecret) - 1);
   strncpy(ev.rfidUid, uidHex, sizeof(ev.rfidUid) - 1);
@@ -219,6 +270,27 @@ static bool enqueueRfidScanEvent(const char* sensorIdentifier, const char* senso
 
   if (xQueueSend(outboundQueue, &ev, 0) != pdTRUE) {
     Serial.println("RFID queue full; dropping scan");
+    return false;
+  }
+  return true;
+}
+
+static bool enqueueBleEvent(const char* sensorIdentifier, const char* sensorSecret, const char* deviceIdentifier, int rssi) {
+  if (!outboundQueue) return false;
+  if (!deviceIdentifier || deviceIdentifier[0] == '\0') return false;
+
+  OutboundEvent ev;
+  memset(&ev, 0, sizeof(ev));
+  ev.type = EVT_BLE;
+  ev.retryCount = 0;
+  strncpy(ev.sensorIdentifier, sensorIdentifier, sizeof(ev.sensorIdentifier) - 1);
+  strncpy(ev.sensorSecret, sensorSecret, sizeof(ev.sensorSecret) - 1);
+  strncpy(ev.bleDevice, deviceIdentifier, sizeof(ev.bleDevice) - 1);
+  ev.bleRssi = (int16_t)rssi;
+  ev.queuedAtMs = millis();
+
+  if (xQueueSend(outboundQueue, &ev, 0) != pdTRUE) {
+    if (DEBUG_BLE) Serial.println("BLE queue full; dropping sighting");
     return false;
   }
   return true;
@@ -585,6 +657,223 @@ static bool sendRfidScanToSupabase(const char* sensorIdentifier, const char* sen
   return ok;
 }
 
+static bool sendBlePresenceToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* deviceIdentifier, int rssi) {
+  if (!deviceIdentifier || deviceIdentifier[0] == '\0') return false;
+  if (!allowHttpAttempt("ble")) {
+    if (DEBUG_BLE) Serial.println("BLE send deferred by HTTP throttle");
+    return false;
+  }
+
+  const uint32_t freeHeap = ESP.getFreeHeap();
+  if (freeHeap < MIN_HEAP_FOR_TLS) {
+    Serial.print("BLE send skipped (low heap): ");
+    Serial.println(freeHeap);
+    return false;
+  }
+
+  ScopedMutex lock(httpMutex, pdMS_TO_TICKS(8000));
+  if (!lock.acquired) {
+    Serial.println("HTTP busy; dropping BLE sighting");
+    return false;
+  }
+
+  if (!ensureWiFiConnected()) return false;
+
+  if (DEBUG_BLE) {
+    Serial.println("\n--- Supabase BLE RPC request ---");
+    Serial.print("URL: ");
+    Serial.println(SUPABASE_BLE_INGEST_URL);
+    Serial.print("device: ");
+    Serial.println(deviceIdentifier);
+    Serial.print("rssi: ");
+    Serial.println(rssi);
+  }
+
+  char body[512];
+  const int n = snprintf(
+    body,
+    sizeof(body),
+    "{\"p_sensor_identifier\":\"%s\",\"p_secret\":\"%s\",\"p_device_identifier\":\"%s\",\"p_rssi\":%d,\"p_payload\":{\"gateway\":\"esp32\",\"source\":\"ble_scan\"}}",
+    sensorIdentifier,
+    sensorSecret,
+    deviceIdentifier,
+    rssi
+  );
+  if (n <= 0 || n >= (int)sizeof(body)) {
+    if (DEBUG_BLE) Serial.println("BLE payload too large; dropping sighting");
+    return false;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  client.setTimeout(10);
+
+  HTTPClient https;
+  if (!https.begin(client, SUPABASE_BLE_INGEST_URL)) {
+    Serial.println("Supabase BLE HTTPS begin failed");
+    return false;
+  }
+
+  https.setReuse(false);
+  https.setTimeout(HTTP_TIMEOUT_MS);
+  https.addHeader("Content-Type", "application/json");
+
+  char jwtKey[512];
+  const size_t jwtLen = sanitizeJwtKey(jwtKey, sizeof(jwtKey), SUPABASE_ANON_KEY);
+  if (jwtLen < 50 || countChar(jwtKey, '.') != 2) {
+    Serial.println("Supabase key malformed; cannot send BLE sighting");
+    https.end();
+    return false;
+  }
+
+  https.addHeader("apikey", jwtKey);
+  char auth[600];
+  const int authN = snprintf(auth, sizeof(auth), "Bearer %s", jwtKey);
+  if (authN <= 0 || authN >= (int)sizeof(auth)) {
+    Serial.println("Supabase Authorization header too long; cannot send BLE sighting");
+    https.end();
+    return false;
+  }
+  https.addHeader("Authorization", auth);
+
+  const int httpCode = https.POST(reinterpret_cast<uint8_t*>(body), strlen(body));
+  const bool ok = (httpCode >= 200 && httpCode < 300);
+  noteHttpResult(httpCode);
+
+  Serial.print("BLE HTTP status: ");
+  Serial.println(httpCode);
+  if (httpCode < 0) {
+    Serial.print("BLE HTTP error: ");
+    Serial.println(HTTPClient::errorToString(httpCode));
+    Serial.print("WiFi status: ");
+    Serial.println(WiFi.status());
+    Serial.print("WiFi RSSI: ");
+    Serial.println(WiFi.RSSI());
+  }
+  if (!ok) {
+    String resp = https.getString();
+    if (resp.length() > 0) {
+      Serial.print("BLE response: ");
+      Serial.println(resp);
+    }
+  }
+  if (DEBUG_BLE) {
+    Serial.println("Supabase BLE RPC done");
+  }
+
+  https.end();
+  return ok;
+}
+
+static bool shouldSendBleDevice(const char* deviceIdentifier, unsigned long now) {
+  if (!deviceIdentifier || deviceIdentifier[0] == '\0') return false;
+
+  int freeSlot = -1;
+  int oldestSlot = 0;
+  uint32_t oldestTs = 0xFFFFFFFFUL;
+
+  for (size_t i = 0; i < BLE_RECENT_SLOTS; i++) {
+    if (bleRecent[i].device[0] == '\0') {
+      if (freeSlot < 0) freeSlot = (int)i;
+      continue;
+    }
+
+    if (strncmp(bleRecent[i].device, deviceIdentifier, sizeof(bleRecent[i].device)) == 0) {
+      uint32_t age = now - bleRecent[i].lastSentMs;
+      if (age < BLE_SEND_COOLDOWN_MS) return false;
+      bleRecent[i].lastSentMs = now;
+      return true;
+    }
+
+    if (bleRecent[i].lastSentMs < oldestTs) {
+      oldestTs = bleRecent[i].lastSentMs;
+      oldestSlot = (int)i;
+    }
+  }
+
+  const int slot = (freeSlot >= 0) ? freeSlot : oldestSlot;
+  strncpy(bleRecent[slot].device, deviceIdentifier, sizeof(bleRecent[slot].device) - 1);
+  bleRecent[slot].device[sizeof(bleRecent[slot].device) - 1] = '\0';
+  bleRecent[slot].lastSentMs = now;
+  return true;
+}
+
+static void pollBle(unsigned long now) {
+  if (!BLE_ENABLED || !bleScan) return;
+  if ((now - lastBleScanMs) < BLE_SCAN_EVERY_MS) return;
+  lastBleScanMs = now;
+
+#if USE_NIMBLE_BACKEND
+  const bool scanOk = bleScan->start(BLE_SCAN_SECONDS, false);
+  if (!scanOk) return;
+  NimBLEScanResults results = bleScan->getResults();
+  const int count = results.getCount();
+#else
+  BLEScanResults* results = bleScan->start(BLE_SCAN_SECONDS, false);
+  if (!results) return;
+  const int count = results->getCount();
+#endif
+  int rssiFiltered = 0;
+  int cooldownFiltered = 0;
+  int enqueued = 0;
+  if (DEBUG_BLE) {
+    Serial.print("BLE scan results: ");
+    Serial.println(count);
+  }
+
+  for (int i = 0; i < count; i++) {
+#if USE_NIMBLE_BACKEND
+    const NimBLEAdvertisedDevice* d = results.getDevice(i);
+    if (!d) continue;
+    const int rssi = d->getRSSI();
+#else
+    BLEAdvertisedDevice d = results->getDevice(i);
+    const int rssi = d.getRSSI();
+#endif
+    if (rssi < BLE_MIN_RSSI) {
+      rssiFiltered++;
+      continue;
+    }
+
+#if USE_NIMBLE_BACKEND
+    std::string addr = d->getAddress().toString();
+    if (addr.empty()) continue;
+#else
+    String addr = d.getAddress().toString();
+    if (addr.length() == 0) continue;
+#endif
+
+    char deviceId[32];
+    memset(deviceId, 0, sizeof(deviceId));
+    const size_t copyLen = (addr.length() < sizeof(deviceId) - 1) ? addr.length() : (sizeof(deviceId) - 1);
+    memcpy(deviceId, addr.c_str(), copyLen);
+
+    if (!shouldSendBleDevice(deviceId, now)) {
+      cooldownFiltered++;
+      continue;
+    }
+
+    if (outboundQueue) {
+      (void)enqueueBleEvent(BLE_SENSOR_IDENTIFIER, BLE_SENSOR_SECRET, deviceId, rssi);
+      enqueued++;
+    } else {
+      (void)sendBlePresenceToSupabase(BLE_SENSOR_IDENTIFIER, BLE_SENSOR_SECRET, deviceId, rssi);
+      enqueued++;
+    }
+  }
+
+  if (DEBUG_BLE) {
+    Serial.print("BLE accepted: ");
+    Serial.print(enqueued);
+    Serial.print(" | RSSI filtered: ");
+    Serial.print(rssiFiltered);
+    Serial.print(" | cooldown filtered: ");
+    Serial.println(cooldownFiltered);
+  }
+
+  bleScan->clearResults();
+}
+
 static void senderTask(void*) {
   OutboundEvent ev;
   for (;;) {
@@ -594,7 +883,7 @@ static void senderTask(void*) {
     }
     if (xQueueReceive(outboundQueue, &ev, portMAX_DELAY) != pdTRUE) continue;
 
-    // Prevent occupancy flood from starving RFID events.
+    // Prevent occupancy flood from starving BLE/RFID events.
     if (ev.type == EVT_OCCUPANCY && uxQueueMessagesWaiting(outboundQueue) > 0) {
       if (xQueueSend(outboundQueue, &ev, 0) == pdTRUE) {
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -607,10 +896,24 @@ static void senderTask(void*) {
       ok = sendOccupancyChangeToSupabase(ev.sensorIdentifier, ev.sensorSecret, ev.change, ev.distanceCm, ev.localCount);
     } else if (ev.type == EVT_RFID) {
       ok = sendRfidScanToSupabase(ev.sensorIdentifier, ev.sensorSecret, ev.rfidUid);
+    } else if (ev.type == EVT_BLE) {
+      ok = sendBlePresenceToSupabase(ev.sensorIdentifier, ev.sensorSecret, ev.bleDevice, ev.bleRssi);
     }
 
     if (!ok) {
-      vTaskDelay(pdMS_TO_TICKS(250));
+      if (ev.type == EVT_BLE && ev.retryCount < 3 && outboundQueue) {
+        OutboundEvent retryEv = ev;
+        retryEv.retryCount++;
+        if (xQueueSend(outboundQueue, &retryEv, 0) == pdTRUE) {
+          if (DEBUG_BLE) {
+            Serial.print("Requeued BLE event retry #");
+            Serial.println(retryEv.retryCount);
+          }
+        } else {
+          Serial.println("BLE retry queue full; dropping BLE event");
+        }
+      }
+      vTaskDelay(pdMS_TO_TICKS(350));
     }
   }
 }
@@ -622,6 +925,13 @@ static void rfidTask(void*) {
     pollRfid(now);
     rfidDiagnostics(now);
     vTaskDelay(pdMS_TO_TICKS(50));
+  }
+}
+
+static void bleTask(void*) {
+  for (;;) {
+    pollBle(millis());
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
 
@@ -690,12 +1000,30 @@ void setup() {
       Serial.println("RC522 initialized");
     }
   } else {
-    Serial.println("Occupancy-only diagnostics mode: RFID disabled");
+    Serial.println("Occupancy-only diagnostics mode: RFID/BLE disabled");
+  }
+
+  if (BLE_ENABLED) {
+#if USE_NIMBLE_BACKEND
+    NimBLEDevice::init("SpotEase-Gateway");
+    bleScan = NimBLEDevice::getScan();
+#else
+    BLEDevice::init("SpotEase-Gateway");
+    bleScan = BLEDevice::getScan();
+#endif
+    if (bleScan) {
+      bleScan->setActiveScan(false);
+      bleScan->setInterval(320);
+      bleScan->setWindow(30);
+      if (DEBUG_BLE) Serial.println("BLE scanner initialized");
+    } else if (DEBUG_BLE) {
+      Serial.println("BLE scanner init failed");
+    }
   }
 
   // Queue + sender task so sensor reads keep running even during HTTPS calls.
   // Includes occupancy events + RFID scans.
-  outboundQueue = xQueueCreate(20, sizeof(OutboundEvent));
+  outboundQueue = xQueueCreate(40, sizeof(OutboundEvent));
   if (outboundQueue) {
     xTaskCreatePinnedToCore(senderTask, "sbSender", 12288, nullptr, 1, nullptr, 1);
   } else {
@@ -706,6 +1034,10 @@ void setup() {
   // Use low priority and core 1 to avoid competing with WiFi/system tasks on core 0.
   if (RFID_ENABLED) {
     xTaskCreatePinnedToCore(rfidTask, "rfid", 4096, nullptr, 0, nullptr, 1);
+  }
+
+  if (BLE_ENABLED && bleScan) {
+    xTaskCreatePinnedToCore(bleTask, "ble", 6144, nullptr, 0, nullptr, 0);
   }
 
   pinMode(ENTRY_TRIG_PIN, OUTPUT);

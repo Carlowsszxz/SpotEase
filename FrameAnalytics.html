@@ -26,12 +26,31 @@
       <div class="chart-card">
         <h3>Usage Over Time</h3>
         <canvas id="usageChart"></canvas>
+        <p id="usageChartSummary" class="chart-summary"></p>
       </div>
 
       <div class="chart-card">
         <h3>Peak Hours (by hour of day)</h3>
         <canvas id="peakChart"></canvas>
+        <p id="peakChartSummary" class="chart-summary"></p>
       </div>
+
+      <div class="chart-card">
+        <h3>Peak Hours (Ultrasonic Sensor)</h3>
+        <canvas id="ultrasonicPeakChart"></canvas>
+        <p id="ultrasonicPeakSummary" class="chart-summary"></p>
+      </div>
+
+      <div class="chart-card">
+        <h3>Peak Hours (RFID Activity)</h3>
+        <canvas id="rfidPeakChart"></canvas>
+        <p id="rfidPeakSummary" class="chart-summary"></p>
+      </div>
+    </section>
+
+    <section class="maintenance-suggestions">
+      <h3>AI Maintenance Recommendations</h3>
+      <div id="maintenanceSuggestions" class="suggestions-list"></div>
     </section>
 
     <section class="insights">

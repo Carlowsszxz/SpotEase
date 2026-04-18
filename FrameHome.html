@@ -6,7 +6,7 @@
     <title>SpotEase</title>
         <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
     <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
-    <link rel="stylesheet" href="JS/react-nav/home-pill-nav.css">
+    <link rel="stylesheet" href="CSS/navbar.css">
     <link rel="stylesheet" href="JS/react-hero/home-hero-tilted.css">
     <link rel="stylesheet" href="CSS/home.css">
     <link rel="stylesheet" href="CSS/ai-chatbot.css">
@@ -16,7 +16,11 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 </head>
 <body>
-    <div id="homePillNavRoot" class="home-pill-nav-host" aria-label="Primary navigation"></div>
+    <div id="navbar"></div>
+    <script type="module">
+        import { injectNavbar } from './JS/app-shell.js';
+        injectNavbar();
+    </script>
 
     <!-- Hero Section -->
     <section class="hero" id="home">
@@ -24,17 +28,17 @@
             <div class="hero-content">
                 <div class="hero-text">
                     <h1 class="hero-title">
-                        Find Available Campus Spaces <span class="highlight">Faster</span>
+                        Live Campus Space Intelligence <span class="highlight">in Production</span>
                     </h1>
-                    <p class="hero-subtitle">SpotEase gives students and staff real-time occupancy visibility for shared resources like study areas, labs, and meeting rooms.</p>
+                    <p class="hero-subtitle">SpotEase is deployed to monitor real-time occupancy across study areas, labs, and meeting rooms, helping students, staff, and operations teams make faster space decisions.</p>
                     <div class="hero-actions">
                         <a href="FrameRegister.html" class="btn btn-primary">Get Started</a>
                         <a href="#about" class="btn btn-secondary">Learn More</a>
                     </div>
                     <div class="hero-signals">
-                        <span>Live occupancy</span>
-                        <span>RFID activity logs</span>
-                        <span>Smart alerts</span>
+                        <span>Live occupancy telemetry</span>
+                        <span>RFID access events</span>
+                        <span>Operational alerting</span>
                     </div>
                 </div>
                 <div class="hero-image">
@@ -54,12 +58,12 @@
             <div class="how-step reveal">
                 <p class="step-kicker">02</p>
                 <h2>Decide</h2>
-                <p>Pick available spaimces quickly with less guesswork.</p>
+                <p>Select available spaces immediately with clear capacity and status indicators.</p>
             </div>
             <div class="how-step reveal">
                 <p class="step-kicker">03</p>
                 <h2>Act</h2>
-                <p>Use reservations and alerts to avoid congestion.</p>
+                <p>Book resources and respond to alerts before congestion impacts users.</p>
             </div>
         </div>
     </section>
@@ -67,19 +71,19 @@
     <section class="home-about-intro" id="about">
         <div class="about-inner reveal">
             <p class="about-eyebrow">About SpotEase</p>
-            <h2 class="about-title">One platform for real-time occupancy visibility and smarter campus flow.</h2>
-            <p class="about-lead">The system combines IoT sensing, RFID activity, and analytics so users find spaces faster while administrators improve utilization and safety.</p>
+            <h2 class="about-title">A deployed platform for occupancy visibility, reservation workflows, and safer campus operations.</h2>
+            <p class="about-lead">SpotEase combines IoT sensing, RFID event tracking, and analytics dashboards to improve utilization, reduce search time, and support day-to-day operational decisions.</p>
         </div>
     </section>
 
     <section class="home-parallax" data-parallax>
         <div class="home-parallax-media" data-speed="0.24">
-            <img src="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=2200&q=80" alt="Smart campus occupancy scene">
+            <img src="Images/Scroll Parallax/Image 1.jpeg" alt="SpotEase deployed campus monitoring view">
         </div>
         <div class="home-parallax-overlay"></div>
         <div class="home-parallax-content reveal">
-            <h3>Parallax Experience</h3>
-            <p>Depth-aware scrolling keeps the landing page visually engaging while still focusing attention on key actions.</p>
+            <h3>Real Deployment Context</h3>
+            <p>This view reflects actual campus deployment conditions where occupancy data, access activity, and response workflows are monitored continuously.</p>
         </div>
     </section>
 
@@ -90,16 +94,16 @@
         </div>
         <div class="home-features-inner">
             <div class="home-feature-card reveal">
-                <h3>Interactive UI</h3>
-                <p>Scroll-triggered animation and hover feedback guide attention without overwhelming the interface.</p>
+                <h3>Operational Dashboarding</h3>
+                <p>Live status views, trend charts, and activity insights give users and administrators immediate operational awareness.</p>
             </div>
             <div class="home-feature-card reveal">
-                <h3>Responsive Design</h3>
-                <p>Layouts adapt from mobile to desktop for consistent usability across devices and screen sizes.</p>
+                <h3>Cross-Device Access</h3>
+                <p>Interfaces are optimized for desktop and mobile so occupancy checks, reservations, and alerts stay accessible anywhere on campus.</p>
             </div>
             <div class="home-feature-card reveal">
-                <h3>Technologies Used</h3>
-                <p>Built with HTML, CSS, and JavaScript for maintainable structure, styling, and interaction logic.</p>
+                <h3>Integrated IoT Pipeline</h3>
+                <p>Ultrasonic sensing, RFID scanning, and cloud-backed analytics work together to deliver reliable real-time space intelligence.</p>
             </div>
         </div>
     </section>
@@ -107,9 +111,9 @@
     <!-- CTA Section -->
     <section class="cta">
         <div class="cta-container">
-            <h2>Optimize Campus Space Utilization</h2>
-            <p>Reduce congestion, improve time management, and enhance campus safety with real-time occupancy data and analytics</p>
-            <a href="FrameRegister.html" class="btn btn-primary">Get Started Now</a>
+            <h2>Deploy Smarter Space Operations</h2>
+            <p>Improve resource availability, reduce congestion, and strengthen campus safety with real-time occupancy and access intelligence.</p>
+            <a href="FrameRegister.html" class="btn btn-primary">Create an Account</a>
         </div>
     </section>
 
@@ -121,7 +125,7 @@
         <div class="footer-container">
             <div class="footer-content">
                 <p class="footer-brand">SpotEase</p>
-                <p class="footer-copy">Smarter space decisions for students, faculty, and campus operations.</p>
+                <p class="footer-copy">Production-ready space intelligence for students, faculty, and campus operations teams.</p>
             </div>
             <div class="footer-contact">
                 <div class="footer-links" aria-label="Footer links">
@@ -138,7 +142,6 @@
     <script type="module" src="JS/supabase-auth.js"></script>
     <script type="module" src="JS/home.js"></script>
     <script type="module" src="JS/ai-chatbot-react.js"></script>
-    <script type="module" src="JS/react-nav/home-pill-nav.js"></script>
     <script type="module" src="JS/react-hero/home-hero-tilted.js"></script>
     <script>
         window.addEventListener('load', function() {

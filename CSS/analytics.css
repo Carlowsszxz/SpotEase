@@ -63,6 +63,15 @@
 
 .chart-card canvas{ display:block; width:100%; height:auto; max-width:100%; }
 
+.chart-summary{
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--bt-border);
+  color: var(--bt-muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .insights{
   position: relative;
   margin-top: 14px;
@@ -102,6 +111,76 @@
 }
 
 .actions{ margin-top: 14px; display:flex; gap: 10px; flex-wrap: wrap; }
+
+.maintenance-suggestions{
+  position: relative;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--bt-border);
+  background: var(--bt-card);
+}
+
+.maintenance-suggestions::before{
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 56px;
+  height: 2px;
+  background: var(--bt-accent);
+}
+
+.maintenance-suggestions h3{
+  margin: 0 0 12px;
+  padding-top: 18px;
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 12px;
+  color: var(--bt-foreground);
+}
+
+.suggestions-list{
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--bt-border);
+  padding-top: 12px;
+}
+
+.suggestion-item{
+  padding: 12px;
+  border: 1px solid var(--bt-border);
+  border-left: 4px solid var(--bt-border);
+  background: var(--bt-background);
+  font-size: 13px;
+}
+
+.suggestion-item.priority-high{
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.suggestion-item.priority-medium{
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.suggestion-item.priority-low{
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.suggestion-title{
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--bt-foreground);
+}
+
+.suggestion-desc{
+  font-size: 12px;
+  color: var(--bt-muted-foreground);
+  line-height: 1.4;
+}
 
 @media(max-width: 900px){
   .charts{ grid-template-columns: 1fr; }

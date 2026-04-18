@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const CHAT_STORAGE_KEY = 'spotease_chat_messages_v1';
+const CHATBOT_TRIGGER_SELECTOR = '[data-ai-chatbot-trigger]';
 
 function getDefaultEndpoint() {
   const { hostname, protocol } = window.location;
@@ -65,12 +66,47 @@ function Bubble({ role, content }) {
 export default function AiChatbot() {
   const config = useMemo(() => getConfig(), []);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasExternalTrigger, setHasExternalTrigger] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState(() => loadMessages());
   const [inputValue, setInputValue] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
   const inputRef = useRef(null);
   const panelRef = useRef(null);
+
+  useEffect(() => {
+    const syncExternalTriggers = () => {
+      const triggers = Array.from(document.querySelectorAll(CHATBOT_TRIGGER_SELECTOR));
+      setHasExternalTrigger(triggers.length > 0);
+
+      triggers.forEach((trigger) => {
+        trigger.setAttribute('aria-controls', 'ai-chat-panel');
+        trigger.setAttribute('aria-expanded', String(isOpen));
+      });
+    };
+
+    const onExternalTriggerClick = (event) => {
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+
+      const trigger = target.closest(CHATBOT_TRIGGER_SELECTOR);
+      if (!trigger) return;
+
+      event.preventDefault();
+      setIsOpen((prev) => !prev);
+    };
+
+    syncExternalTriggers();
+    const observer = new MutationObserver(syncExternalTriggers);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    document.addEventListener('click', onExternalTriggerClick);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('click', onExternalTriggerClick);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -147,15 +183,17 @@ export default function AiChatbot() {
 
   return (
     <section className={`ai-chatbot ${isOpen ? 'is-open' : ''}`} aria-label="SpotEase AI assistant">
-      <button
-        type="button"
-        className="ai-chatbot-toggle"
-        aria-expanded={isOpen}
-        aria-controls="ai-chat-panel"
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        Ask SpotEase AI
-      </button>
+      {!hasExternalTrigger ? (
+        <button
+          type="button"
+          className="ai-chatbot-toggle"
+          aria-expanded={isOpen}
+          aria-controls="ai-chat-panel"
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          Ask SpotEase AI
+        </button>
+      ) : null}
 
       <div className={`ai-chatbot-backdrop ${isOpen ? 'is-open' : ''}`} onClick={() => setIsOpen(false)} aria-hidden={!isOpen} />
 

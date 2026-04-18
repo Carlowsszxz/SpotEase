@@ -9,8 +9,27 @@ function isLocalhostHost(hostname) {
 
 function AppPillNav() {
   const isLocal = isLocalhostHost(window.location.hostname);
+  const path = (window.location.pathname || '').toLowerCase();
+  const title = (document.title || '').toLowerCase();
+  const isHomePage = path.endsWith('framehome.html') || path === '/' || title.includes('spotease');
 
   const items = useMemo(() => {
+    if (isHomePage) {
+      if (isLocal) {
+        return [
+          { label: 'Home', link: '#home' },
+          { label: 'About', link: '#about' },
+          { label: 'Sign in', link: 'FrameLogin.html' },
+        ];
+      }
+
+      return [
+        { label: 'Home', link: '#home' },
+        { label: 'About', link: '#about' },
+        { label: 'Sign in', link: '/login' },
+      ];
+    }
+
     if (isLocal) {
       return [
         { label: 'Dashboard', link: 'FrameDashboard.html' },
@@ -24,7 +43,7 @@ function AppPillNav() {
       { label: 'Map', link: '/map' },
       { label: 'Profile', link: '/profile' },
     ];
-  }, [isLocal]);
+  }, [isHomePage, isLocal]);
 
   return (
     <StaggeredMenu

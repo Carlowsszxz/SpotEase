@@ -3,6 +3,7 @@ const { useEffect, useMemo, useRef, useState } = React;
 const { createRoot } = ReactDOM;
 
 const CHAT_STORAGE_KEY = 'spotease_chat_messages_v1';
+const CHATBOT_TRIGGER_SELECTOR = '[data-ai-chatbot-trigger]';
 
 function getDefaultEndpoint() {
   const { hostname, protocol } = window.location;
@@ -22,6 +23,22 @@ function getPageContext() {
     href,
     hash,
   };
+}
+
+function getContextSpecificPrompt() {
+  const { pathname, href } = window.location;
+  const title = document.title || '';
+  
+  if (pathname.includes('Dashboard') || title.includes('Dashboard')) {
+    return 'Ask about occupancy trends, peak times, or space utilization insights';
+  }
+  if (pathname.includes('Map') || title.includes('Map')) {
+    return 'Ask how to navigate the map, filter by resource type, or find specific spaces';
+  }
+  if (pathname.includes('Profile') || title.includes('Profile')) {
+    return 'Ask about account settings, passwords, RFID tags, or access history';
+  }
+  return 'Ask about spaces, reservations, or campus navigation';
 }
 
 function getConfig() {
@@ -67,11 +84,46 @@ function MessageBubble({ role, content }) {
 function AiChatbot() {
   const config = useMemo(() => getConfig(), []);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasExternalTrigger, setHasExternalTrigger] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState(() => loadMessages());
   const [inputValue, setInputValue] = useState('');
   const [lastUserMessage, setLastUserMessage] = useState('');
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    const syncExternalTriggers = () => {
+      const triggers = Array.from(document.querySelectorAll(CHATBOT_TRIGGER_SELECTOR));
+      setHasExternalTrigger(triggers.length > 0);
+
+      triggers.forEach((trigger) => {
+        trigger.setAttribute('aria-controls', 'ai-chat-panel');
+        trigger.setAttribute('aria-expanded', String(isOpen));
+      });
+    };
+
+    const onExternalTriggerClick = (event) => {
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+
+      const trigger = target.closest(CHATBOT_TRIGGER_SELECTOR);
+      if (!trigger) return;
+
+      event.preventDefault();
+      setIsOpen((prev) => !prev);
+    };
+
+    syncExternalTriggers();
+    const observer = new MutationObserver(syncExternalTriggers);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    document.addEventListener('click', onExternalTriggerClick);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('click', onExternalTriggerClick);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     saveMessages(messages);
@@ -150,7 +202,7 @@ function AiChatbot() {
   return h(
     'section',
     { className: `ai-chatbot ${isOpen ? 'is-open' : ''}`, 'aria-label': 'SpotEase AI assistant' },
-    h(
+    !hasExternalTrigger ? h(
       'button',
       {
         type: 'button',
@@ -160,7 +212,7 @@ function AiChatbot() {
         onClick: () => setIsOpen((prev) => !prev),
       },
       'Ask SpotEase AI'
-    ),
+    ) : null,
     h('div', {
       className: `ai-chatbot-backdrop ${isOpen ? 'is-open' : ''}`,
       'aria-hidden': !isOpen,
@@ -212,7 +264,7 @@ function AiChatbot() {
           className: 'ai-chatbot-input',
           rows: 2,
           maxLength: 1200,
-          placeholder: 'Ask about spaces, reservations, or campus navigation',
+          placeholder: getContextSpecificPrompt(),
           value: inputValue,
           onChange: (event) => setInputValue(event.target.value),
           onKeyDown: (event) => {

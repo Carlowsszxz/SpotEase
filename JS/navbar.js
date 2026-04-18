@@ -5,6 +5,11 @@ function isLocalhostHost(hostname) {
   return host === '' || host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')
 }
 
+function isHomePageView() {
+  const path = (window.location.pathname || '').toLowerCase()
+  return path.endsWith('framehome.html') || path === '/'
+}
+
 function normalizeNavbarLinks() {
   const isLocal = isLocalhostHost(window.location.hostname)
 
@@ -74,6 +79,7 @@ function initStaggeredMenuNavigationFallback() {
     try {
       const item = event.target && event.target.closest ? event.target.closest('.sm-panel-item') : null;
       if (!item) return;
+      if (item.dataset && item.dataset.action === 'logout') return;
 
       const href = item.getAttribute('href');
       if (!href) return;
@@ -92,6 +98,66 @@ function initStaggeredMenuNavigationFallback() {
       // ignore
     }
   }, true);
+}
+
+function ensureMenuLogoutItem() {
+  const panelList = document.querySelector('.main-nav .sm-panel-list');
+  if (!panelList) return null;
+
+  let wrap = document.getElementById('navMenuLogoutWrap');
+  if (!wrap) {
+    wrap = document.createElement('li');
+    wrap.id = 'navMenuLogoutWrap';
+    wrap.className = 'sm-panel-itemWrap';
+
+    const link = document.createElement('a');
+    link.id = 'navMenuLogout';
+    link.className = 'sm-panel-item';
+    link.href = 'FrameHome.html';
+    link.setAttribute('aria-label', 'Logout');
+    link.dataset.action = 'logout';
+
+    const label = document.createElement('span');
+    label.className = 'sm-panel-itemLabel';
+    label.textContent = 'Logout';
+
+    link.appendChild(label);
+    wrap.appendChild(link);
+    panelList.appendChild(wrap);
+  }
+
+  const allItems = Array.from(panelList.querySelectorAll('.sm-panel-item[data-index]'));
+  let maxIndex = 0;
+  allItems.forEach(function(item){
+    if (item && item.id === 'navMenuLogout') return;
+    const value = Number(item.getAttribute('data-index') || 0);
+    if (Number.isFinite(value) && value > maxIndex) maxIndex = value;
+  });
+
+  const logoutLink = wrap.querySelector('#navMenuLogout');
+  if (logoutLink) logoutLink.setAttribute('data-index', String(maxIndex + 1));
+  return wrap;
+}
+
+function setMenuLogoutVisibility(isVisible) {
+  const wrap = ensureMenuLogoutItem();
+  if (!wrap) return;
+  wrap.style.display = isVisible ? '' : 'none';
+}
+
+function bindMenuLogoutHandler() {
+  if (window.__menuLogoutHandlerBound) return;
+  window.__menuLogoutHandlerBound = true;
+
+  document.addEventListener('click', async function(event){
+    const trigger = event.target && event.target.closest ? event.target.closest('#navMenuLogout, [data-action="logout"]') : null;
+    if (!trigger) return;
+
+    try { event.preventDefault(); } catch (e) {}
+    try { await supabase.auth.signOut(); } catch (e) {}
+    try { localStorage.removeItem('pm_username'); } catch (e) {}
+    window.location.href = 'FrameHome.html';
+  });
 }
 
 function initEmergencyCta(){
@@ -155,20 +221,25 @@ function initEmergencyCta(){
   normalizeNavbarLinks()
   await loadAppPillNav()
   initStaggeredMenuNavigationFallback()
+  bindMenuLogoutHandler()
 
-  const logoutBtn = document.getElementById('navLogout');
+  const navRight = document.querySelector('.main-nav .nav-right')
+  if (isHomePageView()) {
+    if (navRight) navRight.style.display = 'none'
+    return
+  }
+
   const loginLink = document.getElementById('navLoginLink');
   const registerLink = document.getElementById('navRegisterLink');
 
   // Manage auth state: show/hide login/register or logout
   try {
     const user = await getCurrentUser();
+    setMenuLogoutVisibility(!!user);
     if (user) {
-      if (logoutBtn) logoutBtn.style.display = '';
       if (loginLink) loginLink.style.display = 'none';
       if (registerLink) registerLink.style.display = 'none';
     } else {
-      if (logoutBtn) logoutBtn.style.display = 'none';
       if (loginLink) loginLink.style.display = '';
       if (registerLink) registerLink.style.display = '';
     }
@@ -176,13 +247,6 @@ function initEmergencyCta(){
     // ignore
   }
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', async function(){
-      try { await supabase.auth.signOut(); } catch(e){}
-      try { localStorage.removeItem('pm_username'); } catch(e){}
-      window.location.href = 'FrameHome.html';
-    })
-  }
   // Highlight active link for whichever nav renderer is present
   try {
     const links = document.querySelectorAll('.main-nav .nav-links a, .main-nav .sm-panel-item');

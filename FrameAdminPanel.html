@@ -55,7 +55,7 @@
   <div class="admin-panel">
     <header>
       <h1>Admin Panel</h1>
-      <p class="small-muted">Resource management, sensor health, reservations and analytics.</p>
+      <p class="small-muted">Resource management, sensor health, and analytics.</p>
       <div class="header-actions">
         <button id="logoutBtn" class="btn btn-logout">Logout</button>
       </div>
@@ -81,43 +81,6 @@
         <ul id="sensorList" class="sensor-list"></ul>
       </div>
 
-      <div class="panel reservations-panel">
-        <h3>All Reservations</h3>
-        
-        <div class="res-stats">
-          <div class="stat-item"><span class="stat-label">Total:</span> <span id="totalResCount">0</span></div>
-          <div class="stat-item"><span class="stat-label">Pending:</span> <span id="pendingResCount">0</span></div>
-          <div class="stat-item"><span class="stat-label">Confirmed:</span> <span id="confirmedResCount">0</span></div>
-          <div class="stat-item"><span class="stat-label">Cancelled:</span> <span id="cancelledResCount">0</span></div>
-        </div>
-
-        <div class="res-controls">
-          <select id="resFilterStatus">
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-        
-		<div class="table-wrap" aria-label="Reservations table">
-			<table class="reservations-table" id="reservationsTable">
-			  <thead>
-			    <tr>
-			      <th>Resource</th>
-			      <th>User</th>
-			      <th>From</th>
-			      <th>Until</th>
-			      <th>Status</th>
-			      <th>Actions</th>
-			    </tr>
-			  </thead>
-			  <tbody></tbody>
-			</table>
-		</div>
-        <p id="noReservations" class="small-muted" style="display:none;">No reservations found.</p>
-      </div>
-
       <div class="panel analytics-panel">
         <h3>Analytics</h3>
         <ul class="analytics-links">
@@ -130,6 +93,14 @@
 	  <div class="panel security-panel">
 		<h3>After-hours Security</h3>
 		<p class="small-muted" style="margin: 0 0 12px;">Flags entries after 5:00 PM and before 6:00 AM. Identity may be unknown; security can verify via patrol/CCTV.</p>
+		<div style="margin-bottom: 12px;">
+		  <button id="exportSecurityBtn" class="btn btn-secondary" type="button">Export as Text</button>
+		  <p id="securityExportStatus" class="small-muted" style="display:none; margin-top: 8px;"></p>
+		</div>
+		<div id="securityExportContainer" style="display:none; margin-bottom: 12px;">
+		  <textarea id="securityExportText" readonly style="width: 100%; min-height: 200px; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid var(--bt-border); background: var(--bt-background); color: var(--bt-foreground);"></textarea>
+		  <button id="copySecurityTextBtn" class="btn btn-primary" type="button" style="margin-top: 8px;">Copy to Clipboard</button>
+		</div>
 		<ul id="securityEventsList" class="security-list"></ul>
 		<p id="noSecurityEvents" class="small-muted" style="display:none;">No after-hours events.</p>
 

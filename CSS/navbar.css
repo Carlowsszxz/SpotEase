@@ -137,6 +137,10 @@
 	color: var(--bt-accent, #9E2222);
 }
 
+#navMenuLogout{
+	padding-bottom: 0.10em;
+}
+
 .nav-links{
 	list-style: none;
 	padding: 0;
