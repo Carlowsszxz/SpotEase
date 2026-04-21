@@ -15,6 +15,7 @@ import { supabase, getCurrentUser } from './supabase-auth.js'
   var msg = document.getElementById('profileMsg');
   var emailHelp = document.getElementById('emailHelp');
   var securityHelp = document.getElementById('securityHelp');
+  var rfidHistoryLink = document.getElementById('rfidHistoryLink');
 
   var rfidLastTap = document.getElementById('rfidLastTap');
   var rfidEmpty = document.getElementById('rfidEmpty');
@@ -201,7 +202,7 @@ import { supabase, getCurrentUser } from './supabase-auth.js'
       // Best-effort load profile row.
       const { data: profile, error } = await supabase
         .from('users')
-        .select('name,email')
+        .select('name,email,role')
         .eq('id', user.id)
         .single();
 
@@ -212,6 +213,10 @@ import { supabase, getCurrentUser } from './supabase-auth.js'
 
       if(profile){
         if(fullName && profile.name) fullName.value = profile.name;
+        var roleVal = (profile.role == null) ? '' : String(profile.role).trim().toLowerCase();
+        if(rfidHistoryLink){
+          rfidHistoryLink.style.display = (roleVal === 'admin') ? 'none' : '';
+        }
         // Email stays from auth; do not allow changing it here.
       }
     }catch(e){

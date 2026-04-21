@@ -10,6 +10,18 @@ import { supabase, getCurrentUser } from './supabase-auth.js'
   try {
     const user = await getCurrentUser();
     if (user) {
+      const { data: profile, error: roleErr } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      const role = String(profile?.role || '').trim().toLowerCase();
+      if (roleErr || role !== 'admin') {
+        window.location.href = 'FrameDashboard.html';
+        return;
+      }
+
       if (logoutBtn) logoutBtn.style.display = '';
       if (loginLink) loginLink.style.display = 'none';
       if (registerLink) registerLink.style.display = 'none';

@@ -11,6 +11,10 @@
   <link rel="stylesheet" href="CSS/navbar.css">
   <link rel="stylesheet" href="CSS/bold-typography.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module">
+    import { checkAuth } from './JS/auth.js';
+    checkAuth('FrameLogin.html');
+  </script>
 </head>
 <body>
   <div id="navbar"></div>
@@ -19,44 +23,9 @@
     injectNavbar();
   </script>
 
-  <div class="access-history-page">
-    <header>
-      <h1>Access History</h1>
-      <p class="small-muted">Your recent RFID tap records.</p>
-    </header>
-
-    <section class="history-controls" aria-label="Access history controls">
-      <input id="historySearch" type="search" placeholder="Search by resource or location">
-      <select id="historyRange">
-        <option value="all">All time</option>
-        <option value="7d">Last 7 days</option>
-        <option value="30d">Last 30 days</option>
-        <option value="today">Today</option>
-      </select>
-      <button id="historyRefresh" class="btn">Refresh</button>
-    </section>
-
-    <section class="history-summary" aria-label="Access history summary">
-      <div class="summary-card">
-        <div class="summary-label">Visible taps</div>
-        <div id="historyCount" class="summary-value">0</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-label">Last tap</div>
-        <div id="historyLastTap" class="summary-value summary-value-small">—</div>
-      </div>
-    </section>
-
-    <section class="panel access-list-panel" aria-labelledby="accessHistoryTitle">
-      <h3 id="accessHistoryTitle">Recent RFID Taps</h3>
-      <p id="historyHelp" class="small-muted">Loading…</p>
-
-      <ul id="accessHistoryList" class="access-list" aria-live="polite"></ul>
-      <p id="historyEmpty" class="small-muted" style="display:none;">No RFID taps found yet.</p>
-      <p id="historyErr" class="small-muted" style="display:none;"></p>
-    </section>
-  </div>
-
-  <script type="module" src="JS/accesshistory.js"></script>
+  <div id="accessHistoryReactRoot"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="module" src="JS/react-accesshistory/access-history-page.js"></script>
 </body>
 </html>

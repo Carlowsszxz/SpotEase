@@ -5,6 +5,24 @@ import { supabase } from './supabase-auth.js'
   const ok = await checkAuth('FrameLogin.html');
   if(!ok) return;
 
+  var MANILA_TIMEZONE = 'Asia/Manila';
+  var MANILA_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+    timeZone: MANILA_TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+  var MANILA_DATE_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+    timeZone: MANILA_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
   var listEl = document.getElementById('accessHistoryList');
   var helpEl = document.getElementById('historyHelp');
   var emptyEl = document.getElementById('historyEmpty');
@@ -17,6 +35,12 @@ import { supabase } from './supabase-auth.js'
 
   var allRows = [];
   var resourceMap = {};
+
+  function manilaDateKey(dateLike){
+    var d = new Date(dateLike);
+    if(isNaN(d.getTime())) return '';
+    return MANILA_DATE_KEY_FORMATTER.format(d);
+  }
 
   function formatWhen(ts){
     if(!ts) return '—';
@@ -32,7 +56,7 @@ import { supabase } from './supabase-auth.js'
 
     var d = new Date(s);
     if(isNaN(d.getTime())) return (typeof raw === 'string') ? raw : '—';
-    return d.toLocaleString();
+    return MANILA_DATE_TIME_FORMATTER.format(d);
   }
 
   function setError(text){
@@ -107,9 +131,7 @@ import { supabase } from './supabase-auth.js'
         var d = new Date(row.scanned_at);
         if(isNaN(d.getTime())) return false;
         if(range === 'today'){
-          var start = new Date();
-          start.setHours(0,0,0,0);
-          if(d.getTime() < start.getTime()) return false;
+          if(manilaDateKey(d) !== manilaDateKey(Date.now())) return false;
         } else if(range === '7d'){
           if(now - d.getTime() > 7 * 24 * 60 * 60 * 1000) return false;
         } else if(range === '30d'){

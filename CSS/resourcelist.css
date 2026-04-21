@@ -31,7 +31,7 @@
 .rl-controls {
 	display: flex;
 	gap: 10px;
-	align-items: end;
+	align-items: center;
 	margin: 18px 0 12px;
 	flex-wrap: wrap;
 	padding: 12px;
@@ -42,14 +42,36 @@
 .rl-controls input[type=search] {
 	flex: 1;
 	min-width: 220px;
+	height: 52px;
+	padding: 0 14px;
+	line-height: 52px;
+	appearance: none;
+	-webkit-appearance: none;
 }
 
 .rl-controls select {
 	min-width: 160px;
+	height: 52px;
+	padding: 0 12px;
 }
 
 .rl-controls .btn {
-	align-self: end;
+	height: 52px;
+	padding: 0 18px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rl-footbar{
+	margin-top:16px;
+	display:flex;
+	gap:8px;
+	align-items:center;
+}
+
+.rl-last-updated{
+	font-size:12px;
 }
 
 .rl-summary{

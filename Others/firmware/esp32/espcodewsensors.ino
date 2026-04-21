@@ -22,11 +22,11 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
-#define ENTRY_TRIG_PIN 27
-#define ENTRY_ECHO_PIN 35
+#define ENTRY_TRIG_PIN 23
+#define ENTRY_ECHO_PIN 22
 
-#define EXIT_TRIG_PIN 23
-#define EXIT_ECHO_PIN 22
+#define EXIT_TRIG_PIN 27
+#define EXIT_ECHO_PIN 35
 
 // --------- RFID (RC522) ---------
 // Wiring (RC522 -> ESP32)
@@ -77,8 +77,8 @@ const char* BLE_SENSOR_IDENTIFIER = "doorA_entry";
 const char* BLE_SENSOR_SECRET = "ENTRY_SECRET";
 
 // --------- BLE LOGIC ---------
-static const bool BLE_ENABLED = true;
-static const bool RFID_ENABLED = true;
+static const bool BLE_ENABLED = !OCCUPANCY_ONLY_DIAGNOSTICS;
+static const bool RFID_ENABLED = !OCCUPANCY_ONLY_DIAGNOSTICS;
 static const bool DEBUG_BLE = true;
 static const unsigned long BLE_SCAN_EVERY_MS = 10000;
 static const uint32_t BLE_SCAN_SECONDS = 2;
@@ -106,6 +106,8 @@ const int REQUIRED_HITS = 1;
 const unsigned long REARM_DELAY_MS = 500;
 const unsigned long DOOR_EVENT_COOLDOWN_MS = 250;
 const unsigned long AMBIGUOUS_WINDOW_MS = 200; // if both sensors trigger within this window, treat as no-op
+// If a user taps RFID then immediately crosses entry beam, suppress one entry count to avoid double counting.
+const unsigned long RFID_ENTRY_SUPPRESS_MS = 2500;
 
 // --------- DEBUG ---------
 static const bool DEBUG_HTTP = true;
@@ -121,6 +123,8 @@ static unsigned long lastHeartbeatMs = 0;
 static unsigned long lastDoorEventMs = 0;
 static unsigned long lastRfidDiagMs = 0;
 static const unsigned long RFID_DIAG_EVERY_MS = 2000;
+static volatile unsigned long lastRfidScanMs = 0;
+static volatile bool suppressNextEntryFromRfid = false;
 static unsigned long nextHttpAttemptAtMs = 0;
 static int8_t lastOccupancyQueuedChange = 0;
 static unsigned long lastOccupancyQueuedAtMs = 0;
@@ -901,7 +905,18 @@ static void senderTask(void*) {
     }
 
     if (!ok) {
-      if (ev.type == EVT_BLE && ev.retryCount < 3 && outboundQueue) {
+      if (ev.type == EVT_RFID && ev.retryCount < 6 && outboundQueue) {
+        OutboundEvent retryEv = ev;
+        retryEv.retryCount++;
+        if (xQueueSend(outboundQueue, &retryEv, 0) == pdTRUE) {
+          if (DEBUG_HTTP || DEBUG_RFID) {
+            Serial.print("Requeued RFID event retry #");
+            Serial.println(retryEv.retryCount);
+          }
+        } else {
+          Serial.println("RFID retry queue full; dropping RFID event");
+        }
+      } else if (ev.type == EVT_BLE && ev.retryCount < 3 && outboundQueue) {
         OutboundEvent retryEv = ev;
         retryEv.retryCount++;
         if (xQueueSend(outboundQueue, &retryEv, 0) == pdTRUE) {
@@ -1052,6 +1067,10 @@ void setup() {
 void loop() {
   unsigned long now = millis();
 
+  if (suppressNextEntryFromRfid && (now - lastRfidScanMs) > RFID_ENTRY_SUPPRESS_MS) {
+    suppressNextEntryFromRfid = false;
+  }
+
   if (DEBUG_HEARTBEAT && (now - lastHeartbeatMs) > 3000) {
     lastHeartbeatMs = now;
     Serial.print("Heartbeat | WiFi: ");
@@ -1111,6 +1130,14 @@ void loop() {
     // If not cancelled, commit after the window expires.
     if (pendingDir != PENDING_NONE && (now - pendingSinceMs) >= AMBIGUOUS_WINDOW_MS) {
       if (pendingDir == PENDING_ENTRY) {
+        if (suppressNextEntryFromRfid && (now - lastRfidScanMs) <= RFID_ENTRY_SUPPRESS_MS) {
+          suppressNextEntryFromRfid = false;
+          Serial.println("Entry suppressed after RFID tap (dedupe)");
+          disarmBothAndCooldown(now);
+          delay(10);
+          return;
+        }
+
         peopleInside++;
         Serial.print("Person entered | Count: ");
         Serial.println(peopleInside);
@@ -1147,6 +1174,14 @@ void loop() {
         Serial.println("Both sensors triggered; ignoring (no count change)");
         disarmBothAndCooldown(now);
       } else if (entryTrigger) {
+        if (suppressNextEntryFromRfid && (now - lastRfidScanMs) <= RFID_ENTRY_SUPPRESS_MS) {
+          suppressNextEntryFromRfid = false;
+          Serial.println("Entry trigger ignored after RFID tap (dedupe)");
+          disarmBothAndCooldown(now);
+          delay(10);
+          return;
+        }
+
         // Delay commit briefly: if the other sensor triggers within AMBIGUOUS_WINDOW_MS, we'll cancel.
         pendingDir = PENDING_ENTRY;
         pendingSinceMs = now;
@@ -1208,6 +1243,8 @@ static void pollRfid(unsigned long now) {
 
   lastRfidUid = uidHex;
   lastRfidSeenMs = now;
+  lastRfidScanMs = now;
+  suppressNextEntryFromRfid = true;
 
   Serial.print("RFID scan UID: ");
   Serial.println(uidHex);
