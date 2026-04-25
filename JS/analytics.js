@@ -1,4 +1,4 @@
-/* Analytics: fetch data from resource_usage_stats and reservations tables */
+/* Analytics: telemetry-focused dashboard (ultrasonic + RFID) */
 import { supabase } from './supabase-auth.js'
 
 (async function analytics(){
@@ -7,24 +7,16 @@ import { supabase } from './supabase-auth.js'
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    var usageCanvas = document.getElementById('usageChart');
-    var peakCanvas = document.getElementById('peakChart');
     var ultrasonicPeakCanvas = document.getElementById('ultrasonicPeakChart');
     var rfidPeakCanvas = document.getElementById('rfidPeakChart');
-    var usageChartSummary = document.getElementById('usageChartSummary');
-    var peakChartSummary = document.getElementById('peakChartSummary');
     var ultrasonicPeakSummary = document.getElementById('ultrasonicPeakSummary');
     var rfidPeakSummary = document.getElementById('rfidPeakSummary');
     var insightsList = document.getElementById('insightsList');
     var maintenanceSuggestions = document.getElementById('maintenanceSuggestions');
-    var exportBtn = document.getElementById('exportCsv');
-    
-    console.log('Elements found:', {
-      usageCanvas: usageCanvas,
-      peakCanvas: peakCanvas, 
-      insightsList: insightsList,
-      exportBtn: exportBtn
-    });
+    var kpiUltrasonicRecords = document.getElementById('kpiUltrasonicRecords');
+    var kpiRfidRecords = document.getElementById('kpiRfidRecords');
+    var kpiUltrasonicPeak = document.getElementById('kpiUltrasonicPeak');
+    var kpiRfidPeak = document.getElementById('kpiRfidPeak');
 
     function formatHourLabel(hour){
       var h = Number(hour);
@@ -40,6 +32,9 @@ import { supabase } from './supabase-auth.js'
         return { peakHour: null, peakValue: 0, total: 0 };
       }
       var peakValue = Math.max.apply(null, values.concat([0]));
+      if (peakValue <= 0) {
+        return { peakHour: null, peakValue: 0, total: values.reduce(function(sum, value){ return sum + value; }, 0) };
+      }
       var peakHour = values.indexOf(peakValue);
       var total = values.reduce(function(sum, value){ return sum + value; }, 0);
       return { peakHour: peakHour, peakValue: peakValue, total: total };
@@ -50,21 +45,9 @@ import { supabase } from './supabase-auth.js'
       el.textContent = text;
     }
 
-    // Load resource usage stats
-    async function loadUsageStats(){
-      try {
-        const { data, error } = await supabase
-          .from('resource_usage_stats')
-          .select('*')
-          .order('date', { ascending: true })
-          .limit(14);
-        
-        if (error) throw error;
-        return data || [];
-      } catch (err) {
-        console.error('Error loading usage stats:', err);
-        return [];
-      }
+    function setKpi(el, text){
+      if (!el) return;
+      el.textContent = text;
     }
 
     function getPayloadObject(row){
@@ -247,36 +230,9 @@ import { supabase } from './supabase-auth.js'
       return peakHours;
     }
 
-    // Generate AI maintenance suggestions
-    function generateMaintenanceSuggestions(stats, ultrasonicReadings, rfidTaps){
+    // Generate telemetry maintenance suggestions
+    function generateMaintenanceSuggestions(ultrasonicReadings, rfidTaps){
       var suggestions = [];
-      
-      // Analyze peak hours to find quietest times
-      var peakHours = new Array(24).fill(0);
-      stats.forEach(function(s){
-        if (s.peak_usage_time){
-          var h = new Date(s.peak_usage_time).getHours();
-          if (!isNaN(h)) peakHours[h]++;
-        }
-      });
-      
-      var quietestHours = [];
-      var minCount = Math.min.apply(null, peakHours);
-      peakHours.forEach(function(count, hour){
-        if (count === minCount) quietestHours.push(hour);
-      });
-      
-      if (quietestHours.length > 0){
-        var quietestHourStr = quietestHours.slice(0, 3).map(function(h){
-          return h + ':00';
-        }).join(', ');
-        suggestions.push({
-          type: 'optimal-window',
-          title: 'Optimal Maintenance Window',
-          description: 'Best times for maintenance: ' + quietestHourStr + '. Usage is lowest during these hours.',
-          priority: 'high'
-        });
-      }
       
       // Analyze ultrasonic sensor health
       if (ultrasonicReadings && ultrasonicReadings.length > 0){
@@ -292,14 +248,14 @@ import { supabase } from './supabase-auth.js'
           if (avgUltrasonic > 80){
             suggestions.push({
               type: 'sensor-health',
-              title: '⚠ Ultrasonic Sensor Alert',
+              title: 'Ultrasonic Sensor Attention',
               description: 'Average sensor reading is high (' + avgUltrasonic.toFixed(1) + 'cm). Consider cleaning or calibrating sensors.',
               priority: 'medium'
             });
           }else{
             suggestions.push({
               type: 'sensor-health',
-              title: '✓ Ultrasonic Sensors Normal',
+              title: 'Ultrasonic Sensors Normal',
               description: 'Average reading: ' + avgUltrasonic.toFixed(1) + 'cm. Sensors operating normally.',
               priority: 'low'
             });
@@ -307,9 +263,8 @@ import { supabase } from './supabase-auth.js'
         }
       }
       
-      // Analyze RFID activity
+      // Analyze RFID activity pattern
       if (rfidTaps && rfidTaps.length > 0){
-        // Check for unusual patterns
         var rfidByHour = new Array(24).fill(0);
         rfidTaps.forEach(function(tap){
           var tapDate = getRecordDate(tap);
@@ -322,43 +277,17 @@ import { supabase } from './supabase-auth.js'
         var maxRfidHour = rfidByHour.indexOf(Math.max.apply(null, rfidByHour));
         suggestions.push({
           type: 'rfid-pattern',
-          title: '📊 RFID Peak Activity',
-          description: 'Peak RFID activity at ' + maxRfidHour + ':00 (' + rfidByHour[maxRfidHour] + ' taps). Coordinate maintenance outside this window.',
+          title: 'RFID Peak Activity',
+          description: 'Peak RFID activity at ' + formatHourLabel(maxRfidHour) + ' (' + rfidByHour[maxRfidHour] + ' taps). Coordinate checks outside this window.',
           priority: 'medium'
         });
       }
-      
-      // Usage trend analysis
-      if (stats.length >= 7){
-        var recentAvg = stats.slice(-7).reduce(function(sum, s){
-          return sum + (s.total_reservations || 0);
-        }, 0) / 7;
-        var previousAvg = stats.slice(-14, -7).reduce(function(sum, s){
-          return sum + (s.total_reservations || 0);
-        }, 0) / 7;
-        
-        if (recentAvg > previousAvg * 1.2){
-          suggestions.push({
-            type: 'usage-trend',
-            title: 'Increased Usage',
-            description: 'Usage trending up (↑ ' + Math.round((recentAvg - previousAvg) / previousAvg * 100) + '%). More frequent maintenance may be needed.',
-            priority: 'medium'
-          });
-        }else if (recentAvg < previousAvg * 0.8){
-          suggestions.push({
-            type: 'usage-trend',
-            title: 'Low Usage Period',
-            description: 'Usage trending down. Good time for preventive maintenance.',
-            priority: 'high'
-          });
-        }
-      }
-      
+
       // General recommendations
       suggestions.push({
         type: 'general',
-        title: 'General Maintenance Tips',
-        description: 'Schedule regular calibration during quiet hours. Check battery levels on wireless sensors. Verify RFID reader antenna connections.',
+        title: 'General Telemetry Checks',
+        description: 'Verify sensor calibration, inspect RFID reader connections, and monitor unusual drops in telemetry volume.',
         priority: 'low'
       });
       
@@ -386,119 +315,9 @@ import { supabase } from './supabase-auth.js'
         maintenanceSuggestions.appendChild(div);
       });
     }
-    async function loadReservations(){
-      try {
-        const { data, error } = await supabase
-          .from('reservations')
-          .select(`
-            id,
-            status,
-            reserved_from,
-            reserved_until,
-            resources:resource_id(name)
-          `)
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data || [];
-      } catch (err) {
-        console.error('Error loading reservations:', err);
-        return [];
-      }
-    }
-
-    // Draw line chart
-    function drawLineChart(canvas, labels, values){
-      console.log('drawLineChart called with canvas:', canvas, 'labels:', labels, 'values:', values);
-      if(!canvas) {
-        console.error('Canvas not found for line chart');
-        return;
-      }
-      var ctx = canvas.getContext('2d');
-      if (!ctx) {
-        console.error('Could not get 2D context for line chart');
-        return;
-      }
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      var w = canvas.width, h = canvas.height;
-      var max = Math.max.apply(null, values.concat([1]));
-      var left = 46;
-      var right = 14;
-      var top = 14;
-      var bottom = 34;
-      var chartW = w - left - right;
-      var chartH = h - top - bottom;
-      console.log('Chart dimensions: width=' + w + ', height=' + h + ', max value=' + max);
-
-      var styles = getComputedStyle(document.documentElement);
-      var axisColor = (styles.getPropertyValue('--bt-border') || '#e6e9ef').trim();
-      var textColor = (styles.getPropertyValue('--bt-muted-foreground') || '#334155').trim();
-      var accentColor = (styles.getPropertyValue('--bt-accent') || '#2563eb').trim();
-
-      // draw y grid + tick labels
-      ctx.strokeStyle = axisColor;
-      ctx.lineWidth = 1;
-      ctx.font = '11px sans-serif';
-      ctx.fillStyle = textColor;
-      [0, 0.5, 1].forEach(function(ratio){
-        var y = top + chartH - chartH * ratio;
-        ctx.beginPath();
-        ctx.moveTo(left, y);
-        ctx.lineTo(left + chartW, y);
-        ctx.stroke();
-        var labelValue = Math.round(max * ratio);
-        ctx.fillText(String(labelValue), 8, y + 4);
-      });
-
-      // axes
-      ctx.beginPath();
-      ctx.moveTo(left, top);
-      ctx.lineTo(left, top + chartH);
-      ctx.lineTo(left + chartW, top + chartH);
-      ctx.stroke();
-      
-      // draw line
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      values.forEach(function(v, i){
-        var x = left + (i * chartW / (values.length - 1 || 1));
-        var y = top + chartH - ((v / max) * chartH);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-      
-      // draw points and labels
-      ctx.fillStyle = accentColor;
-      values.forEach(function(v, i){
-        var x = left + (i * chartW / (values.length - 1 || 1));
-        var y = top + chartH - ((v / max) * chartH);
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, Math.PI * 2);
-        ctx.fill();
-        if (i % Math.ceil(values.length / 10) === 0){
-          ctx.fillStyle = textColor;
-          ctx.font = '11px sans-serif';
-          ctx.fillText(labels[i], x - 12, h - 10);
-          ctx.fillStyle = accentColor;
-        }
-      });
-
-      // latest value callout
-      if (values.length > 0) {
-        var latest = values[values.length - 1];
-        ctx.fillStyle = textColor;
-        ctx.font = '11px sans-serif';
-        ctx.fillText('Latest: ' + latest, left + chartW - 78, top + 14);
-      }
-      console.log('Line chart drawn successfully');
-    }
-
     // Draw bar chart
     function drawBarChart(canvas, labels, values, options){
       options = options || {};
-      console.log('drawBarChart called with canvas:', canvas, 'labels:', labels, 'values:', values);
       if(!canvas) {
         console.error('Canvas not found for bar chart');
         return;
@@ -524,7 +343,6 @@ import { supabase } from './supabase-auth.js'
       var axisColor = (styles.getPropertyValue('--bt-border') || '#e6e9ef').trim();
       var textColor = (styles.getPropertyValue('--bt-muted-foreground') || '#334155').trim();
       var accentColor = (styles.getPropertyValue('--bt-accent') || '#2563eb').trim();
-      console.log('Bar chart dimensions: width=' + w + ', height=' + h + ', barWidth=' + barW + ', max value=' + max);
 
       // y grid + ticks
       ctx.strokeStyle = axisColor;
@@ -575,108 +393,43 @@ import { supabase } from './supabase-auth.js'
         ctx.font = '11px sans-serif';
         ctx.fillText('Peak: ' + peakLabel + ' (' + peak.peakValue + ')', left + chartW - 120, top + 14);
       }
-      console.log('Bar chart drawn successfully');
     }
 
-    // Generate insights from usage stats
-    function generateInsights(stats){
+    // Generate telemetry insights
+    function generateInsights(ultrasonicReadings, rfidTaps){
       var insights = [];
-      
-      if (stats.length === 0){
-        insights.push('No usage data available to analyze.');
+
+      if ((!ultrasonicReadings || ultrasonicReadings.length === 0) && (!rfidTaps || rfidTaps.length === 0)){
+        insights.push('No ultrasonic or RFID activity data is currently available.');
         return insights;
       }
-      
-      // Total reservations
-      var totalReservations = stats.reduce(function(sum, s){ return sum + (s.total_reservations || 0); }, 0);
-      insights.push('Total reservations (last 14 days): ' + totalReservations);
-      
-      // Average per day
-      var avgPerDay = Math.round(totalReservations / stats.length);
-      insights.push('Average per day: ' + avgPerDay + ' reservations');
-      
-      // Peak usage
-      var peakDay = stats.reduce(function(max, s){ 
-        return (s.total_reservations || 0) > (max.total_reservations || 0) ? s : max; 
-      });
-      if (peakDay.date){
-        insights.push('Peak usage day: ' + peakDay.date + ' with ' + peakDay.total_reservations + ' reservations');
+
+      var ultrasonicCount = ultrasonicReadings ? ultrasonicReadings.length : 0;
+      var rfidCount = rfidTaps ? rfidTaps.length : 0;
+      insights.push('Ultrasonic records loaded: ' + ultrasonicCount + '.');
+      insights.push('RFID records loaded: ' + rfidCount + '.');
+
+      if (ultrasonicCount > 0){
+        var ultrasonicValues = ultrasonicReadings
+          .map(getUltrasonicDistanceCm)
+          .filter(function(v){ return typeof v === 'number' && !isNaN(v); });
+        if (ultrasonicValues.length > 0){
+          var avgUltrasonic = ultrasonicValues.reduce(function(a, b){ return a + b; }, 0) / ultrasonicValues.length;
+          insights.push('Average ultrasonic distance: ' + avgUltrasonic.toFixed(1) + ' cm.');
+        }
       }
-      
-      // Average occupancy duration
-      var durations = stats.filter(function(s){ return s.avg_occupancy_duration; }).map(function(s){ return s.avg_occupancy_duration; });
-      if (durations.length > 0){
-        var avgDuration = (durations.reduce(function(a, b){ return a + b; }, 0) / durations.length).toFixed(1);
-        insights.push('Average occupancy duration: ' + avgDuration + ' hours');
+
+      if (rfidCount > 0){
+        var latestRfid = rfidTaps[0] ? getRecordDate(rfidTaps[0]) : null;
+        if (latestRfid) insights.push('Latest RFID activity: ' + latestRfid.toLocaleString() + '.');
       }
-      
+
       return insights;
     }
 
-    // Export CSV
-    function exportCSV(reservations){
-      var rows = [['ID', 'Resource', 'From', 'Until', 'Status']];
-      reservations.forEach(function(r){
-        var resourceName = r.resources ? r.resources.name : 'Unknown';
-        var from = r.reserved_from ? new Date(r.reserved_from).toLocaleString() : '';
-        var until = r.reserved_until ? new Date(r.reserved_until).toLocaleString() : '';
-        rows.push([r.id, resourceName, from, until, r.status || '']);
-      });
-      
-      var csv = rows.map(function(r){
-        return r.map(function(c){
-          return '"' + String(c).replace(/"/g, '""') + '"';
-        }).join(',');
-      }).join('\n');
-      
-      var blob = new Blob([csv], {type: 'text/csv'});
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'reservations.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    // Load and display data
-    var stats = await loadUsageStats();
+    // Load and display telemetry data
     var ultrasonicReadings = await loadUltrasonicReadings();
     var rfidTaps = await loadRfidTaps();
-    
-    console.log('Usage stats loaded:', stats);
-    console.log('Ultrasonic readings loaded:', ultrasonicReadings.length);
-    console.log('RFID taps loaded:', rfidTaps.length);
-    
-    // If no data, show message and use sample data for demo
-    if (stats.length === 0) {
-      console.warn('No resource_usage_stats data found. Using sample data for demo.');
-      if (insightsList) {
-        var noDataMsg = document.createElement('div');
-        noDataMsg.className = 'insight';
-        noDataMsg.textContent = 'No usage data available. Please ensure resource_usage_stats table is populated.';
-        insightsList.appendChild(noDataMsg);
-      }
-      
-      // Use sample data for demonstration
-      stats = [
-        { date: '2026-02-21', total_reservations: 8, avg_occupancy_duration: 2.5, peak_usage_time: '2026-02-21T14:00:00' },
-        { date: '2026-02-22', total_reservations: 12, avg_occupancy_duration: 2.8, peak_usage_time: '2026-02-22T15:30:00' },
-        { date: '2026-02-23', total_reservations: 5, avg_occupancy_duration: 1.9, peak_usage_time: '2026-02-23T10:00:00' },
-        { date: '2026-02-24', total_reservations: 15, avg_occupancy_duration: 3.2, peak_usage_time: '2026-02-24T13:00:00' },
-        { date: '2026-02-25', total_reservations: 18, avg_occupancy_duration: 3.5, peak_usage_time: '2026-02-25T14:30:00' },
-        { date: '2026-02-26', total_reservations: 22, avg_occupancy_duration: 3.8, peak_usage_time: '2026-02-26T12:00:00' },
-        { date: '2026-02-27', total_reservations: 9, avg_occupancy_duration: 2.1, peak_usage_time: '2026-02-27T16:00:00' },
-        { date: '2026-02-28', total_reservations: 14, avg_occupancy_duration: 2.9, peak_usage_time: '2026-02-28T15:00:00' },
-        { date: '2026-03-01', total_reservations: 16, avg_occupancy_duration: 3.1, peak_usage_time: '2026-03-01T14:00:00' },
-        { date: '2026-03-02', total_reservations: 20, avg_occupancy_duration: 3.4, peak_usage_time: '2026-03-02T13:30:00' },
-        { date: '2026-03-03', total_reservations: 11, avg_occupancy_duration: 2.6, peak_usage_time: '2026-03-03T11:00:00' },
-        { date: '2026-03-04', total_reservations: 17, avg_occupancy_duration: 3.0, peak_usage_time: '2026-03-04T14:00:00' },
-        { date: '2026-03-05', total_reservations: 24, avg_occupancy_duration: 3.9, peak_usage_time: '2026-03-05T15:00:00' },
-        { date: '2026-03-06', total_reservations: 19, avg_occupancy_duration: 3.3, peak_usage_time: '2026-03-06T12:30:00' }
-      ];
-    }
     
     // Resize canvas to fit containers
     function resizeCanvas(canvas) {
@@ -684,58 +437,29 @@ import { supabase } from './supabase-auth.js'
       var rect = canvas.parentElement.getBoundingClientRect();
       canvas.width = rect.width - 32; // Account for padding
       canvas.height = 240;
-      console.log('Canvas resized:', { width: canvas.width, height: canvas.height });
     }
     
     // Resize both canvases
-    resizeCanvas(usageCanvas);
-    resizeCanvas(peakCanvas);
     resizeCanvas(ultrasonicPeakCanvas);
     resizeCanvas(rfidPeakCanvas);
-    
-    // Usage over time chart
-    var dates = stats.map(function(s){ return s.date; });
-    var counts = stats.map(function(s){ return s.total_reservations || 0; });
-    console.log('Drawing usage chart with dates:', dates, 'counts:', counts);
-    drawLineChart(usageCanvas, dates, counts);
 
-    // Peak hours chart (hours of day derived from peak_usage_time)
-    var peakHours = new Array(24).fill(0);
-    stats.forEach(function(s){
-      if (s.peak_usage_time){
-        var h = new Date(s.peak_usage_time).getHours();
-        if (!isNaN(h)) peakHours[h]++;
-      }
-    });
-    var hourLabels = peakHours.map(function(_, i){ return formatHourLabel(i); });
-    console.log('Drawing peak hours chart with hours:', hourLabels, 'values:', peakHours);
-    drawBarChart(peakCanvas, hourLabels, peakHours, { isHourly: true });
+    var hourLabels = new Array(24).fill(0).map(function(_, i){ return formatHourLabel(i); });
 
     // Ultrasonic peak hours chart
     var ultrasonicPeakHours = calculatePeakHours(ultrasonicReadings, 'timestamp');
-    console.log('Drawing ultrasonic peak chart:', ultrasonicPeakHours);
     drawBarChart(ultrasonicPeakCanvas, hourLabels, ultrasonicPeakHours, { isHourly: true });
 
     // RFID peak hours chart
     var rfidPeakHours = calculatePeakHours(rfidTaps, 'timestamp');
-    console.log('Drawing RFID peak chart:', rfidPeakHours);
     drawBarChart(rfidPeakCanvas, hourLabels, rfidPeakHours, { isHourly: true });
 
-    var reservationPeaks = getPeakInfo(peakHours);
     var ultrasonicPeaks = getPeakInfo(ultrasonicPeakHours);
     var rfidPeaks = getPeakInfo(rfidPeakHours);
-    var usageMax = Math.max.apply(null, counts.concat([0]));
-    var usageMin = Math.min.apply(null, counts.concat([0]));
-    setSummary(
-      usageChartSummary,
-      'Last 14 days: highest ' + usageMax + ', lowest ' + usageMin + ', average ' + (counts.length ? (counts.reduce(function(a, b){ return a + b; }, 0) / counts.length).toFixed(1) : '0') + ' reservations/day.'
-    );
-    setSummary(
-      peakChartSummary,
-      reservationPeaks.peakHour !== null
-        ? 'Reservation peak hour: ' + formatHourLabel(reservationPeaks.peakHour) + ' (' + reservationPeaks.peakValue + ' peak-day hits).'
-        : 'No reservation peak-hour data yet.'
-    );
+    setKpi(kpiUltrasonicRecords, String(ultrasonicReadings ? ultrasonicReadings.length : 0));
+    setKpi(kpiRfidRecords, String(rfidTaps ? rfidTaps.length : 0));
+    setKpi(kpiUltrasonicPeak, ultrasonicPeaks.peakHour !== null ? formatHourLabel(ultrasonicPeaks.peakHour) : '—');
+    setKpi(kpiRfidPeak, rfidPeaks.peakHour !== null ? formatHourLabel(rfidPeaks.peakHour) : '—');
+
     setSummary(
       ultrasonicPeakSummary,
       ultrasonicPeaks.peakHour !== null && ultrasonicPeaks.peakValue > 0
@@ -749,21 +473,16 @@ import { supabase } from './supabase-auth.js'
         : 'No RFID activity grouped by hour yet.'
     );
 
-    // Define redraw function (has access to dates, counts, hourLabels, peakHours via closure)
+    // Redraw on resize
     function redrawCharts() {
-      resizeCanvas(usageCanvas);
-      resizeCanvas(peakCanvas);
       resizeCanvas(ultrasonicPeakCanvas);
       resizeCanvas(rfidPeakCanvas);
-      drawLineChart(usageCanvas, dates, counts);
-      drawBarChart(peakCanvas, hourLabels, peakHours, { isHourly: true });
       drawBarChart(ultrasonicPeakCanvas, hourLabels, ultrasonicPeakHours, { isHourly: true });
       drawBarChart(rfidPeakCanvas, hourLabels, rfidPeakHours, { isHourly: true });
     }
 
     // Insights
-    var insights = generateInsights(stats);
-    console.log('Generated insights:', insights);
+    var insights = generateInsights(ultrasonicReadings, rfidTaps);
     if (insightsList){
       insightsList.innerHTML = '';
       insights.forEach(function(s){
@@ -774,19 +493,9 @@ import { supabase } from './supabase-auth.js'
       });
     }
 
-    // Maintenance suggestions
-    var maintenanceSugs = generateMaintenanceSuggestions(stats, ultrasonicReadings, rfidTaps);
-    console.log('Generated maintenance suggestions:', maintenanceSugs);
+    // Telemetry suggestions
+    var maintenanceSugs = generateMaintenanceSuggestions(ultrasonicReadings, rfidTaps);
     renderMaintenanceSuggestions(maintenanceSugs);
-
-    // CSV export
-    if (exportBtn){
-      exportBtn.addEventListener('click', async function(){
-        var reservations = await loadReservations();
-        console.log('Exporting reservations:', reservations);
-        exportCSV(reservations);
-      });
-    }
 
     // Handle window resize
     window.addEventListener('resize', redrawCharts);

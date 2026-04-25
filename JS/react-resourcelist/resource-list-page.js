@@ -8223,7 +8223,7 @@ var S, C, w, te, ne, T, re = s((() => {
 				window.open("FrameMap.html", "_blank");
 			} catch {}
 			window.setTimeout(() => {
-				alert(`${e.name}\n${e.type} • ${e.location}\nStatus: ${e.status}`);
+				alert(`${e.name}\n${o(e.type)} • ${e.location}\nStatus: ${o(e.status)}\n\nOpening map in a new tab.`);
 			}, 300);
 		}
 		return /* @__PURE__ */ (0, n.jsxs)(n.Fragment, { children: [/* @__PURE__ */ (0, n.jsxs)("div", {
@@ -8233,7 +8233,7 @@ var S, C, w, te, ne, T, re = s((() => {
 					className: "rl-header",
 					children: [/* @__PURE__ */ (0, n.jsx)("h1", { children: "Resources" }), /* @__PURE__ */ (0, n.jsx)("p", {
 						className: "small-muted",
-						children: "Browse and search available resources."
+						children: "Browse capacity, availability, and location details across active resources."
 					})]
 				}),
 				/* @__PURE__ */ (0, n.jsx)("div", {
@@ -8284,9 +8284,9 @@ var S, C, w, te, ne, T, re = s((() => {
 						}),
 						/* @__PURE__ */ (0, n.jsx)("button", {
 							type: "button",
-							className: "btn",
+							className: "btn btn-secondary",
 							onClick: E,
-							children: "Clear"
+							children: "Reset Filters"
 						})
 					]
 				}),
@@ -8337,7 +8337,7 @@ var S, C, w, te, ne, T, re = s((() => {
 						/* @__PURE__ */ (0, n.jsx)("th", { children: "Actions" })
 					] }) }), /* @__PURE__ */ (0, n.jsx)("tbody", { children: !d && se.length === 0 ? /* @__PURE__ */ (0, n.jsx)("tr", { children: /* @__PURE__ */ (0, n.jsx)("td", {
 						colSpan: 6,
-						children: "No resources found."
+						children: "No resources matched your current filters."
 					}) }) : se.map((e) => /* @__PURE__ */ (0, n.jsxs)("tr", { children: [
 						/* @__PURE__ */ (0, n.jsx)("td", { children: e.name }),
 						/* @__PURE__ */ (0, n.jsx)("td", { children: e.type }),
@@ -8351,7 +8351,7 @@ var S, C, w, te, ne, T, re = s((() => {
 							type: "button",
 							className: "action-btn action-view",
 							onClick: () => D(e),
-							children: "View"
+							children: "View Details"
 						}) })
 					] }, e.id)) })] })
 				}),
@@ -8359,9 +8359,9 @@ var S, C, w, te, ne, T, re = s((() => {
 					className: "rl-footbar",
 					children: [/* @__PURE__ */ (0, n.jsx)("button", {
 						type: "button",
-						className: "btn",
+						className: "btn btn-primary",
 						onClick: le,
-						children: "Retry"
+						children: "Refresh Data"
 					}), /* @__PURE__ */ (0, n.jsx)("div", {
 						className: "small-muted rl-last-updated",
 						children: _

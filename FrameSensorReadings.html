@@ -18,8 +18,10 @@
 
   <div class="sensor-page">
     <header>
-      <h1>Sensor Readings</h1>
-      <p class="small-muted">Inspect raw IoT sensor data for troubleshooting and validation.</p>
+      <div class="header-copy">
+        <h1>Sensor Readings</h1>
+        <p class="small-muted">Monitor sensor telemetry, detect stale devices, and review raw event payloads for diagnostics and validation.</p>
+      </div>
     </header>
 
     <section class="sr-health" aria-label="Resource health dashboard">
@@ -50,23 +52,29 @@
           </thead>
           <tbody id="healthTbody"></tbody>
         </table>
-        <p id="healthEmpty" class="small-muted" style="display:none; margin-top: 10px;">All sensors are reporting recently.</p>
+        <p id="healthEmpty" class="small-muted health-empty" style="display:none;">All sensors are reporting recently.</p>
       </div>
     </section>
 
     <section class="sr-filters">
-      <label>Sensor:
+      <label>Sensor
         <select id="filterSensor"><option value="all">All</option></select>
       </label>
-      <label>Resource:
+      <label>Resource
         <select id="filterResource"><option value="all">All</option></select>
       </label>
-      <label>From: <input type="date" id="filterFrom"></label>
-      <label>To: <input type="date" id="filterTo"></label>
-      <input id="filterKeyword" type="search" placeholder="Search payload or sensor id">
-      <button id="exportCsv" class="btn">Export CSV</button>
-      <button id="exportJson" class="btn">Export JSON</button>
-      <button id="toggleGraph" class="btn">Graph View</button>
+      <label>From
+        <input type="date" id="filterFrom">
+      </label>
+      <label>To
+        <input type="date" id="filterTo">
+      </label>
+      <label class="keyword-field">Keyword
+        <input id="filterKeyword" type="search" placeholder="Search by sensor, resource, or payload">
+      </label>
+      <button id="exportCsv" class="btn btn-secondary">Export CSV</button>
+      <button id="exportJson" class="btn btn-secondary">Export JSON</button>
+      <button id="toggleGraph" class="btn btn-primary">Show Graph</button>
     </section>
 
     <section class="sr-table">
@@ -79,13 +87,13 @@
     </section>
 
     <section class="sr-pagination">
-      <button id="prevPage" class="btn">Prev</button>
+      <button id="prevPage" class="btn btn-secondary">Previous</button>
       <span id="pageInfo">Page 1</span>
-      <button id="nextPage" class="btn">Next</button>
+      <button id="nextPage" class="btn btn-secondary">Next</button>
     </section>
 
     <section id="graphSection" class="sr-graph" style="display:none">
-      <h3>Graph</h3>
+      <h3>Telemetry Trend</h3>
       <canvas id="readingsChart" width="900" height="240"></canvas>
     </section>
   </div>

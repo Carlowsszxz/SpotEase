@@ -19,7 +19,7 @@
   <div class="presence-page">
     <header>
       <h1>Presence Roster</h1>
-      <p class="small-muted">Read-only overview of likely presence using RFID and BLE activity.</p>
+      <p class="small-muted">Operational overview of likely on-site presence based on RFID and BLE activity.</p>
     </header>
 
     <section class="shortcut-strip" aria-label="Presence roster quick links">
@@ -55,8 +55,8 @@
         </div>
       </div>
       <div class="toolbar-right">
-        <button id="presenceRefresh" class="btn">Refresh</button>
         <span id="presenceUpdated" class="small-muted">Updated: —</span>
+        <button id="presenceRefresh" class="btn btn-primary">Refresh</button>
       </div>
     </section>
 
@@ -83,11 +83,11 @@
       <div class="note-grid">
         <div>
           <strong>How it works</strong>
-          <p class="small-muted">The roster combines RFID scan recency and BLE presence sessions. If BLE is unavailable, it falls back to RFID history.</p>
+          <p class="small-muted">This roster combines RFID recency and BLE presence sessions. If BLE data is unavailable, it gracefully falls back to RFID history.</p>
         </div>
         <div>
           <strong>Status guide</strong>
-          <p class="small-muted">Likely Present means activity was seen within the selected window. Last Seen means the user was seen earlier, but not within that window.</p>
+          <p class="small-muted">Likely Present indicates activity within the selected window. Last Seen indicates activity occurred earlier, outside that window.</p>
         </div>
       </div>
     </section>
@@ -112,7 +112,7 @@
     </section>
 
     <section class="panel">
-      <h3>Recent BLE Scans (Expanded)</h3>
+      <h3>Recent BLE Scans</h3>
       <table class="presence-table" id="bleScansTable">
         <thead>
           <tr>
@@ -131,7 +131,7 @@
     </section>
 
     <section class="panel">
-      <h3>Person Presence (RFID + BLE)</h3>
+      <h3>People Presence (RFID + BLE)</h3>
       <table class="presence-table" id="presenceTable">
         <thead>
           <tr>

@@ -1,29 +1,41 @@
 /* Admin Panel (Bold Typography-aligned) */
 .admin-panel{
-	max-width: 1200px;
-	margin: 40px auto;
-	padding: 24px;
+	max-width: 1320px;
+	margin: 16px auto 28px;
+	padding: 30px;
+	border: 1px solid var(--bt-border);
+	background: var(--bt-card);
+	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
 }
 
 .admin-panel header{
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-end;
-	gap: 16px;
-	padding: 18px 0 12px;
+	align-items: flex-start;
+	gap: 22px;
+	padding: 6px 0 16px;
 	border-bottom: 1px solid var(--bt-border);
-	margin-bottom: 16px;
+	margin-bottom: 22px;
+}
+
+.header-copy{
+	max-width: 860px;
 }
 
 .admin-panel header h1{
 	margin: 0;
-	font-size: 44px;
+	font-size: 42px;
 	line-height: 1.05;
 	letter-spacing: -0.06em;
 	color: var(--bt-foreground);
 }
 
-.admin-panel header .small-muted{ margin: 6px 0 0; }
+.admin-panel header .small-muted{
+	margin: 8px 0 0;
+	max-width: 760px;
+	font-size: 14px;
+	line-height: 1.6;
+}
 
 .header-actions{
 	display:flex;
@@ -36,15 +48,27 @@
 .overview-stats{
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: 12px;
-	margin: 18px 0 14px;
+	gap: 14px;
+	margin: 12px 0 16px;
 }
 
 .overview-stat{
-	padding: 14px 16px;
+	position: relative;
+	padding: 16px 16px 14px;
 	border: 1px solid var(--bt-border);
-	background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), var(--bt-card);
-	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+	background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--bt-card);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+	border-radius: 10px;
+}
+
+.overview-stat::before{
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--bt-accent);
 }
 
 .overview-label,
@@ -59,8 +83,8 @@
 
 .overview-stat strong{
 	display: block;
-	margin: 8px 0 6px;
-	font-size: 28px;
+	margin: 10px 0 6px;
+	font-size: 32px;
 	line-height: 1;
 	letter-spacing: -0.04em;
 	color: var(--bt-foreground);
@@ -68,17 +92,33 @@
 
 .overview-hint{ text-transform: none; letter-spacing: 0.08em; }
 
+.panel-subtext{
+	margin: 0 0 12px;
+}
+
+.panel-msg{
+	margin-top: 10px;
+}
+
+.panel-spacer-sm{
+	margin-top: 12px;
+}
+
+.panel-spacer-bottom-sm{
+	margin-bottom: 12px;
+}
+
 /* Shortcut cards */
 .shortcut-strip{
 	display: grid;
 	grid-template-columns: repeat(5, minmax(0, 1fr));
-	gap: 10px;
-	margin: 0 0 16px;
+	gap: 12px;
+	margin: 0 0 18px;
 }
 
 .shortcut-card{
 	display: block;
-	padding: 14px 14px 12px;
+	padding: 14px;
 	border: 1px solid var(--bt-border);
 	background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--bt-card);
 	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
@@ -86,6 +126,7 @@
 	color: var(--bt-foreground);
 	transition: transform var(--bt-fast) var(--bt-ease), border-color var(--bt-fast) var(--bt-ease), background-color var(--bt-fast) var(--bt-ease);
 	border-radius: 10px;
+	min-height: 96px;
 }
 
 .shortcut-card:hover{
@@ -113,14 +154,14 @@
 	display: block;
 	color: var(--bt-muted-foreground);
 	font-size: 13px;
-	line-height: 1.45;
+	line-height: 1.5;
 }
 
 /* Layout */
 .admin-grid{
 	display: grid;
 	grid-template-columns: 2fr 1fr;
-	gap: 14px;
+	gap: 16px;
 	grid-template-areas:
 		"resources sensors"
 		"ble ble"
@@ -163,10 +204,12 @@
 
 .panel{
 	position: relative;
-	padding: 16px;
+	padding: 18px;
 	border: 1px solid var(--bt-border);
 	background: var(--bt-card);
 	color: var(--bt-foreground);
+	border-radius: 10px;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .panel::before{
@@ -186,13 +229,17 @@
 .security-panel h3,
 .notifications-panel h3,
 .overview-links-panel h3{
-	margin: 0 0 12px;
+	margin: 0 0 14px;
 	padding-top: 18px;
 	font-family: var(--bt-font-mono);
 	text-transform: uppercase;
 	letter-spacing: 0.16em;
 	font-size: 12px;
 	color: var(--bt-foreground);
+}
+
+.small-muted{
+	line-height: 1.55;
 }
 
 /* Security events list */
@@ -329,7 +376,7 @@ button.btn-logout{
 /* Controls */
 .resource-controls{
 	display: flex;
-	gap: 10px;
+	gap: 12px;
 	align-items: center;
 	flex-wrap: wrap;
 	margin-bottom: 12px;
@@ -342,7 +389,7 @@ button.btn-logout{
 
 .panel-actions-inline{
 	display: flex;
-	gap: 10px;
+	gap: 12px;
 	flex-wrap: wrap;
 	align-items: center;
 }
@@ -356,16 +403,19 @@ button.btn-logout{
 }
 
 .admin-panel .btn{
-	padding: 10px 12px;
+	appearance: none;
+	cursor: pointer;
+	padding: 10px 14px;
 	border-radius: 999px;
 	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
+	min-height: 40px;
 }
 
 .btn-secondary{
-	background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+	background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
 	border: 1px solid rgba(255,255,255,0.14);
 	color: var(--bt-foreground);
 }
@@ -378,6 +428,23 @@ button.btn-logout{
 }
 
 .btn-secondary:active{
+	transform: translateY(0);
+}
+
+.btn-primary{
+	background: var(--bt-accent);
+	border: 1px solid var(--bt-accent);
+	color: var(--bt-background);
+}
+
+.btn-primary:hover{
+	filter: brightness(1.05);
+	transform: translateY(-1px);
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.btn-logout:active{
 	transform: translateY(0);
 }
 
@@ -414,6 +481,41 @@ button.btn-logout{
 	transition: transform var(--bt-fast) var(--bt-ease), box-shadow var(--bt-fast) var(--bt-ease), background-color var(--bt-fast) var(--bt-ease), border-color var(--bt-fast) var(--bt-ease);
 }
 
+.admin-panel .btn:focus-visible,
+.shortcut-card:focus-visible,
+.analytics-links a:focus-visible,
+.resource-controls input[type="search"]:focus-visible{
+	outline: 2px solid var(--bt-accent);
+	outline-offset: 2px;
+}
+
+.export-actions{
+	margin-bottom: 12px;
+}
+
+.export-status{
+	margin-top: 8px;
+}
+
+.security-export-wrap{
+	margin-bottom: 12px;
+}
+
+.security-export-text{
+	width: 100%;
+	min-height: 200px;
+	font-family: var(--bt-font-mono);
+	font-size: 12px;
+	padding: 12px;
+	border: 1px solid var(--bt-border);
+	background: var(--bt-background);
+	color: var(--bt-foreground);
+}
+
+.security-copy-btn{
+	margin-top: 8px;
+}
+
 .header-actions .btn:hover,
 .resource-controls .btn:hover,
 .panel-actions-inline .btn:hover{
@@ -425,6 +527,7 @@ button.btn-logout{
 	border-top: 1px solid var(--bt-border);
 	max-height: 520px;
 	overflow: auto;
+	border-radius: 8px;
 }
 
 .resource-table{
@@ -454,6 +557,7 @@ button.btn-logout{
 	border-bottom: 1px solid var(--bt-border);
 	vertical-align: top;
 	color: var(--bt-foreground);
+	line-height: 1.45;
 }
 
 .resource-table tbody tr:hover{
@@ -545,6 +649,9 @@ button.btn-logout{
 .analytics-links a{
 	color: var(--bt-foreground);
 	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 0;
 }
 .analytics-links a:hover{ color: var(--bt-accent); }
 
@@ -561,6 +668,7 @@ button.btn-logout{
 .modal-panel .close-btn:hover{ color: var(--bt-foreground); }
 
 @media (max-width: 1024px){
+	.admin-panel{ padding: 22px; }
 	.overview-stats{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.shortcut-strip{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.admin-grid{
@@ -568,14 +676,18 @@ button.btn-logout{
 		grid-template-areas:
 			"resources"
 			"sensors"
+			"ble"
 			"analytics"
 			"security"
 			"notifications";
 	}
+	.header-actions{
+		margin-left: auto;
+	}
 }
 
 @media (max-width: 480px){
-	.admin-panel{ margin: 24px auto; padding: 18px; }
+	.admin-panel{ margin: 16px auto 20px; padding: 16px; }
 	.admin-panel header h1{ font-size: 36px; }
 	.overview-stats{ grid-template-columns: 1fr; }
 	.shortcut-strip{ grid-template-columns: 1fr; }

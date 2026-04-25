@@ -122,7 +122,7 @@ import {
 
       var movementHtml = ''
       if(!r.movement || !r.movement.length){
-        movementHtml = '<span class="small-muted">No RFID taps recorded.</span>'
+        movementHtml = '<span class="small-muted">No recent RFID taps recorded.</span>'
       } else {
         movementHtml = '<ul class="movement-list">' + r.movement.map(function(m){
           return '<li>' + escapeHtml(m.resource) + ' · ' + escapeHtml(formatWhen(m.when)) + '</li>'
@@ -328,7 +328,7 @@ import {
         bleScans = []
         if(bleScansError){
           bleScansError.style.display = 'block'
-          bleScansError.textContent = 'BLE scans are not configured yet (missing ble_scans table or policies).'
+          bleScansError.textContent = 'BLE scans are currently unavailable (ble_scans table or policies not configured).'
         }
       }
 
@@ -341,7 +341,7 @@ import {
       rowsAll = []
       render([])
       renderBleScans([])
-      setError('Unable to load presence roster: ' + (err.message || err))
+      setError('Unable to load Presence Roster right now. ' + (err.message || err))
     }finally{
       refreshInFlight = false
     }

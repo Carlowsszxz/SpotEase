@@ -90,7 +90,7 @@ import { fetchBleScans } from './services/admin-observability-data.js'
 
       if(tableBody.children.length === 0){
         const tr = document.createElement('tr')
-        tr.innerHTML = '<td colspan="5" class="small-muted">No resources match the current search.</td>'
+        tr.innerHTML = '<td colspan="5" class="small-muted">No resources matched your current filters.</td>'
         tableBody.appendChild(tr)
       }
 
@@ -104,7 +104,7 @@ import { fetchBleScans } from './services/admin-observability-data.js'
 
       if(!resources || resources.length === 0){
         const li = document.createElement('li')
-        li.innerHTML = '<div class="small-muted">No resource data available.</div>'
+        li.innerHTML = '<div class="small-muted">No resource data is currently available.</div>'
         sensorList.appendChild(li)
         return
       }
@@ -312,7 +312,7 @@ import { fetchBleScans } from './services/admin-observability-data.js'
 
       if(securityExportStatus){
         securityExportStatus.style.display = 'block'
-        securityExportStatus.textContent = 'Text ready to copy. Click "Copy to Clipboard" below.'
+        securityExportStatus.textContent = 'Export is ready. Click "Copy to Clipboard" to copy the report.'
         securityExportStatus.classList.remove('error')
       }
 
@@ -328,14 +328,14 @@ import { fetchBleScans } from './services/admin-observability-data.js'
 
         if(securityExportStatus){
           securityExportStatus.style.display = 'block'
-          securityExportStatus.textContent = '✓ Copied to clipboard.'
+          securityExportStatus.textContent = 'Copied to clipboard successfully.'
           securityExportStatus.classList.remove('error')
         }
       }catch(err){
         console.error('Copy failed:', err)
         if(securityExportStatus){
           securityExportStatus.style.display = 'block'
-          securityExportStatus.textContent = 'Copy failed. Please manually select and copy the text.'
+          securityExportStatus.textContent = 'Copy failed. Please select the report text and copy manually.'
           securityExportStatus.classList.add('error')
         }
       }
@@ -349,7 +349,7 @@ import { fetchBleScans } from './services/admin-observability-data.js'
       } catch (err) {
         console.error('Error loading resources:', err)
         if(tableBody){
-          tableBody.innerHTML = '<tr><td colspan="5" class="small-muted">Failed to load resources.</td></tr>'
+          tableBody.innerHTML = '<tr><td colspan="5" class="small-muted">Unable to load resources right now.</td></tr>'
         }
       }
     }
@@ -364,7 +364,7 @@ import { fetchBleScans } from './services/admin-observability-data.js'
         securityEventsList.innerHTML = ''
         if(noSecurityEvents){
           noSecurityEvents.style.display = 'block'
-          noSecurityEvents.textContent = 'Security events are not configured yet (missing database table/policies).'
+          noSecurityEvents.textContent = 'Security events are currently unavailable (database table or policies not configured).'
         }
       }
     }
@@ -391,7 +391,7 @@ import { fetchBleScans } from './services/admin-observability-data.js'
         bleOverviewList.innerHTML = ''
         if(bleOverviewEmpty){
           bleOverviewEmpty.style.display = 'block'
-          bleOverviewEmpty.textContent = 'BLE overview is not configured yet (missing ble_scans table or policies).'
+          bleOverviewEmpty.textContent = 'BLE overview is currently unavailable (ble_scans table or policies not configured).'
         }
       }
     }

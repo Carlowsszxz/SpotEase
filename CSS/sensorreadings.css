@@ -1,46 +1,71 @@
 /* Sensor Readings (Bold Typography-aligned) */
 .sensor-page{
-	max-width: 1200px;
-	margin: 40px auto;
-	padding: 24px;
+	max-width: 1320px;
+	margin: 16px auto 28px;
+	padding: 30px;
+	border: 1px solid var(--bt-border);
+	background: var(--bt-card);
+	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
 }
 
 .sensor-page header{
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-end;
-	gap: 16px;
-	padding: 18px 0 12px;
+	align-items: flex-start;
+	gap: 22px;
+	padding: 6px 0 16px;
 	border-bottom: 1px solid var(--bt-border);
-	margin-bottom: 16px;
+	margin-bottom: 22px;
+}
+
+.header-copy{
+	max-width: 860px;
 }
 
 .sensor-page header h1{
 	margin: 0;
-	font-size: 56px;
+	font-size: 44px;
 	line-height: 1.05;
 	letter-spacing: -0.06em;
 	color: var(--bt-foreground);
 }
 
-.sensor-page header .small-muted{ margin: 6px 0 0; }
+.sensor-page header .small-muted{
+	margin: 8px 0 0;
+	max-width: 760px;
+	font-size: 14px;
+	line-height: 1.6;
+}
 
 .sr-health{
-	margin: 14px 0 10px;
+	margin: 0 0 16px;
 	display: grid;
-	gap: 10px;
+	gap: 14px;
 }
 
 .health-grid{
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: 10px;
+	gap: 14px;
 }
 
 .health-card{
+	position: relative;
 	border: 1px solid var(--bt-border);
-	background: var(--bt-card);
-	padding: 12px;
+	background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--bt-card);
+	padding: 16px 16px 14px;
+	border-radius: 10px;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.health-card::before{
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--bt-accent);
 }
 
 .health-label{
@@ -52,26 +77,32 @@
 }
 
 .health-value{
-	margin-top: 6px;
-	font-size: 28px;
+	margin-top: 10px;
+	font-size: 32px;
 	line-height: 1;
-	letter-spacing: -0.03em;
+	letter-spacing: -0.04em;
 	color: var(--bt-foreground);
 }
 
 .health-table-wrap{
 	border: 1px solid var(--bt-border);
 	background: var(--bt-card);
-	padding: 12px;
+	padding: 16px;
+	border-radius: 10px;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .health-table-wrap h3{
-	margin: 0 0 10px;
+	margin: 0 0 12px;
 	font-family: var(--bt-font-mono);
 	text-transform: uppercase;
 	letter-spacing: 0.16em;
 	font-size: 12px;
 	color: var(--bt-foreground);
+}
+
+.health-empty{
+	margin-top: 10px;
 }
 
 .health-table{
@@ -107,20 +138,23 @@
 	letter-spacing: 0.14em;
 	font-size: 11px;
 	color: var(--bt-muted-foreground);
+	border-radius: 999px;
 }
 
-.health-status.stale{ color: var(--bt-foreground); }
+.health-status.stale{ color: var(--bt-accent); border-color: var(--bt-accent); }
 .health-status.nodata{ color: var(--bt-muted-foreground); }
 
 .sr-filters{
 	display: flex;
 	flex-wrap: wrap;
-	gap: 10px;
+	gap: 12px;
 	align-items: end;
-	margin: 18px 0 12px;
-	padding: 12px;
+	margin: 0 0 16px;
+	padding: 16px;
 	border: 1px solid var(--bt-border);
 	background: var(--bt-card);
+	border-radius: 10px;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .sr-filters label{
@@ -130,9 +164,63 @@
 	min-width: 160px;
 }
 
+.keyword-field{
+	flex: 1;
+	min-width: 240px;
+}
+
 .sr-filters input[type=search]{
 	flex: 1;
 	min-width: 220px;
+}
+
+.sr-filters .btn,
+.sr-pagination .btn,
+.payload-btn{
+	appearance: none;
+	cursor: pointer;
+	padding: 10px 14px;
+	min-height: 40px;
+	border-radius: 999px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-size: 11px;
+	line-height: 1.2;
+	transition: transform var(--bt-fast) var(--bt-ease), background-color var(--bt-fast) var(--bt-ease), border-color var(--bt-fast) var(--bt-ease), color var(--bt-fast) var(--bt-ease), box-shadow var(--bt-fast) var(--bt-ease);
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.sr-filters .btn:hover,
+.sr-pagination .btn:hover,
+.payload-btn:hover{
+	transform: translateY(-1px);
+}
+
+.sr-filters .btn:active,
+.sr-pagination .btn:active,
+.payload-btn:active{
+	transform: translateY(0);
+}
+
+.sr-filters .btn:focus-visible,
+.sr-pagination .btn:focus-visible,
+.payload-btn:focus-visible,
+.sr-filters input:focus-visible,
+.sr-filters select:focus-visible{
+	outline: 2px solid var(--bt-accent);
+	outline-offset: 2px;
+}
+
+.sr-filters .btn:disabled,
+.sr-pagination .btn:disabled{
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.sr-filters .btn:disabled:hover,
+.sr-pagination .btn:disabled:hover{
+	transform: none;
 }
 
 .sr-table{
@@ -140,6 +228,8 @@
 	background: var(--bt-card);
 	max-height: 560px;
 	overflow: auto;
+	border-radius: 10px;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .sr-table table{
@@ -169,21 +259,18 @@
 	border-bottom: 1px solid var(--bt-border);
 	vertical-align: top;
 	color: var(--bt-foreground);
+	line-height: 1.45;
 }
 
 .sr-table tbody tr:hover{ background: var(--bt-muted); }
 
 .payload-btn{
-	appearance:none;
-	padding: 6px 10px;
 	border: 1px solid var(--bt-border);
 	background: transparent;
 	color: var(--bt-foreground);
-	cursor: pointer;
 	font-family: var(--bt-font-mono);
-	text-transform: uppercase;
-	letter-spacing: 0.14em;
-	font-size: 11px;
+	min-height: 34px;
+	padding: 8px 12px;
 }
 
 .payload-btn:hover{ background: var(--bt-foreground); color: var(--bt-background); }
@@ -218,18 +305,28 @@
 	gap: 10px;
 	align-items:center;
 	justify-content:center;
-	margin-top: 12px;
+	margin-top: 14px;
+}
+
+#pageInfo{
+	font-family: var(--bt-font-mono);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
 }
 
 .sr-graph{
-	margin-top: 14px;
-	padding: 16px;
+	margin-top: 16px;
+	padding: 18px;
 	border: 1px solid var(--bt-border);
 	background: var(--bt-card);
+	border-radius: 10px;
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .sr-graph h3{
-	margin: 0 0 12px;
+	margin: 0 0 14px;
 	font-family: var(--bt-font-mono);
 	text-transform: uppercase;
 	letter-spacing: 0.16em;
@@ -238,13 +335,15 @@
 }
 
 @media(max-width: 900px){
+	.sensor-page{ padding: 22px; }
 	.health-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.sr-filters{ flex-direction: column; align-items: stretch; }
 	.sr-filters label{ width: 100%; min-width: 0; }
 }
 
 @media (max-width: 480px){
-	.sensor-page{ margin: 24px auto; padding: 18px; }
-	.sensor-page header h1{ font-size: 44px; }
+	.sensor-page{ margin: 16px auto 20px; padding: 16px; }
+	.sensor-page header h1{ font-size: 36px; }
 	.health-grid{ grid-template-columns: 1fr; }
+	.health-value{ font-size: 28px; }
 }

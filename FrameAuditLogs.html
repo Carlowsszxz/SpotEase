@@ -18,30 +18,61 @@
 
   <div class="audit-page">
     <header>
-      <h1>Audit Logs</h1>
-      <p class="small-muted">Unified incident timeline across audit, security, occupancy, and RFID events.</p>
+      <div class="header-copy">
+        <h1>Audit Logs</h1>
+        <p class="small-muted">Unified event timeline across audit, security, occupancy, and RFID activity for traceability and incident review.</p>
+      </div>
     </header>
 
+    <section class="audit-kpis" aria-label="Audit summary">
+      <article class="kpi-card">
+        <span class="kpi-label">Total Events</span>
+        <strong id="kpiTotalEvents" class="kpi-value">—</strong>
+        <span class="kpi-hint">Current filtered result set</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Security Events</span>
+        <strong id="kpiSecurityEvents" class="kpi-value">—</strong>
+        <span class="kpi-hint">Source: security</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">RFID Events</span>
+        <strong id="kpiRfidEvents" class="kpi-value">—</strong>
+        <span class="kpi-hint">Source: rfid</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Latest Event</span>
+        <strong id="kpiLatestEvent" class="kpi-value kpi-value-sm">—</strong>
+        <span class="kpi-hint">Most recent timestamp</span>
+      </article>
+    </section>
+
     <section class="filters">
-      <label>Source:
+      <label>Source
         <select id="filterSource"><option value="all">All</option></select>
       </label>
-      <label>Action:
+      <label>Action
         <select id="filterAction"><option value="all">All</option></select>
       </label>
-      <label>User:
+      <label>User
         <select id="filterUser"><option value="all">All</option></select>
       </label>
-      <label>Resource:
+      <label>Resource
         <select id="filterResource"><option value="all">All</option></select>
       </label>
-      <label>From: <input type="date" id="filterFrom"></label>
-      <label>To: <input type="date" id="filterTo"></label>
-      <input id="filterKeyword" type="search" placeholder="Keyword in details">
-      <label>Page size:
+      <label>From
+        <input type="date" id="filterFrom">
+      </label>
+      <label>To
+        <input type="date" id="filterTo">
+      </label>
+      <label class="keyword-field">Keyword
+        <input id="filterKeyword" type="search" placeholder="Search user, action, resource, or details">
+      </label>
+      <label>Page Size
         <select id="pageSize"><option>10</option><option>25</option><option>50</option></select>
       </label>
-      <button id="clearFilters" class="btn">Clear</button>
+      <button id="clearFilters" class="btn btn-secondary">Reset Filters</button>
     </section>
 
     <section class="log-table">
@@ -54,9 +85,9 @@
     </section>
 
     <section class="pagination">
-      <button id="prevPage" class="btn">Prev</button>
+      <button id="prevPage" class="btn btn-secondary">Previous</button>
       <span id="pageInfo">Page 1</span>
-      <button id="nextPage" class="btn">Next</button>
+      <button id="nextPage" class="btn btn-secondary">Next</button>
     </section>
   </div>
 

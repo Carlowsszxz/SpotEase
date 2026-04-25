@@ -28,10 +28,27 @@ import {
   var nextPage = document.getElementById('nextPage');
   var pageInfo = document.getElementById('pageInfo');
   var pageSizeSel = document.getElementById('pageSize');
+  var kpiTotalEvents = document.getElementById('kpiTotalEvents');
+  var kpiSecurityEvents = document.getElementById('kpiSecurityEvents');
+  var kpiRfidEvents = document.getElementById('kpiRfidEvents');
+  var kpiLatestEvent = document.getElementById('kpiLatestEvent');
 
   var currentPage = 1; function pageSize(){ return parseInt(pageSizeSel.value,10) || 10; }
 
   function shortId(id){ return String(id || '').slice(0,8); }
+
+  function setText(el, value){
+    if(!el) return;
+    el.textContent = value;
+  }
+
+  function titleCase(text){
+    var str = String(text || '').replace(/[_-]+/g, ' ').trim();
+    if(!str) return 'Unknown';
+    return str.split(' ').map(function(part){
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    }).join(' ');
+  }
 
   async function loadFromSupabase(){
     const [users, resources] = await Promise.all([
@@ -76,7 +93,7 @@ import {
         source: 'audit',
         ts: row.timestamp || new Date().toISOString(),
         user: userMap[row.user_id] || ('User ' + shortId(row.user_id)),
-        action: row.action || 'unknown',
+        action: row.action || 'unknown_event',
         resource: resourceMap[row.resource_id] || (row.resource_id ? ('Resource ' + shortId(row.resource_id)) : ''),
         details: row.details || {}
       };
@@ -140,9 +157,9 @@ import {
 
   function populateFilters(){
     var sources = unique(logs.map(function(l){return l.source || 'audit';})); sources.unshift('all');
-    setSelectOptions(filterSource, sources, function(s){ return s==='all' ? 'All' : s; });
+    setSelectOptions(filterSource, sources, function(s){ return s==='all' ? 'All' : titleCase(s); });
     var actions = unique(logs.map(function(l){return l.action;})); actions.unshift('all');
-    setSelectOptions(filterAction, actions, function(a){ return a==='all' ? 'All' : a; });
+    setSelectOptions(filterAction, actions, function(a){ return a==='all' ? 'All' : titleCase(a); });
     var users = unique(logs.map(function(l){return l.user;})); users.unshift('all');
     setSelectOptions(filterUser, users, function(u){ return u==='all' ? 'All' : u; });
     var resources = unique(logs.map(function(l){return l.resource||'';})).filter(Boolean); resources.unshift('all');
@@ -176,27 +193,63 @@ import {
       return true;
     });
 
+      var securityCount = filtered.filter(function(l){ return String(l.source || '').toLowerCase() === 'security'; }).length;
+      var rfidCount = filtered.filter(function(l){ return String(l.source || '').toLowerCase() === 'rfid'; }).length;
+      var latest = filtered.length ? formatTs(filtered[0].ts) : '—';
+      setText(kpiTotalEvents, String(filtered.length));
+      setText(kpiSecurityEvents, String(securityCount));
+      setText(kpiRfidEvents, String(rfidCount));
+      setText(kpiLatestEvent, latest);
+
     var total = filtered.length; var ps = pageSize(); var pages = Math.max(1, Math.ceil(total/ps)); if(currentPage>pages) currentPage = pages;
     var start = (currentPage-1)*ps; var pageItems = filtered.slice(start, start+ps);
 
     tbody.innerHTML = '';
+      if(pageItems.length === 0){
+        var emptyTr = document.createElement('tr');
+        emptyTr.innerHTML = '<td colspan="6" class="details-cell">No audit log entries matched your current filters.</td>';
+        tbody.appendChild(emptyTr);
+      }
+
     pageItems.forEach(function(l,idx){
       var tr = document.createElement('tr');
       var source = String(l.source || 'audit').toLowerCase();
-      tr.innerHTML = '<td>'+formatTs(l.ts)+'</td><td><span class="badge-source src-' + escapeHtml(source) + '">'+escapeHtml(source)+'</span></td><td>'+escapeHtml(l.user)+'</td><td>'+escapeHtml(l.action)+'</td><td>'+escapeHtml(l.resource||'')+'</td><td><button class="btn view-details">View</button></td>';
+        tr.innerHTML = '<td>'+formatTs(l.ts)+'</td><td><span class="badge-source src-' + escapeHtml(source) + '">'+escapeHtml(titleCase(source))+'</span></td><td>'+escapeHtml(l.user)+'</td><td><span class="badge-action">'+escapeHtml(titleCase(l.action))+'</span></td><td>'+escapeHtml(l.resource||'')+'</td><td><button class="btn btn-secondary view-details" aria-expanded="false">View</button></td>';
       tbody.appendChild(tr);
       // details row
       var dtr = document.createElement('tr'); dtr.className='details-row'; dtr.style.display='none'; var dtd = document.createElement('td'); dtd.colSpan=6; dtd.className='details-cell'; dtd.textContent = JSON.stringify(l.details, null, 2); dtr.appendChild(dtd); tbody.appendChild(dtr);
-      tr.querySelector('.view-details').addEventListener('click', function(){ dtr.style.display = dtr.style.display==='none' ? 'table-row' : 'none'; });
+        tr.querySelector('.view-details').addEventListener('click', function(e){
+          var isHidden = dtr.style.display === 'none';
+          dtr.style.display = isHidden ? 'table-row' : 'none';
+          e.currentTarget.textContent = isHidden ? 'Hide' : 'View';
+          e.currentTarget.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+        });
     });
 
-    pageInfo.textContent = 'Page '+currentPage+' of '+pages+' ('+total+' items)';
+      pageInfo.textContent = 'Page '+currentPage+' of '+pages+' · '+total+' records';
+      if(prevPage) prevPage.disabled = currentPage <= 1;
+      if(nextPage) nextPage.disabled = currentPage >= pages;
   }
 
-  function formatTs(ts){ var d = new Date(ts); return d.toISOString().replace('T',' ').split('.')[0]; }
+    function formatTs(ts){
+      var d = new Date(ts);
+      if(isNaN(d.getTime())) return '—';
+      return d.toLocaleString();
+    }
   function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  clearBtn.addEventListener('click',function(){ if(filterSource) filterSource.value='all'; filterAction.value='all'; filterUser.value='all'; filterResource.value='all'; filterFrom.value=''; filterTo.value=''; filterKeyword.value=''; currentPage=1; render(); });
+  clearBtn.addEventListener('click',function(){
+    if(filterSource) filterSource.value='all';
+    filterAction.value='all';
+    filterUser.value='all';
+    filterResource.value='all';
+    filterFrom.value='';
+    filterTo.value='';
+    filterKeyword.value='';
+    if(pageSizeSel) pageSizeSel.value='10';
+    currentPage=1;
+    render();
+  });
   [filterSource,filterAction,filterUser,filterResource,filterFrom,filterTo,filterKeyword,pageSizeSel].forEach(function(el){
     if(!el) return;
     var onFilterChange = function(){ currentPage=1; render(); };

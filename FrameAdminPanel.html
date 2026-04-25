@@ -18,8 +18,10 @@
 
   <div class="admin-panel">
     <header>
-      <h1>Admin Panel</h1>
-      <p class="small-muted">Read-only overview of resources, sensors, alerts, RFID, and analytics.</p>
+      <div class="header-copy">
+        <h1>Admin Panel</h1>
+        <p class="small-muted">Central operations view for resource health, sensor activity, security signals, and student-facing notices.</p>
+      </div>
       <div class="header-actions">
         <button id="logoutBtn" class="btn btn-logout">Logout</button>
       </div>
@@ -59,15 +61,11 @@
       </a>
       <a class="shortcut-card" href="FrameAnalytics.html">
         <span>Analytics</span>
-        <small>Open peak-time and maintenance charts</small>
+        <small>Open usage trends and maintenance insights</small>
       </a>
       <a class="shortcut-card" href="FrameAuditLogs.html">
         <span>Audit Logs</span>
         <small>Review RFID, occupancy, and security history</small>
-      </a>
-      <a class="shortcut-card" href="FrameEmergency.html">
-        <span>Emergency</span>
-        <small>Open safe points and alerts</small>
       </a>
     </section>
 
@@ -96,10 +94,10 @@
 
       <div class="panel ble-panel">
         <h3>BLE Presence Overview</h3>
-        <p class="small-muted" style="margin: 0 0 12px;">Recent BLE scans from gateways. Use Presence Roster for full BLE details.</p>
+        <p class="small-muted panel-subtext">Recent gateway BLE scans. Use Presence Roster for full presence detail.</p>
         <ul id="bleOverviewList" class="sensor-list"></ul>
-        <p id="bleOverviewEmpty" class="small-muted" style="display:none; margin-top: 10px;">No BLE scans received yet.</p>
-        <div class="panel-actions-inline" style="margin-top: 12px;">
+        <p id="bleOverviewEmpty" class="small-muted panel-msg" style="display:none;">No BLE scans received yet.</p>
+        <div class="panel-actions-inline panel-spacer-sm">
           <a class="btn btn-secondary" href="FramePresenceRoster.html">Open Presence Roster</a>
         </div>
       </div>
@@ -115,19 +113,19 @@
 
 	  <div class="panel security-panel">
 		<h3>After-hours Security Overview</h3>
-		<p class="small-muted" style="margin: 0 0 12px;">View after-hours events and incident reports. Editing and status actions are handled on the dedicated pages or backend workflow.</p>
-		<div style="margin-bottom: 12px;">
+    <p class="small-muted panel-subtext">Review after-hours events and incidents. Status management is handled in dedicated workflows.</p>
+    <div class="export-actions">
 		  <button id="exportSecurityBtn" class="btn btn-secondary" type="button">Export as Text</button>
-		  <p id="securityExportStatus" class="small-muted" style="display:none; margin-top: 8px;"></p>
+      <p id="securityExportStatus" class="small-muted export-status" style="display:none;"></p>
 		</div>
-		<div id="securityExportContainer" style="display:none; margin-bottom: 12px;">
-		  <textarea id="securityExportText" readonly style="width: 100%; min-height: 200px; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid var(--bt-border); background: var(--bt-background); color: var(--bt-foreground);"></textarea>
-		  <button id="copySecurityTextBtn" class="btn btn-primary" type="button" style="margin-top: 8px;">Copy to Clipboard</button>
+    <div id="securityExportContainer" class="security-export-wrap" style="display:none;">
+      <textarea id="securityExportText" class="security-export-text" readonly></textarea>
+      <button id="copySecurityTextBtn" class="btn btn-primary security-copy-btn" type="button">Copy to Clipboard</button>
 		</div>
 		<ul id="securityEventsList" class="security-list"></ul>
 		<p id="noSecurityEvents" class="small-muted" style="display:none;">No after-hours events.</p>
 
-		<div class="panel-actions-inline" style="margin-top: 12px;">
+    <div class="panel-actions-inline panel-spacer-sm">
 		  <a class="btn btn-secondary" href="FrameAuditLogs.html">Audit Logs</a>
 		  <a class="btn btn-secondary" href="FrameEmergency.html">Emergency</a>
 		</div>
@@ -135,8 +133,8 @@
 
       <div class="panel notifications-panel">
         <h3>Student Notifications Overview</h3>
-        <p class="small-muted" style="margin: 0 0 12px;">Recent notices shown to students on the website.</p>
-        <div class="panel-actions-inline" style="margin-bottom: 12px;">
+        <p class="small-muted panel-subtext">Recent notices currently visible to students.</p>
+        <div class="panel-actions-inline panel-spacer-sm panel-spacer-bottom-sm">
           <a class="btn btn-secondary" href="FrameDashboard.html">Dashboard Alerts</a>
         </div>
         <ul id="notifList" class="notif-list"></ul>
