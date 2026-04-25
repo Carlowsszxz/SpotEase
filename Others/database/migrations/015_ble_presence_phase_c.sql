@@ -1,112 +1,166 @@
--- Phase C: BLE Signal-Loss Tracking & Last-Seen Location
--- Adds close_reason attribution and last_seen_location capture for accountability/emergency response
--- Timeline: April 14, 2026
+-- =====================================================
+-- Phase C: BLE signal-loss tracking and accountability
+--
+-- Goals:
+-- - Record last-seen location when BLE session times out
+-- - Provide a table-returning timeout closure function for schedulers
+-- - Emit audit log entries for emergency/accountability views
+-- - Keep compatibility with Phase B schema (last_seen_at / ended_at)
+-- =====================================================
 
--- 1. Extend ble_presence_sessions with signal-loss metadata
-ALTER TABLE ble_presence_sessions
-ADD COLUMN IF NOT EXISTS close_reason VARCHAR(50),
-ADD COLUMN IF NOT EXISTS last_seen_location TEXT;
+-- -----------------------------------------------------
+-- 1) Extend ble_presence_sessions metadata (idempotent)
+-- -----------------------------------------------------
+ALTER TABLE public.ble_presence_sessions
+ADD COLUMN IF NOT EXISTS close_reason text,
+ADD COLUMN IF NOT EXISTS last_seen_location text;
 
--- Add check constraint on close_reason (soft enum)
-ALTER TABLE ble_presence_sessions
-ADD CONSTRAINT check_close_reason CHECK (
-  close_reason IS NULL OR close_reason IN ('ble_timeout', 'rfid_tap', 'manual')
-);
-
--- 2. Update close_stale_ble_presence_sessions to capture last-seen details
-CREATE OR REPLACE FUNCTION close_stale_ble_presence_sessions(
-  timeout_minutes INT,
-  now_time TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-)
-RETURNS TABLE (
-  user_id UUID,
-  session_id UUID,
-  last_signal_time TIMESTAMPTZ,
-  last_seen_location TEXT,
-  close_reason VARCHAR(50)
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_stale_session RECORD;
-  v_last_event RECORD;
-  v_resource_name TEXT;
+DO $$
 BEGIN
-  -- Find all active sessions that exceed timeout threshold
-  FOR v_stale_session IN
-    SELECT
-      bps.id,
-      bps.user_id,
-      bps.last_signal_time,
-      bps.resource_id
-    FROM ble_presence_sessions bps
-    WHERE bps.status = 'active'
-      AND (now_time - bps.last_signal_time) > INTERVAL '1 minute' * timeout_minutes
-  LOOP
-    -- Look up resource name for last-seen-location
-    SELECT r.name INTO v_resource_name
-    FROM resources r
-    WHERE r.id = v_stale_session.resource_id
-    LIMIT 1;
-
-    -- Mark session as closed with signal-loss attribution
-    UPDATE ble_presence_sessions
-    SET
-      status = 'inactive',
-      closed_at = now_time,
-      close_reason = 'ble_timeout',
-      last_seen_location = COALESCE(v_resource_name, 'Unknown Location'),
-      updated_at = now_time
-    WHERE id = v_stale_session.id;
-
-    -- Return audit row for logging/accountability
-    RETURN QUERY
-    SELECT
-      v_stale_session.user_id,
-      v_stale_session.id,
-      v_stale_session.last_signal_time,
-      COALESCE(v_resource_name, 'Unknown Location'::TEXT),
-      'ble_timeout'::VARCHAR(50);
-  END LOOP;
-
-  RETURN;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'ble_presence_sessions_close_reason_chk'
+  ) THEN
+    ALTER TABLE public.ble_presence_sessions
+      ADD CONSTRAINT ble_presence_sessions_close_reason_chk
+      CHECK (close_reason IS NULL OR close_reason IN ('ble_timeout', 'rfid_tap', 'manual'));
+  END IF;
 END;
 $$;
 
--- 3. Helper function: mark session closed via manual intervention or RFID tap
-CREATE OR REPLACE FUNCTION close_ble_presence_session(
-  p_user_id UUID,
-  p_reason VARCHAR(50),
-  p_location TEXT DEFAULT NULL,
-  p_now TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+-- -----------------------------------------------------
+-- 2) Timeout closure function (table-returning)
+-- -----------------------------------------------------
+DROP FUNCTION IF EXISTS public.close_stale_ble_presence_sessions(int, timestamptz);
+
+CREATE FUNCTION public.close_stale_ble_presence_sessions(
+  timeout_minutes int,
+  now_time timestamptz DEFAULT CURRENT_TIMESTAMP
 )
-RETURNS BOOLEAN
-LANGUAGE SQL
+RETURNS TABLE (
+  user_id uuid,
+  session_id uuid,
+  last_signal_time timestamptz,
+  last_seen_location text,
+  close_reason text
+)
+LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, extensions
+SET row_security = off
 AS $$
-  UPDATE ble_presence_sessions
-  SET
-    status = 'inactive',
-    closed_at = p_now,
-    close_reason = p_reason,
-    last_seen_location = COALESCE(p_location, last_seen_location),
-    updated_at = p_now
-  WHERE user_id = p_user_id AND status = 'active'
-  RETURNING id IS NOT NULL;
+DECLARE
+  v_timeout_minutes int := GREATEST(COALESCE(timeout_minutes, 5), 1);
+  v_now timestamptz := COALESCE(now_time, now());
+BEGIN
+  RETURN QUERY
+  WITH stale AS (
+    SELECT
+      bps.id,
+      bps.user_id,
+      bps.last_seen_at,
+      bps.resource_id,
+      COALESCE(NULLIF(trim(r.name), ''), 'Unknown Location') AS resolved_location
+    FROM public.ble_presence_sessions bps
+    LEFT JOIN public.resources r ON r.id = bps.resource_id
+    WHERE bps.status = 'active'
+      AND bps.ended_at IS NULL
+      AND bps.last_seen_at < (v_now - make_interval(mins => v_timeout_minutes))
+    FOR UPDATE
+  ), closed AS (
+    UPDATE public.ble_presence_sessions bps
+    SET
+      status = 'inactive',
+      ended_at = v_now,
+      close_reason = 'ble_timeout',
+      last_seen_location = stale.resolved_location,
+      updated_at = now()
+    FROM stale
+    WHERE bps.id = stale.id
+    RETURNING
+      bps.user_id,
+      bps.id AS session_id,
+      bps.last_seen_at AS last_signal_time,
+      bps.last_seen_location,
+      bps.close_reason
+  )
+  SELECT
+    closed.user_id,
+    closed.session_id,
+    closed.last_signal_time,
+    closed.last_seen_location,
+    closed.close_reason
+  FROM closed;
+END;
 $$;
 
--- 4. Audit-log-compatible: capture BLE timeouts as "occupancy_updated" events
--- (This ensures accountability logs show why someone went from "present" to "left")
-CREATE OR REPLACE FUNCTION audit_ble_timeout_on_close()
-RETURNS TRIGGER
-LANGUAGE PLPGSQL
+REVOKE ALL ON FUNCTION public.close_stale_ble_presence_sessions(int, timestamptz) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.close_stale_ble_presence_sessions(int, timestamptz)
+TO authenticated;
+
+-- -----------------------------------------------------
+-- 3) Manual/RFID close helper
+-- -----------------------------------------------------
+CREATE OR REPLACE FUNCTION public.close_ble_presence_session(
+  p_user_id uuid,
+  p_reason text,
+  p_location text DEFAULT NULL,
+  p_now timestamptz DEFAULT CURRENT_TIMESTAMP
+)
+RETURNS boolean
+LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, extensions
+SET row_security = off
+AS $$
+DECLARE
+  v_rowcount int := 0;
+  v_reason text := lower(COALESCE(trim(p_reason), 'manual'));
+BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  IF v_reason NOT IN ('ble_timeout', 'rfid_tap', 'manual') THEN
+    v_reason := 'manual';
+  END IF;
+
+  UPDATE public.ble_presence_sessions
+  SET
+    status = 'inactive',
+    ended_at = COALESCE(p_now, now()),
+    close_reason = v_reason,
+    last_seen_location = COALESCE(NULLIF(trim(p_location), ''), last_seen_location),
+    updated_at = now()
+  WHERE user_id = p_user_id
+    AND status = 'active'
+    AND ended_at IS NULL;
+
+  GET DIAGNOSTICS v_rowcount = ROW_COUNT;
+  RETURN v_rowcount > 0;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.close_ble_presence_session(uuid, text, text, timestamptz) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.close_ble_presence_session(uuid, text, text, timestamptz)
+TO authenticated;
+
+-- -----------------------------------------------------
+-- 4) Audit timeout close transitions
+-- -----------------------------------------------------
+CREATE OR REPLACE FUNCTION public.audit_ble_timeout_on_close()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+SET row_security = off
 AS $$
 BEGIN
-  -- Only log if transitioning from active→inactive with ble_timeout
-  IF NEW.status = 'inactive' AND OLD.status = 'active' AND NEW.close_reason = 'ble_timeout' THEN
-    INSERT INTO audit_logs (
+  IF NEW.status = 'inactive'
+     AND OLD.status = 'active'
+     AND COALESCE(NEW.close_reason, '') = 'ble_timeout' THEN
+    INSERT INTO public.audit_logs (
       user_id,
       action_type,
       description,
@@ -121,43 +175,44 @@ BEGIN
       NEW.resource_id,
       jsonb_build_object(
         'reason', 'ble_timeout',
-        'signal_ended', NEW.last_signal_time,
-        'closed_at', NEW.closed_at,
-        'location', NEW.last_seen_location
+        'signal_ended', NEW.last_seen_at,
+        'closed_at', NEW.ended_at,
+        'location', COALESCE(NEW.last_seen_location, 'Unknown')
       ),
-      CURRENT_TIMESTAMP
+      COALESCE(NEW.ended_at, now())
     );
   END IF;
+
   RETURN NEW;
 END;
 $$;
 
--- Attach trigger to ble_presence_sessions
-DROP TRIGGER IF EXISTS trig_audit_ble_timeout ON ble_presence_sessions;
+DROP TRIGGER IF EXISTS trig_audit_ble_timeout ON public.ble_presence_sessions;
 CREATE TRIGGER trig_audit_ble_timeout
-AFTER UPDATE ON ble_presence_sessions
+AFTER UPDATE ON public.ble_presence_sessions
 FOR EACH ROW
-EXECUTE FUNCTION audit_ble_timeout_on_close();
+EXECUTE FUNCTION public.audit_ble_timeout_on_close();
 
--- 5. RLS Policy: allow session closing via close_reason
-ALTER TABLE ble_presence_sessions
-ENABLE ROW LEVEL SECURITY;
+-- -----------------------------------------------------
+-- 5) Policies and indexes for accountability querying
+-- -----------------------------------------------------
+ALTER TABLE public.ble_presence_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ble_presence_sessions FORCE ROW LEVEL SECURITY;
 
--- Policy: authenticated admins can view all closed sessions with close_reason
+DROP POLICY IF EXISTS "Admins can view closed ble sessions with close_reason" ON public.ble_presence_sessions;
 CREATE POLICY "Admins can view closed ble sessions with close_reason"
-  ON ble_presence_sessions
+  ON public.ble_presence_sessions
   FOR SELECT
+  TO authenticated
   USING (
-    auth.uid() IN (SELECT user_id FROM users WHERE role = 'admin')
-    OR (auth.uid() = user_id)  -- Users can see own session history
+    public.is_admin()
+    OR auth.uid() = user_id
   );
 
--- 6. Index for fast queries on closed sessions (supports last-seen reports)
-CREATE INDEX IF NOT EXISTS idx_ble_sessions_closed_at
-  ON ble_presence_sessions(closed_at DESC)
+CREATE INDEX IF NOT EXISTS idx_ble_sessions_ended_at
+  ON public.ble_presence_sessions(ended_at DESC)
   WHERE status = 'inactive';
 
--- 7. Index for signal-loss accountability tracking
-CREATE INDEX IF NOT EXISTS idx_ble_sessions_close_reason
-  ON ble_presence_sessions(close_reason, created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_ble_sessions_close_reason_updated_at
+  ON public.ble_presence_sessions(close_reason, updated_at DESC)
   WHERE close_reason = 'ble_timeout';

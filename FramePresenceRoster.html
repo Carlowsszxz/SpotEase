@@ -19,22 +19,45 @@
   <div class="presence-page">
     <header>
       <h1>Presence Roster</h1>
-      <p class="small-muted">Phase A (RFID-based): estimated person presence and recent movement from RFID taps.</p>
+      <p class="small-muted">Read-only overview of likely presence using RFID and BLE activity.</p>
     </header>
 
-    <section class="presence-controls" aria-label="Presence roster controls">
-      <input id="presenceSearch" type="search" placeholder="Search by user, email, or resource">
-      <label>Likely present window:
-        <select id="presenceWindowMinutes">
-          <option value="10">10 min</option>
-          <option value="15">15 min</option>
-          <option value="30" selected>30 min</option>
-          <option value="60">60 min</option>
-          <option value="120">120 min</option>
-        </select>
-      </label>
-      <button id="presenceRefresh" class="btn">Refresh</button>
-      <span id="presenceUpdated" class="small-muted">Updated: —</span>
+    <section class="shortcut-strip" aria-label="Presence roster quick links">
+      <a class="shortcut-card" href="FrameAuditLogs.html">
+        <span>Audit Logs</span>
+        <small>Review RFID, occupancy, and security history</small>
+      </a>
+      <a class="shortcut-card" href="FrameSensorReadings.html">
+        <span>Sensor Readings</span>
+        <small>Check active sensor health and recent signals</small>
+      </a>
+      <a class="shortcut-card" href="FrameDashboard.html">
+        <span>Dashboard</span>
+        <small>Return to live occupancy and alerts</small>
+      </a>
+    </section>
+
+    <section class="presence-toolbar panel" aria-label="Presence roster controls">
+      <div class="toolbar-left">
+        <div class="control-field search-field">
+          <label for="presenceSearch">Search roster</label>
+          <input id="presenceSearch" type="search" placeholder="Search by user, email, or resource">
+        </div>
+        <div class="control-field window-field">
+          <label for="presenceWindowMinutes">Likely present window</label>
+          <select id="presenceWindowMinutes">
+            <option value="10">10 min</option>
+            <option value="15">15 min</option>
+            <option value="30" selected>30 min</option>
+            <option value="60">60 min</option>
+            <option value="120">120 min</option>
+          </select>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button id="presenceRefresh" class="btn">Refresh</button>
+        <span id="presenceUpdated" class="small-muted">Updated: —</span>
+      </div>
     </section>
 
     <section class="presence-summary" aria-label="Presence summary">
@@ -57,9 +80,54 @@
     </section>
 
     <section class="presence-note panel">
-      <p class="small-muted">
-        This roster combines RFID scan recency and BLE presence sessions. If BLE is unavailable, it falls back to RFID history.
-      </p>
+      <div class="note-grid">
+        <div>
+          <strong>How it works</strong>
+          <p class="small-muted">The roster combines RFID scan recency and BLE presence sessions. If BLE is unavailable, it falls back to RFID history.</p>
+        </div>
+        <div>
+          <strong>Status guide</strong>
+          <p class="small-muted">Likely Present means activity was seen within the selected window. Last Seen means the user was seen earlier, but not within that window.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="presence-summary" aria-label="BLE scan summary">
+      <div class="summary-card">
+        <div class="summary-label">BLE scans (24h)</div>
+        <div id="bleSumScans24h" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Unique devices (24h)</div>
+        <div id="bleSumDevices24h" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Active gateways</div>
+        <div id="bleSumGateways" class="summary-value">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Latest scan</div>
+        <div id="bleSumLatest" class="summary-value" style="font-size:16px; line-height:1.3;">—</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Recent BLE Scans (Expanded)</h3>
+      <table class="presence-table" id="bleScansTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Gateway</th>
+            <th>Device</th>
+            <th>Name</th>
+            <th>RSSI</th>
+            <th>Scan Batch</th>
+          </tr>
+        </thead>
+        <tbody id="bleScansTbody"></tbody>
+      </table>
+      <p id="bleScansEmpty" class="small-muted" style="display:none;">No BLE scans found.</p>
+      <p id="bleScansError" class="small-muted" style="display:none;"></p>
     </section>
 
     <section class="panel">

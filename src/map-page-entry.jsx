@@ -166,6 +166,10 @@ function MapPage() {
   }, [resourcesMap]);
 
   const hasValidFilters = useMemo(() => selectedType !== 'all' && selectedLocation !== 'all', [selectedType, selectedLocation]);
+  const quickPickChips = useMemo(
+    () => typeOptions.map((type) => ({ value: type, label: titleCase(type) })),
+    [typeOptions]
+  );
 
   const setStatusMessage = useCallback((message, type = 'info') => {
     setStatus({ message, type });
@@ -537,11 +541,7 @@ function MapPage() {
         <section className="quick-filters" aria-label="Quick picks">
           <p className="quick-filters-title">Quick picks</p>
           <div className="quick-filter-list" role="group" aria-label="Popular resource types">
-            {[
-              { value: 'study_area', label: 'Study Area' },
-              { value: 'computer_lab', label: 'Computer Lab' },
-              { value: 'meeting_room', label: 'Meeting Room' },
-            ].map((chip) => (
+            {quickPickChips.map((chip) => (
               <button
                 type="button"
                 key={chip.value}

@@ -2,57 +2,45 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
-// Arduino preprocessing can mis-handle __has_include in .ino files.
-// Use explicit backend selection instead.
-#define USE_NIMBLE_BACKEND 1
-
-#if USE_NIMBLE_BACKEND
-#include <NimBLEDevice.h>
-#else
-#include <BLEDevice.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
-#endif
-
-#include <SPI.h>
-#include <MFRC522.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
+// --------- PIN DOCUMENTATION ---------
+// Entry #1 ultrasonic (new sensor; first trigger for entry sequence)
+//   TRIG: GPIO 26
+//   ECHO: GPIO 34
+// Entry #2 ultrasonic
+//   TRIG: GPIO 23
+//   ECHO: GPIO 22
+// Exit #1 ultrasonic
+//   TRIG: GPIO 25
+//   ECHO: GPIO 32
+// Exit #2 ultrasonic
+//   TRIG: GPIO 27
+//   ECHO: GPIO 35
+// RFID RC522 (SPI)
+//   SDA/SS -> GPIO 5
+//   SCK    -> GPIO 18
+//   MOSI   -> GPIO 13
+//   MISO   -> GPIO 19
+//   RST    -> GPIO 21
+// Power is 3.3V + GND.
+
 #define ENTRY_TRIG_PIN 23
 #define ENTRY_ECHO_PIN 22
+#define ENTRY2_TRIG_PIN 26
+#define ENTRY2_ECHO_PIN 34
 
-#define EXIT_TRIG_PIN 27
-#define EXIT_ECHO_PIN 35
-
-// --------- RFID (RC522) ---------
-// Wiring (RC522 -> ESP32)
-// SDA/SS -> GPIO 5
-// SCK    -> GPIO 18
-// MOSI   -> GPIO 13
-// MISO   -> GPIO 19
-// RST    -> GPIO 21
-// 3.3V/GND as normal
-#define RFID_SS_PIN   5
-#define RFID_SCK_PIN  18
-#define RFID_MOSI_PIN 13
-#define RFID_MISO_PIN 19
-#define RFID_RST_PIN  21
-
-static const unsigned long RFID_DEBOUNCE_MS = 2500;
-static String lastRfidUid = "";
-static unsigned long lastRfidSeenMs = 0;
-static uint8_t rfidBadReads = 0;
-static unsigned long lastRfidRecoverMs = 0;
-
-MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
+#define EXIT_TRIG_PIN 25
+#define EXIT_ECHO_PIN 32
+#define EXIT2_TRIG_PIN 27
+#define EXIT2_ECHO_PIN 35
 
 // --------- WIFI ---------
-const char* WIFI_SSID = "TP-Link_DE3A";
-const char* WIFI_PASSWORD = "61693906";
+const char* WIFI_SSID = "JOSHUA 24:15/ 4G";
+const char* WIFI_PASSWORD = "Tend@wifi";
 
 // --------- SUPABASE ---------
 // NOTE: The anon key is public for client-side apps, but any sensor secrets must be kept private.
@@ -60,45 +48,17 @@ const char* SUPABASE_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co";
 const char* SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzZ3ltanprdWlvaHNxYWxycWt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjk2NjMsImV4cCI6MjA4ODIwNTY2M30.CKZoZbIu0MDZplXl_8Qf-K6n5nFaPMvp4ZHp7TcdIkM";
 const char* SUPABASE_INGEST_RPC_PATH = "/rest/v1/rpc/ingest_occupancy_change";
 static const char* SUPABASE_INGEST_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co/rest/v1/rpc/ingest_occupancy_change";
-static const char* SUPABASE_RFID_INGEST_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co/rest/v1/rpc/ingest_rfid_scan";
-static const char* SUPABASE_BLE_INGEST_URL = "https://xsgymjzkuiohsqalrqkw.supabase.co/rest/v1/rpc/ingest_ble_presence_event";
 
 // Occupancy-only diagnostics mode: reduce device load and isolate ultrasonic -> Supabase transport.
 static const bool OCCUPANCY_ONLY_DIAGNOSTICS = false;
+// Temporary debug mode: process entry sensors only, ignore exit sensors.
+static const bool ENTRY_DEBUG_ONLY = false;
 
 // These must match rows in public.sensors (sensor_identifier + secret used to generate ingest_secret_hash)
 const char* ENTRY_SENSOR_IDENTIFIER = "doorA_entry";
 const char* ENTRY_SENSOR_SECRET = "ENTRY_SECRET";
 const char* EXIT_SENSOR_IDENTIFIER = "doorA_exit";
 const char* EXIT_SENSOR_SECRET = "EXIT_SECRET";
-// BLE gateway credentials should map to an active row in public.sensors.
-// If you have a dedicated BLE gateway sensor row, set these to that sensor_identifier + secret.
-const char* BLE_SENSOR_IDENTIFIER = "doorA_entry";
-const char* BLE_SENSOR_SECRET = "ENTRY_SECRET";
-
-// --------- BLE LOGIC ---------
-static const bool BLE_ENABLED = !OCCUPANCY_ONLY_DIAGNOSTICS;
-static const bool RFID_ENABLED = !OCCUPANCY_ONLY_DIAGNOSTICS;
-static const bool DEBUG_BLE = true;
-static const unsigned long BLE_SCAN_EVERY_MS = 10000;
-static const uint32_t BLE_SCAN_SECONDS = 2;
-static const uint32_t BLE_SEND_COOLDOWN_MS = 60000;
-static const int BLE_MIN_RSSI = -95;
-static const size_t BLE_RECENT_SLOTS = 32;
-static const uint32_t MIN_HEAP_FOR_TLS = 22000;
-
-struct BleRecentEntry {
-  char device[32];
-  uint32_t lastSentMs;
-};
-
-static BleRecentEntry bleRecent[BLE_RECENT_SLOTS];
-#if USE_NIMBLE_BACKEND
-static NimBLEScan* bleScan = nullptr;
-#else
-static BLEScan* bleScan = nullptr;
-#endif
-static unsigned long lastBleScanMs = 0;
 
 // --------- SENSOR LOGIC ---------
 const float DETECT_THRESHOLD_CM = 25.0;
@@ -106,14 +66,12 @@ const int REQUIRED_HITS = 1;
 const unsigned long REARM_DELAY_MS = 500;
 const unsigned long DOOR_EVENT_COOLDOWN_MS = 250;
 const unsigned long AMBIGUOUS_WINDOW_MS = 200; // if both sensors trigger within this window, treat as no-op
-// If a user taps RFID then immediately crosses entry beam, suppress one entry count to avoid double counting.
-const unsigned long RFID_ENTRY_SUPPRESS_MS = 2500;
+const unsigned long SEQUENCE_CONFIRM_MS = 1200;
 
 // --------- DEBUG ---------
 static const bool DEBUG_HTTP = true;
 static const bool DEBUG_WIFI = true;
 static const bool DEBUG_HEARTBEAT = true;
-static const bool DEBUG_RFID = false;
 
 static const uint32_t HTTP_TIMEOUT_MS = 5000;
 static const uint32_t HTTP_MIN_GAP_MS = 1200;
@@ -121,10 +79,6 @@ static const uint32_t HTTP_FAIL_BACKOFF_MS = 7000;
 
 static unsigned long lastHeartbeatMs = 0;
 static unsigned long lastDoorEventMs = 0;
-static unsigned long lastRfidDiagMs = 0;
-static const unsigned long RFID_DIAG_EVERY_MS = 2000;
-static volatile unsigned long lastRfidScanMs = 0;
-static volatile bool suppressNextEntryFromRfid = false;
 static unsigned long nextHttpAttemptAtMs = 0;
 static int8_t lastOccupancyQueuedChange = 0;
 static unsigned long lastOccupancyQueuedAtMs = 0;
@@ -136,6 +90,16 @@ static float pendingDistanceCm = -1.0;
 
 int entryCloseCount = 0;
 int exitCloseCount = 0;
+int entry2CloseCount = 0;
+int exit2CloseCount = 0;
+
+enum SideSeqState : uint8_t { SEQ_IDLE = 0, SEQ_WAIT_SECOND = 1 };
+SideSeqState entrySeqState = SEQ_IDLE;
+SideSeqState exitSeqState = SEQ_IDLE;
+unsigned long entrySeqSinceMs = 0;
+unsigned long exitSeqSinceMs = 0;
+float entrySeqDistanceCm = -1.0;
+float exitSeqDistanceCm = -1.0;
 
 int peopleInside = 0;
 
@@ -149,23 +113,12 @@ bool exitArmed = true;
 
 static bool ensureWiFiConnected();
 static bool sendOccupancyChangeToSupabase(const char* sensorIdentifier, const char* sensorSecret, int change, float distanceCm, int localCount);
-static bool sendRfidScanToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* uidHex);
-static bool sendBlePresenceToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* deviceIdentifier, int rssi);
 
 static size_t sanitizeJwtKey(char* out, size_t outLen, const char* in);
 static int countChar(const char* s, char ch);
 static void printJwtShapeDebug(const char* label, const char* jwt);
 static bool allowHttpAttempt(const char* tag);
 static void noteHttpResult(int httpCode);
-
-static void pollRfid(unsigned long now);
-static String formatUidHex(const MFRC522::Uid& uid);
-static void rfidDiagnostics(unsigned long now);
-static void pollBle(unsigned long now);
-static bool shouldSendBleDevice(const char* deviceIdentifier, unsigned long now);
-
-static void rfidTask(void*);
-static void bleTask(void*);
 
 static SemaphoreHandle_t httpMutex = nullptr;
 
@@ -184,7 +137,7 @@ struct ScopedMutex {
   }
 };
 
-enum OutboundEventType : uint8_t { EVT_OCCUPANCY = 1, EVT_RFID = 2, EVT_BLE = 3 };
+enum OutboundEventType : uint8_t { EVT_OCCUPANCY = 1 };
 
 struct OutboundEvent {
   uint8_t type;
@@ -196,13 +149,6 @@ struct OutboundEvent {
   int8_t change;
   float distanceCm;
   int localCount;
-
-  // RFID fields
-  char rfidUid[32];
-
-  // BLE fields
-  char bleDevice[32];
-  int16_t bleRssi;
 
   uint32_t queuedAtMs;
 };
@@ -223,6 +169,14 @@ static void disarmBothAndCooldown(unsigned long now) {
   exitFarTimerRunning = false;
   entryCloseCount = 0;
   exitCloseCount = 0;
+  entry2CloseCount = 0;
+  exit2CloseCount = 0;
+  entrySeqState = SEQ_IDLE;
+  exitSeqState = SEQ_IDLE;
+  entrySeqSinceMs = 0;
+  exitSeqSinceMs = 0;
+  entrySeqDistanceCm = -1.0;
+  exitSeqDistanceCm = -1.0;
   resetPending();
   lastDoorEventMs = now;
 }
@@ -256,47 +210,6 @@ static bool enqueueOccupancyEvent(const char* sensorIdentifier, const char* sens
   }
   lastOccupancyQueuedChange = (int8_t)change;
   lastOccupancyQueuedAtMs = now;
-  return true;
-}
-
-static bool enqueueRfidScanEvent(const char* sensorIdentifier, const char* sensorSecret, const char* uidHex) {
-  if (!outboundQueue) return false;
-  if (!uidHex || uidHex[0] == '\0') return false;
-
-  OutboundEvent ev;
-  memset(&ev, 0, sizeof(ev));
-  ev.type = EVT_RFID;
-  ev.retryCount = 0;
-  strncpy(ev.sensorIdentifier, sensorIdentifier, sizeof(ev.sensorIdentifier) - 1);
-  strncpy(ev.sensorSecret, sensorSecret, sizeof(ev.sensorSecret) - 1);
-  strncpy(ev.rfidUid, uidHex, sizeof(ev.rfidUid) - 1);
-  ev.queuedAtMs = millis();
-
-  if (xQueueSend(outboundQueue, &ev, 0) != pdTRUE) {
-    Serial.println("RFID queue full; dropping scan");
-    return false;
-  }
-  return true;
-}
-
-static bool enqueueBleEvent(const char* sensorIdentifier, const char* sensorSecret, const char* deviceIdentifier, int rssi) {
-  if (!outboundQueue) return false;
-  if (!deviceIdentifier || deviceIdentifier[0] == '\0') return false;
-
-  OutboundEvent ev;
-  memset(&ev, 0, sizeof(ev));
-  ev.type = EVT_BLE;
-  ev.retryCount = 0;
-  strncpy(ev.sensorIdentifier, sensorIdentifier, sizeof(ev.sensorIdentifier) - 1);
-  strncpy(ev.sensorSecret, sensorSecret, sizeof(ev.sensorSecret) - 1);
-  strncpy(ev.bleDevice, deviceIdentifier, sizeof(ev.bleDevice) - 1);
-  ev.bleRssi = (int16_t)rssi;
-  ev.queuedAtMs = millis();
-
-  if (xQueueSend(outboundQueue, &ev, 0) != pdTRUE) {
-    if (DEBUG_BLE) Serial.println("BLE queue full; dropping sighting");
-    return false;
-  }
   return true;
 }
 
@@ -572,312 +485,6 @@ static bool sendOccupancyChangeToSupabase(const char* sensorIdentifier, const ch
   return ok;
 }
 
-static bool sendRfidScanToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* uidHex) {
-  if (!uidHex || uidHex[0] == '\0') return false;
-  if (!allowHttpAttempt("rfid")) return false;
-
-  ScopedMutex lock(httpMutex, pdMS_TO_TICKS(8000));
-  if (!lock.acquired) {
-    if (DEBUG_RFID) Serial.println("HTTP busy; dropping RFID scan");
-    return false;
-  }
-
-  if (!ensureWiFiConnected()) return false;
-
-  if (DEBUG_HTTP) {
-    Serial.println("\n--- Supabase RFID RPC request ---");
-    Serial.print("URL: ");
-    Serial.println(SUPABASE_RFID_INGEST_URL);
-    Serial.print("sensor_identifier: ");
-    Serial.println(sensorIdentifier);
-    Serial.print("uid: ");
-    Serial.println(uidHex);
-  }
-
-  // Minimal JSON; p_scanned_at and p_payload are optional (defaults).
-  char body[256];
-  const int n = snprintf(
-    body,
-    sizeof(body),
-    "{\"p_sensor_identifier\":\"%s\",\"p_secret\":\"%s\",\"p_tag_uid\":\"%s\"}",
-    sensorIdentifier,
-    sensorSecret,
-    uidHex
-  );
-  if (n <= 0 || n >= (int)sizeof(body)) {
-    Serial.println("RFID payload too large; dropping scan");
-    return false;
-  }
-
-  WiFiClientSecure client;
-  client.setInsecure();
-  client.setTimeout(10);
-
-  HTTPClient https;
-  if (!https.begin(client, SUPABASE_RFID_INGEST_URL)) {
-    Serial.println("Supabase RFID HTTPS begin failed");
-    return false;
-  }
-
-  https.setTimeout(HTTP_TIMEOUT_MS);
-  https.addHeader("Content-Type", "application/json");
-
-  char jwtKey[512];
-  const size_t jwtLen = sanitizeJwtKey(jwtKey, sizeof(jwtKey), SUPABASE_ANON_KEY);
-  if (jwtLen < 50 || countChar(jwtKey, '.') != 2) {
-    Serial.println("Supabase key looks malformed; cannot send RFID scan");
-    https.end();
-    return false;
-  }
-
-  https.addHeader("apikey", jwtKey);
-  char auth[600];
-  const int authN = snprintf(auth, sizeof(auth), "Bearer %s", jwtKey);
-  if (authN <= 0 || authN >= (int)sizeof(auth)) {
-    Serial.println("Supabase Authorization header too long; cannot send RFID scan");
-    https.end();
-    return false;
-  }
-  https.addHeader("Authorization", auth);
-
-  const int httpCode = https.POST(reinterpret_cast<uint8_t*>(body), strlen(body));
-  const bool ok = (httpCode >= 200 && httpCode < 300);
-  noteHttpResult(httpCode);
-
-  if (DEBUG_HTTP) {
-    Serial.print("RFID HTTP status: ");
-    Serial.println(httpCode);
-    if (!ok) {
-      String resp = https.getString();
-      if (resp.length() > 0) {
-        Serial.print("RFID response: ");
-        Serial.println(resp);
-      }
-    }
-    Serial.println("Supabase RFID RPC done");
-  }
-
-  https.end();
-  return ok;
-}
-
-static bool sendBlePresenceToSupabase(const char* sensorIdentifier, const char* sensorSecret, const char* deviceIdentifier, int rssi) {
-  if (!deviceIdentifier || deviceIdentifier[0] == '\0') return false;
-  if (!allowHttpAttempt("ble")) {
-    if (DEBUG_BLE) Serial.println("BLE send deferred by HTTP throttle");
-    return false;
-  }
-
-  const uint32_t freeHeap = ESP.getFreeHeap();
-  if (freeHeap < MIN_HEAP_FOR_TLS) {
-    Serial.print("BLE send skipped (low heap): ");
-    Serial.println(freeHeap);
-    return false;
-  }
-
-  ScopedMutex lock(httpMutex, pdMS_TO_TICKS(8000));
-  if (!lock.acquired) {
-    Serial.println("HTTP busy; dropping BLE sighting");
-    return false;
-  }
-
-  if (!ensureWiFiConnected()) return false;
-
-  if (DEBUG_BLE) {
-    Serial.println("\n--- Supabase BLE RPC request ---");
-    Serial.print("URL: ");
-    Serial.println(SUPABASE_BLE_INGEST_URL);
-    Serial.print("device: ");
-    Serial.println(deviceIdentifier);
-    Serial.print("rssi: ");
-    Serial.println(rssi);
-  }
-
-  char body[512];
-  const int n = snprintf(
-    body,
-    sizeof(body),
-    "{\"p_sensor_identifier\":\"%s\",\"p_secret\":\"%s\",\"p_device_identifier\":\"%s\",\"p_rssi\":%d,\"p_payload\":{\"gateway\":\"esp32\",\"source\":\"ble_scan\"}}",
-    sensorIdentifier,
-    sensorSecret,
-    deviceIdentifier,
-    rssi
-  );
-  if (n <= 0 || n >= (int)sizeof(body)) {
-    if (DEBUG_BLE) Serial.println("BLE payload too large; dropping sighting");
-    return false;
-  }
-
-  WiFiClientSecure client;
-  client.setInsecure();
-  client.setTimeout(10);
-
-  HTTPClient https;
-  if (!https.begin(client, SUPABASE_BLE_INGEST_URL)) {
-    Serial.println("Supabase BLE HTTPS begin failed");
-    return false;
-  }
-
-  https.setReuse(false);
-  https.setTimeout(HTTP_TIMEOUT_MS);
-  https.addHeader("Content-Type", "application/json");
-
-  char jwtKey[512];
-  const size_t jwtLen = sanitizeJwtKey(jwtKey, sizeof(jwtKey), SUPABASE_ANON_KEY);
-  if (jwtLen < 50 || countChar(jwtKey, '.') != 2) {
-    Serial.println("Supabase key malformed; cannot send BLE sighting");
-    https.end();
-    return false;
-  }
-
-  https.addHeader("apikey", jwtKey);
-  char auth[600];
-  const int authN = snprintf(auth, sizeof(auth), "Bearer %s", jwtKey);
-  if (authN <= 0 || authN >= (int)sizeof(auth)) {
-    Serial.println("Supabase Authorization header too long; cannot send BLE sighting");
-    https.end();
-    return false;
-  }
-  https.addHeader("Authorization", auth);
-
-  const int httpCode = https.POST(reinterpret_cast<uint8_t*>(body), strlen(body));
-  const bool ok = (httpCode >= 200 && httpCode < 300);
-  noteHttpResult(httpCode);
-
-  Serial.print("BLE HTTP status: ");
-  Serial.println(httpCode);
-  if (httpCode < 0) {
-    Serial.print("BLE HTTP error: ");
-    Serial.println(HTTPClient::errorToString(httpCode));
-    Serial.print("WiFi status: ");
-    Serial.println(WiFi.status());
-    Serial.print("WiFi RSSI: ");
-    Serial.println(WiFi.RSSI());
-  }
-  if (!ok) {
-    String resp = https.getString();
-    if (resp.length() > 0) {
-      Serial.print("BLE response: ");
-      Serial.println(resp);
-    }
-  }
-  if (DEBUG_BLE) {
-    Serial.println("Supabase BLE RPC done");
-  }
-
-  https.end();
-  return ok;
-}
-
-static bool shouldSendBleDevice(const char* deviceIdentifier, unsigned long now) {
-  if (!deviceIdentifier || deviceIdentifier[0] == '\0') return false;
-
-  int freeSlot = -1;
-  int oldestSlot = 0;
-  uint32_t oldestTs = 0xFFFFFFFFUL;
-
-  for (size_t i = 0; i < BLE_RECENT_SLOTS; i++) {
-    if (bleRecent[i].device[0] == '\0') {
-      if (freeSlot < 0) freeSlot = (int)i;
-      continue;
-    }
-
-    if (strncmp(bleRecent[i].device, deviceIdentifier, sizeof(bleRecent[i].device)) == 0) {
-      uint32_t age = now - bleRecent[i].lastSentMs;
-      if (age < BLE_SEND_COOLDOWN_MS) return false;
-      bleRecent[i].lastSentMs = now;
-      return true;
-    }
-
-    if (bleRecent[i].lastSentMs < oldestTs) {
-      oldestTs = bleRecent[i].lastSentMs;
-      oldestSlot = (int)i;
-    }
-  }
-
-  const int slot = (freeSlot >= 0) ? freeSlot : oldestSlot;
-  strncpy(bleRecent[slot].device, deviceIdentifier, sizeof(bleRecent[slot].device) - 1);
-  bleRecent[slot].device[sizeof(bleRecent[slot].device) - 1] = '\0';
-  bleRecent[slot].lastSentMs = now;
-  return true;
-}
-
-static void pollBle(unsigned long now) {
-  if (!BLE_ENABLED || !bleScan) return;
-  if ((now - lastBleScanMs) < BLE_SCAN_EVERY_MS) return;
-  lastBleScanMs = now;
-
-#if USE_NIMBLE_BACKEND
-  const bool scanOk = bleScan->start(BLE_SCAN_SECONDS, false);
-  if (!scanOk) return;
-  NimBLEScanResults results = bleScan->getResults();
-  const int count = results.getCount();
-#else
-  BLEScanResults* results = bleScan->start(BLE_SCAN_SECONDS, false);
-  if (!results) return;
-  const int count = results->getCount();
-#endif
-  int rssiFiltered = 0;
-  int cooldownFiltered = 0;
-  int enqueued = 0;
-  if (DEBUG_BLE) {
-    Serial.print("BLE scan results: ");
-    Serial.println(count);
-  }
-
-  for (int i = 0; i < count; i++) {
-#if USE_NIMBLE_BACKEND
-    const NimBLEAdvertisedDevice* d = results.getDevice(i);
-    if (!d) continue;
-    const int rssi = d->getRSSI();
-#else
-    BLEAdvertisedDevice d = results->getDevice(i);
-    const int rssi = d.getRSSI();
-#endif
-    if (rssi < BLE_MIN_RSSI) {
-      rssiFiltered++;
-      continue;
-    }
-
-#if USE_NIMBLE_BACKEND
-    std::string addr = d->getAddress().toString();
-    if (addr.empty()) continue;
-#else
-    String addr = d.getAddress().toString();
-    if (addr.length() == 0) continue;
-#endif
-
-    char deviceId[32];
-    memset(deviceId, 0, sizeof(deviceId));
-    const size_t copyLen = (addr.length() < sizeof(deviceId) - 1) ? addr.length() : (sizeof(deviceId) - 1);
-    memcpy(deviceId, addr.c_str(), copyLen);
-
-    if (!shouldSendBleDevice(deviceId, now)) {
-      cooldownFiltered++;
-      continue;
-    }
-
-    if (outboundQueue) {
-      (void)enqueueBleEvent(BLE_SENSOR_IDENTIFIER, BLE_SENSOR_SECRET, deviceId, rssi);
-      enqueued++;
-    } else {
-      (void)sendBlePresenceToSupabase(BLE_SENSOR_IDENTIFIER, BLE_SENSOR_SECRET, deviceId, rssi);
-      enqueued++;
-    }
-  }
-
-  if (DEBUG_BLE) {
-    Serial.print("BLE accepted: ");
-    Serial.print(enqueued);
-    Serial.print(" | RSSI filtered: ");
-    Serial.print(rssiFiltered);
-    Serial.print(" | cooldown filtered: ");
-    Serial.println(cooldownFiltered);
-  }
-
-  bleScan->clearResults();
-}
-
 static void senderTask(void*) {
   OutboundEvent ev;
   for (;;) {
@@ -887,7 +494,7 @@ static void senderTask(void*) {
     }
     if (xQueueReceive(outboundQueue, &ev, portMAX_DELAY) != pdTRUE) continue;
 
-    // Prevent occupancy flood from starving BLE/RFID events.
+    // Prevent occupancy flood from causing queue churn.
     if (ev.type == EVT_OCCUPANCY && uxQueueMessagesWaiting(outboundQueue) > 0) {
       if (xQueueSend(outboundQueue, &ev, 0) == pdTRUE) {
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -898,55 +505,11 @@ static void senderTask(void*) {
     bool ok = false;
     if (ev.type == EVT_OCCUPANCY) {
       ok = sendOccupancyChangeToSupabase(ev.sensorIdentifier, ev.sensorSecret, ev.change, ev.distanceCm, ev.localCount);
-    } else if (ev.type == EVT_RFID) {
-      ok = sendRfidScanToSupabase(ev.sensorIdentifier, ev.sensorSecret, ev.rfidUid);
-    } else if (ev.type == EVT_BLE) {
-      ok = sendBlePresenceToSupabase(ev.sensorIdentifier, ev.sensorSecret, ev.bleDevice, ev.bleRssi);
     }
 
     if (!ok) {
-      if (ev.type == EVT_RFID && ev.retryCount < 6 && outboundQueue) {
-        OutboundEvent retryEv = ev;
-        retryEv.retryCount++;
-        if (xQueueSend(outboundQueue, &retryEv, 0) == pdTRUE) {
-          if (DEBUG_HTTP || DEBUG_RFID) {
-            Serial.print("Requeued RFID event retry #");
-            Serial.println(retryEv.retryCount);
-          }
-        } else {
-          Serial.println("RFID retry queue full; dropping RFID event");
-        }
-      } else if (ev.type == EVT_BLE && ev.retryCount < 3 && outboundQueue) {
-        OutboundEvent retryEv = ev;
-        retryEv.retryCount++;
-        if (xQueueSend(outboundQueue, &retryEv, 0) == pdTRUE) {
-          if (DEBUG_BLE) {
-            Serial.print("Requeued BLE event retry #");
-            Serial.println(retryEv.retryCount);
-          }
-        } else {
-          Serial.println("BLE retry queue full; dropping BLE event");
-        }
-      }
       vTaskDelay(pdMS_TO_TICKS(350));
     }
-  }
-}
-
-static void rfidTask(void*) {
-  // Poll RFID frequently so brief taps are not missed.
-  for (;;) {
-    const unsigned long now = millis();
-    pollRfid(now);
-    rfidDiagnostics(now);
-    vTaskDelay(pdMS_TO_TICKS(50));
-  }
-}
-
-static void bleTask(void*) {
-  for (;;) {
-    pollBle(millis());
-    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
 
@@ -957,87 +520,8 @@ void setup() {
 
   ensureWiFiConnected();
 
-  if (RFID_ENABLED) {
-    pinMode(RFID_SS_PIN, OUTPUT);
-    digitalWrite(RFID_SS_PIN, HIGH);
-    pinMode(RFID_RST_PIN, OUTPUT);
-    digitalWrite(RFID_RST_PIN, HIGH);
-    delay(10);
-
-    // Init SPI + RC522
-    SPI.begin(RFID_SCK_PIN, RFID_MISO_PIN, RFID_MOSI_PIN, RFID_SS_PIN);
-    SPI.setFrequency(1000000); // 1 MHz (slower = more tolerant)
-    rfid.PCD_Init();
-    // Improve read range / robustness
-    rfid.PCD_AntennaOn();
-    rfid.PCD_SetAntennaGain(rfid.RxGain_max);
-    if (DEBUG_RFID) {
-      Serial.println("RC522 init...");
-      Serial.print("SPI pins | SCK: ");
-      Serial.print(RFID_SCK_PIN);
-      Serial.print(" | MISO: ");
-      Serial.print(RFID_MISO_PIN);
-      Serial.print(" | MOSI: ");
-      Serial.print(RFID_MOSI_PIN);
-      Serial.print(" | SS: ");
-      Serial.print(RFID_SS_PIN);
-      Serial.print(" | RST: ");
-      Serial.println(RFID_RST_PIN);
-      Serial.println("RC522 version dump:");
-      rfid.PCD_DumpVersionToSerial();
-
-      // RF/antenna diagnostics
-      byte txCtrl = rfid.PCD_ReadRegister(MFRC522::TxControlReg);
-      Serial.print("RC522 TxControlReg: 0x");
-      if (txCtrl < 0x10) Serial.print("0");
-      Serial.println(txCtrl, HEX);
-
-      byte gain = rfid.PCD_GetAntennaGain();
-      Serial.print("RC522 antenna gain (mask): 0x");
-      if (gain < 0x10) Serial.print("0");
-      Serial.println(gain, HEX);
-
-      bool selfTestOk = rfid.PCD_PerformSelfTest();
-      Serial.print("RC522 self-test: ");
-      Serial.println(selfTestOk ? "PASS" : "FAIL");
-      if (!selfTestOk) {
-        Serial.println("RFID WARNING: Self-test failed. Module/antenna/power may be bad even if VersionReg is OK.");
-      }
-
-      byte v = rfid.PCD_ReadRegister(MFRC522::VersionReg);
-      Serial.print("RC522 VersionReg raw: 0x");
-      if (v < 0x10) Serial.print("0");
-      Serial.println(v, HEX);
-      if (v == 0x00 || v == 0xFF) {
-        Serial.println("RFID WARNING: RC522 not responding (VersionReg is 0x00/0xFF). Check wiring, power (3.3V), and SS/RST pins.");
-      }
-    } else {
-      Serial.println("RC522 initialized");
-    }
-  } else {
-    Serial.println("Occupancy-only diagnostics mode: RFID/BLE disabled");
-  }
-
-  if (BLE_ENABLED) {
-#if USE_NIMBLE_BACKEND
-    NimBLEDevice::init("SpotEase-Gateway");
-    bleScan = NimBLEDevice::getScan();
-#else
-    BLEDevice::init("SpotEase-Gateway");
-    bleScan = BLEDevice::getScan();
-#endif
-    if (bleScan) {
-      bleScan->setActiveScan(false);
-      bleScan->setInterval(320);
-      bleScan->setWindow(30);
-      if (DEBUG_BLE) Serial.println("BLE scanner initialized");
-    } else if (DEBUG_BLE) {
-      Serial.println("BLE scanner init failed");
-    }
-  }
-
   // Queue + sender task so sensor reads keep running even during HTTPS calls.
-  // Includes occupancy events + RFID scans.
+  // Includes occupancy events.
   outboundQueue = xQueueCreate(40, sizeof(OutboundEvent));
   if (outboundQueue) {
     xTaskCreatePinnedToCore(senderTask, "sbSender", 12288, nullptr, 1, nullptr, 1);
@@ -1045,31 +529,27 @@ void setup() {
     Serial.println("Failed to create occupancy queue; will send inline");
   }
 
-  // Dedicated RFID polling task keeps scanning even if loop() is busy.
-  // Use low priority and core 1 to avoid competing with WiFi/system tasks on core 0.
-  if (RFID_ENABLED) {
-    xTaskCreatePinnedToCore(rfidTask, "rfid", 4096, nullptr, 0, nullptr, 1);
-  }
-
-  if (BLE_ENABLED && bleScan) {
-    xTaskCreatePinnedToCore(bleTask, "ble", 6144, nullptr, 0, nullptr, 0);
-  }
-
   pinMode(ENTRY_TRIG_PIN, OUTPUT);
   pinMode(ENTRY_ECHO_PIN, INPUT);
-  pinMode(EXIT_TRIG_PIN, OUTPUT);
-  pinMode(EXIT_ECHO_PIN, INPUT);
+  pinMode(ENTRY2_TRIG_PIN, OUTPUT);
+  pinMode(ENTRY2_ECHO_PIN, INPUT);
+  if (!ENTRY_DEBUG_ONLY) {
+    pinMode(EXIT_TRIG_PIN, OUTPUT);
+    pinMode(EXIT_ECHO_PIN, INPUT);
+    pinMode(EXIT2_TRIG_PIN, OUTPUT);
+    pinMode(EXIT2_ECHO_PIN, INPUT);
+  }
 
   digitalWrite(ENTRY_TRIG_PIN, LOW);
-  digitalWrite(EXIT_TRIG_PIN, LOW);
+  digitalWrite(ENTRY2_TRIG_PIN, LOW);
+  if (!ENTRY_DEBUG_ONLY) {
+    digitalWrite(EXIT_TRIG_PIN, LOW);
+    digitalWrite(EXIT2_TRIG_PIN, LOW);
+  }
 }
 
 void loop() {
   unsigned long now = millis();
-
-  if (suppressNextEntryFromRfid && (now - lastRfidScanMs) > RFID_ENTRY_SUPPRESS_MS) {
-    suppressNextEntryFromRfid = false;
-  }
 
   if (DEBUG_HEARTBEAT && (now - lastHeartbeatMs) > 3000) {
     lastHeartbeatMs = now;
@@ -1080,17 +560,32 @@ void loop() {
   }
 
   float entryDistance = readDistanceCm(ENTRY_TRIG_PIN, ENTRY_ECHO_PIN);
-  float exitDistance = readDistanceCm(EXIT_TRIG_PIN, EXIT_ECHO_PIN);
+  float entry2Distance = readDistanceCm(ENTRY2_TRIG_PIN, ENTRY2_ECHO_PIN);
+  float exitDistance = -1.0;
+  float exit2Distance = -1.0;
+  if (!ENTRY_DEBUG_ONLY) {
+    exitDistance = readDistanceCm(EXIT_TRIG_PIN, EXIT_ECHO_PIN);
+    exit2Distance = readDistanceCm(EXIT2_TRIG_PIN, EXIT2_ECHO_PIN);
+  }
 
   bool entryClose = (entryDistance > 0 && entryDistance <= DETECT_THRESHOLD_CM);
+  bool entry2Close = (entry2Distance > 0 && entry2Distance <= DETECT_THRESHOLD_CM);
   bool exitClose = (exitDistance > 0 && exitDistance <= DETECT_THRESHOLD_CM);
+  bool exit2Close = (exit2Distance > 0 && exit2Distance <= DETECT_THRESHOLD_CM);
 
   // Update hit counters
   if (entryClose) entryCloseCount++; else entryCloseCount = 0;
-  if (exitClose) exitCloseCount++; else exitCloseCount = 0;
+  if (entry2Close) entry2CloseCount++; else entry2CloseCount = 0;
+  if (!ENTRY_DEBUG_ONLY) {
+    if (exitClose) exitCloseCount++; else exitCloseCount = 0;
+    if (exit2Close) exit2CloseCount++; else exit2CloseCount = 0;
+  } else {
+    exitCloseCount = 0;
+    exit2CloseCount = 0;
+  }
 
   // Start/advance rearm timers only when far
-  if (!entryArmed && !entryClose) {
+  if (!entryArmed && !entryClose && !entry2Close) {
     if (!entryFarTimerRunning) {
       entryFarSince = now;
       entryFarTimerRunning = true;
@@ -1099,7 +594,7 @@ void loop() {
       entryFarTimerRunning = false;
     }
   }
-  if (!exitArmed && !exitClose) {
+  if (!ENTRY_DEBUG_ONLY && !exitArmed && !exitClose && !exit2Close) {
     if (!exitFarTimerRunning) {
       exitFarSince = now;
       exitFarTimerRunning = true;
@@ -1111,17 +606,63 @@ void loop() {
 
   // Door cooldown: prevents +1 and -1 from firing back-to-back from the same person standing in the doorway.
   // Qualified hits (for decision making)
-  bool entryQualified = (entryCloseCount >= REQUIRED_HITS);
-  bool exitQualified = (exitCloseCount >= REQUIRED_HITS);
+  bool entryPrimaryQualified = (entry2CloseCount >= REQUIRED_HITS);
+  bool entrySecondaryQualified = (entryCloseCount >= REQUIRED_HITS);
+  bool exitPrimaryQualified = (exitCloseCount >= REQUIRED_HITS);
+  bool exitSecondaryQualified = (exit2CloseCount >= REQUIRED_HITS);
+
+  if (entrySeqState == SEQ_WAIT_SECOND && (now - entrySeqSinceMs) > SEQUENCE_CONFIRM_MS) {
+    entrySeqState = SEQ_IDLE;
+    entrySeqSinceMs = 0;
+    entrySeqDistanceCm = -1.0;
+    Serial.println("Entry sequence timed out (no second sensor confirmation)");
+  }
+  if (!ENTRY_DEBUG_ONLY && exitSeqState == SEQ_WAIT_SECOND && (now - exitSeqSinceMs) > SEQUENCE_CONFIRM_MS) {
+    exitSeqState = SEQ_IDLE;
+    exitSeqSinceMs = 0;
+    exitSeqDistanceCm = -1.0;
+    Serial.println("Exit sequence timed out (no second sensor confirmation)");
+  }
+
+  bool entrySequenceConfirmed = false;
+  bool exitSequenceConfirmed = false;
+
+  if (entryArmed) {
+    if (entrySeqState == SEQ_IDLE) {
+      if (entryPrimaryQualified) {
+        entrySeqState = SEQ_WAIT_SECOND;
+        entrySeqSinceMs = now;
+        entrySeqDistanceCm = entry2Distance;
+      }
+    } else if (entrySeqState == SEQ_WAIT_SECOND && entrySecondaryQualified) {
+      entrySequenceConfirmed = true;
+      entrySeqState = SEQ_IDLE;
+      entrySeqSinceMs = 0;
+    }
+  }
+
+  if (!ENTRY_DEBUG_ONLY && exitArmed) {
+    if (exitSeqState == SEQ_IDLE) {
+      if (exitPrimaryQualified) {
+        exitSeqState = SEQ_WAIT_SECOND;
+        exitSeqSinceMs = now;
+        exitSeqDistanceCm = exitDistance;
+      }
+    } else if (exitSeqState == SEQ_WAIT_SECOND && exitSecondaryQualified) {
+      exitSequenceConfirmed = true;
+      exitSeqState = SEQ_IDLE;
+      exitSeqSinceMs = 0;
+    }
+  }
 
   // If we have a pending decision, either cancel (if other sensor triggers soon) or commit after a short window.
   if (pendingDir != PENDING_NONE) {
     // Cancel if the opposite sensor also triggers within the ambiguous window.
     if ((now - pendingSinceMs) <= AMBIGUOUS_WINDOW_MS) {
-      if (pendingDir == PENDING_ENTRY && exitQualified) {
+      if (pendingDir == PENDING_ENTRY && !ENTRY_DEBUG_ONLY && exitSequenceConfirmed) {
         Serial.println("Entry then exit within window; cancel (no count change)");
         disarmBothAndCooldown(now);
-      } else if (pendingDir == PENDING_EXIT && entryQualified) {
+      } else if (pendingDir == PENDING_EXIT && entrySequenceConfirmed) {
         Serial.println("Exit then entry within window; cancel (no count change)");
         disarmBothAndCooldown(now);
       }
@@ -1130,14 +671,6 @@ void loop() {
     // If not cancelled, commit after the window expires.
     if (pendingDir != PENDING_NONE && (now - pendingSinceMs) >= AMBIGUOUS_WINDOW_MS) {
       if (pendingDir == PENDING_ENTRY) {
-        if (suppressNextEntryFromRfid && (now - lastRfidScanMs) <= RFID_ENTRY_SUPPRESS_MS) {
-          suppressNextEntryFromRfid = false;
-          Serial.println("Entry suppressed after RFID tap (dedupe)");
-          disarmBothAndCooldown(now);
-          delay(10);
-          return;
-        }
-
         peopleInside++;
         Serial.print("Person entered | Count: ");
         Serial.println(peopleInside);
@@ -1150,6 +683,11 @@ void loop() {
         }
         disarmBothAndCooldown(now);
       } else if (pendingDir == PENDING_EXIT) {
+        if (ENTRY_DEBUG_ONLY) {
+          disarmBothAndCooldown(now);
+          delay(10);
+          return;
+        }
         if (peopleInside > 0) peopleInside--;
         Serial.print("Person left | Count: ");
         Serial.println(peopleInside);
@@ -1166,149 +704,32 @@ void loop() {
   } else {
     // No pending: start a decision if we're past cooldown.
     if (now - lastDoorEventMs >= DOOR_EVENT_COOLDOWN_MS) {
-      bool entryTrigger = entryArmed && entryQualified;
-      bool exitTrigger = exitArmed && exitQualified;
+      bool entryTrigger = entryArmed && entrySequenceConfirmed;
+      bool exitTrigger = (!ENTRY_DEBUG_ONLY) && exitArmed && exitSequenceConfirmed;
 
       // If both are already triggered, ignore as ambiguous and disarm until clear.
       if (entryTrigger && exitTrigger) {
         Serial.println("Both sensors triggered; ignoring (no count change)");
         disarmBothAndCooldown(now);
       } else if (entryTrigger) {
-        if (suppressNextEntryFromRfid && (now - lastRfidScanMs) <= RFID_ENTRY_SUPPRESS_MS) {
-          suppressNextEntryFromRfid = false;
-          Serial.println("Entry trigger ignored after RFID tap (dedupe)");
-          disarmBothAndCooldown(now);
-          delay(10);
-          return;
-        }
-
         // Delay commit briefly: if the other sensor triggers within AMBIGUOUS_WINDOW_MS, we'll cancel.
         pendingDir = PENDING_ENTRY;
         pendingSinceMs = now;
-        pendingDistanceCm = entryDistance;
+        pendingDistanceCm = entrySeqDistanceCm;
         // Prevent repeatedly re-triggering while someone is still close.
         entryArmed = false;
         entryFarTimerRunning = false;
-        Serial.println("Entry triggered; pending...");
+        Serial.println("Entry confirmed by 2 sensors; pending...");
       } else if (exitTrigger) {
         pendingDir = PENDING_EXIT;
         pendingSinceMs = now;
-        pendingDistanceCm = exitDistance;
+        pendingDistanceCm = exitSeqDistanceCm;
         exitArmed = false;
         exitFarTimerRunning = false;
-        Serial.println("Exit triggered; pending...");
+        Serial.println("Exit confirmed by 2 sensors; pending...");
       }
     }
   }
 
   delay(10);
-}
-
-static void pollRfid(unsigned long now) {
-  // Look for new card
-  if (!rfid.PICC_IsNewCardPresent()) return;
-  if (!rfid.PICC_ReadCardSerial()) {
-    if (DEBUG_RFID) Serial.println("RFID: PICC_ReadCardSerial() failed");
-    return;
-  }
-
-  if (DEBUG_RFID) {
-    MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
-    Serial.print("RFID tag detected | UID bytes: ");
-    Serial.print(rfid.uid.size);
-    Serial.print(" | SAK: 0x");
-    if (rfid.uid.sak < 0x10) Serial.print("0");
-    Serial.print(rfid.uid.sak, HEX);
-    Serial.print(" | Type: ");
-    Serial.println(rfid.PICC_GetTypeName(piccType));
-
-    if (piccType == MFRC522::PICC_TYPE_UNKNOWN) {
-      Serial.println("RFID note: Tag type is UNKNOWN. If this is a 125kHz ID card (HID/EM), RC522 will never read it.");
-    }
-  }
-
-  String uidHex = formatUidHex(rfid.uid);
-  if (uidHex.length() == 0) {
-    rfid.PICC_HaltA();
-    rfid.PCD_StopCrypto1();
-    return;
-  }
-
-  // Debounce: don't spam if card is held to the reader
-  if (uidHex == lastRfidUid && (now - lastRfidSeenMs) < RFID_DEBOUNCE_MS) {
-    rfid.PICC_HaltA();
-    rfid.PCD_StopCrypto1();
-    return;
-  }
-
-  lastRfidUid = uidHex;
-  lastRfidSeenMs = now;
-  lastRfidScanMs = now;
-  suppressNextEntryFromRfid = true;
-
-  Serial.print("RFID scan UID: ");
-  Serial.println(uidHex);
-
-  // Log the scan to Supabase (hashed server-side) so it appears in public.rfid_scans.
-  // IMPORTANT: Don't do HTTPS inside the RFID task (stack overflow). Enqueue instead.
-  if (outboundQueue) {
-    (void)enqueueRfidScanEvent(ENTRY_SENSOR_IDENTIFIER, ENTRY_SENSOR_SECRET, uidHex.c_str());
-  } else {
-    if (DEBUG_RFID) Serial.println("RFID log skipped (no outbound queue)");
-  }
-
-  // Hook for later:
-  // - if you add a secure Supabase RPC (recommended), you can send uidHex (or a hash)
-  //   without opening up table inserts via anon key.
-
-  rfid.PICC_HaltA();
-  rfid.PCD_StopCrypto1();
-}
-
-static void rfidDiagnostics(unsigned long now) {
-  if (!DEBUG_RFID) return;
-  if (now - lastRfidDiagMs < RFID_DIAG_EVERY_MS) return;
-  lastRfidDiagMs = now;
-
-  // Quick wiring/communication check. If this is 0x00 or 0xFF, SPI/SS/RST/power is usually wrong.
-  byte v = rfid.PCD_ReadRegister(MFRC522::VersionReg);
-  Serial.print("RFID diag | VersionReg: 0x");
-  if (v < 0x10) Serial.print("0");
-  Serial.print(v, HEX);
-  const bool bad = (v == 0x00 || v == 0xFF);
-  if (bad) {
-    Serial.print(" | RC522 NOT RESPONDING");
-    if (rfidBadReads < 255) rfidBadReads++;
-  } else {
-    rfidBadReads = 0;
-  }
-  Serial.println(" | Present tag: (tap card now)");
-
-  // Auto-recover: if the reader is unresponsive for several consecutive diagnostics,
-  // toggle reset and re-init. This helps with intermittent power/noise issues.
-  if (bad && rfidBadReads >= 3 && (now - lastRfidRecoverMs) > 3000) {
-    lastRfidRecoverMs = now;
-    Serial.println("RFID recover: toggling RC522 reset + re-init");
-    digitalWrite(RFID_SS_PIN, HIGH);
-    digitalWrite(RFID_RST_PIN, LOW);
-    delay(50);
-    digitalWrite(RFID_RST_PIN, HIGH);
-    delay(50);
-    SPI.begin(RFID_SCK_PIN, RFID_MISO_PIN, RFID_MOSI_PIN, RFID_SS_PIN);
-    SPI.setFrequency(1000000);
-    rfid.PCD_Init();
-    rfid.PCD_AntennaOn();
-    rfid.PCD_SetAntennaGain(rfid.RxGain_max);
-    rfidBadReads = 0;
-  }
-}
-
-static String formatUidHex(const MFRC522::Uid& uid) {
-  String out;
-  for (byte i = 0; i < uid.size; i++) {
-    if (uid.uidByte[i] < 0x10) out += "0";
-    out += String(uid.uidByte[i], HEX);
-  }
-  out.toUpperCase();
-  return out;
 }

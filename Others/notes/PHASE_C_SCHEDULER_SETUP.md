@@ -2,7 +2,7 @@
 
 **Objective**: Automatically close stale BLE presence sessions and capture last-seen location for accountability/emergency response.
 
-**Migration**: `015_ble_presence_phase_b.sql`  
+**Migration**: `015_ble_presence_phase_c.sql`  
 **Status**: Ready for deployment  
 **Timeline**: April 14, 2026
 
@@ -171,7 +171,7 @@ RETURNS TABLE (
   session_id UUID,
   last_signal_time TIMESTAMPTZ,
   last_seen_location TEXT,
-  close_reason VARCHAR(50)
+  close_reason TEXT
 )
 ```
 

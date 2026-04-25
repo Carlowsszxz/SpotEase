@@ -21,6 +21,7 @@ function normalizeNavbarLinks() {
     '/register': 'FrameRegister.html',
     '/dashboard': 'FrameDashboard.html',
     '/map': 'FrameMap.html',
+    '/chat': 'FrameChat.html',
     '/emergency': 'FrameEmergency.html',
     '/my-reservations': 'FrameMyReservations.html',
     '/profile': 'FrameProfile.html',
@@ -33,6 +34,7 @@ function normalizeNavbarLinks() {
     'FrameRegister.html': '/register',
     'FrameDashboard.html': '/dashboard',
     'FrameMap.html': '/map',
+    'FrameChat.html': '/chat',
     'FrameEmergency.html': '/emergency',
     'FrameMyReservations.html': '/my-reservations',
     'FrameProfile.html': '/profile',
@@ -139,6 +141,38 @@ function ensureMenuLogoutItem() {
   return wrap;
 }
 
+function isGuestNavHref(href) {
+  var value = String(href || '').toLowerCase().trim();
+  if (!value) return false;
+  return value === '/'
+    || value === '/about'
+    || value === '/login'
+    || value === '/register'
+    || value.endsWith('framehome.html')
+    || value.endsWith('frameabout.html')
+    || value.endsWith('framelogin.html')
+    || value.endsWith('frameregister.html');
+}
+
+function setGuestNavVisibility(isVisible) {
+  var links = document.querySelectorAll('.main-nav a, .main-nav .sm-panel-item');
+  links.forEach(function(link){
+    try {
+      var action = (link.getAttribute('data-action') || '').toLowerCase().trim();
+      if (action === 'logout') return;
+
+      var href = link.getAttribute('href') || '';
+      var text = String((link.textContent || '')).toLowerCase().trim();
+      var guestByText = text === 'home' || text === 'about' || text === 'sign in' || text === 'login' || text === 'register';
+      var isGuest = isGuestNavHref(href) || guestByText;
+      if (!isGuest) return;
+      link.style.display = isVisible ? '' : 'none';
+    } catch (e) {
+      // ignore
+    }
+  });
+}
+
 function setMenuLogoutVisibility(isVisible) {
   const wrap = ensureMenuLogoutItem();
   if (!wrap) return;
@@ -237,9 +271,11 @@ function initEmergencyCta(){
     const user = await getCurrentUser();
     setMenuLogoutVisibility(!!user);
     if (user) {
+      setGuestNavVisibility(false);
       if (loginLink) loginLink.style.display = 'none';
       if (registerLink) registerLink.style.display = 'none';
     } else {
+      setGuestNavVisibility(true);
       if (loginLink) loginLink.style.display = '';
       if (registerLink) registerLink.style.display = '';
     }

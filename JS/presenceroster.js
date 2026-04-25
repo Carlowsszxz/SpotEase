@@ -3,7 +3,8 @@ import {
   fetchUsersForAdminUi,
   fetchResourcesLookup,
   fetchRfidScans,
-  fetchActiveBlePresenceSessions
+  fetchActiveBlePresenceSessions,
+  fetchBleScans
 } from './services/admin-observability-data.js'
 
 (function(){
@@ -19,6 +20,14 @@ import {
   var sumLikelyPresent = document.getElementById('sumLikelyPresent')
   var sumLastSeen = document.getElementById('sumLastSeen')
   var sumNoActivity = document.getElementById('sumNoActivity')
+
+  var bleScansTbody = document.getElementById('bleScansTbody')
+  var bleScansEmpty = document.getElementById('bleScansEmpty')
+  var bleScansError = document.getElementById('bleScansError')
+  var bleSumScans24h = document.getElementById('bleSumScans24h')
+  var bleSumDevices24h = document.getElementById('bleSumDevices24h')
+  var bleSumGateways = document.getElementById('bleSumGateways')
+  var bleSumLatest = document.getElementById('bleSumLatest')
 
   var rowsAll = []
   var rfidChannel = null
@@ -138,6 +147,45 @@ import {
     if(sumLikelyPresent) sumLikelyPresent.textContent = String(presentCount)
     if(sumLastSeen) sumLastSeen.textContent = String(lastSeenCount)
     if(sumNoActivity) sumNoActivity.textContent = String(noActivityCount)
+  }
+
+  function renderBleScans(rows){
+    if(!bleScansTbody) return
+    bleScansTbody.innerHTML = ''
+    if(bleScansError) bleScansError.style.display = 'none'
+
+    var list = (rows || []).slice().sort(function(a,b){ return new Date(b.created_at || 0) - new Date(a.created_at || 0) })
+    var now = Date.now()
+    var cutoff = now - (24 * 60 * 60 * 1000)
+    var rows24h = list.filter(function(r){ return new Date(r.created_at || 0).getTime() >= cutoff })
+    var uniqueDevices = new Set(rows24h.map(function(r){ return String(r.device_address || '').toLowerCase() }).filter(Boolean))
+    var uniqueGateways = new Set(rows24h.map(function(r){ return String(r.gateway_id || '').toLowerCase() }).filter(Boolean))
+
+    if(bleSumScans24h) bleSumScans24h.textContent = String(rows24h.length)
+    if(bleSumDevices24h) bleSumDevices24h.textContent = String(uniqueDevices.size)
+    if(bleSumGateways) bleSumGateways.textContent = String(uniqueGateways.size)
+    if(bleSumLatest) {
+      bleSumLatest.textContent = list.length ? relative(list[0].created_at) : '—'
+    }
+
+    if(!list.length){
+      if(bleScansEmpty) bleScansEmpty.style.display = 'block'
+      return
+    }
+    if(bleScansEmpty) bleScansEmpty.style.display = 'none'
+
+    list.slice(0, 120).forEach(function(r){
+      var rssi = Number(r.rssi || 0)
+      var tr = document.createElement('tr')
+      tr.innerHTML =
+        '<td>' + escapeHtml(formatWhen(r.created_at)) + ' (' + escapeHtml(relative(r.created_at)) + ')</td>' +
+        '<td>' + escapeHtml(r.gateway_id || 'Unknown gateway') + '</td>' +
+        '<td>' + escapeHtml(r.device_address || 'Unknown device') + '</td>' +
+        '<td>' + escapeHtml(r.device_name || '—') + '</td>' +
+        '<td><span class="status-chip ' + (rssi >= -75 ? 'present' : 'lastseen') + '">' + escapeHtml(String(rssi)) + '</span></td>' +
+        '<td>' + escapeHtml(String(r.scan_batch == null ? '—' : r.scan_batch)) + '</td>'
+      bleScansTbody.appendChild(tr)
+    })
   }
 
   function buildRoster(users, resources, scans, bleSessions, windowMinutes){
@@ -267,19 +315,32 @@ import {
       ])
 
       var bleSessions = []
+      var bleScans = []
       try{
         bleSessions = await fetchActiveBlePresenceSessions(supabase, 4000)
       }catch(e){
         bleSessions = []
       }
 
+      try{
+        bleScans = await fetchBleScans(supabase, 2000)
+      }catch(e){
+        bleScans = []
+        if(bleScansError){
+          bleScansError.style.display = 'block'
+          bleScansError.textContent = 'BLE scans are not configured yet (missing ble_scans table or policies).'
+        }
+      }
+
       rowsAll = buildRoster(result[0], result[1], result[2], bleSessions, windowMinutes)
       applyFilters()
+      renderBleScans(bleScans)
       if(updatedEl) updatedEl.textContent = 'Updated: ' + formatWhen(new Date().toISOString())
     }catch(err){
       console.error('Presence roster load failed', err)
       rowsAll = []
       render([])
+      renderBleScans([])
       setError('Unable to load presence roster: ' + (err.message || err))
     }finally{
       refreshInFlight = false

@@ -57,6 +57,17 @@ export async function fetchSensorsLookup(supabase) {
   return data || [];
 }
 
+export async function fetchBleScans(supabase, limit) {
+  const { data, error } = await supabase
+    .from('ble_scans')
+    .select('id,created_at,gateway_id,scan_batch,device_address,device_name,rssi')
+    .order('created_at', { ascending: false })
+    .limit(typeof limit === 'number' && limit > 0 ? limit : 2000);
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function fetchSecurityEvents(supabase, limit) {
   const { data, error } = await supabase
     .from('security_events')

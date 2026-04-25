@@ -10162,7 +10162,7 @@ var b, x, S, C, w, T, E, D, O, k, ee, A, te, j, M, N, P, F, I, ne, re, ie, L, R,
 		return t === "" || t === "localhost" || t === "127.0.0.1" || t.endsWith(".local");
 	}
 	function i() {
-		let t = r(window.location.hostname), i = (window.location.pathname || "").toLowerCase(), a = (document.title || "").toLowerCase(), o = i.endsWith("framehome.html") || i === "/" || a.includes("spotease");
+		let t = r(window.location.hostname), i = (window.location.pathname || "").toLowerCase(), o = i.endsWith("framehome.html") || i === "/";
 		return /* @__PURE__ */ (0, n.jsx)(Hi, {
 			position: "right",
 			colors: [
@@ -10206,6 +10206,10 @@ var b, x, S, C, w, T, E, D, O, k, ee, A, te, j, M, N, P, F, I, ne, re, ie, L, R,
 					link: "FrameMap.html"
 				},
 				{
+					label: "Chat",
+					link: "FrameChat.html"
+				},
+				{
 					label: "Profile",
 					link: "FrameProfile.html"
 				}
@@ -10217,6 +10221,10 @@ var b, x, S, C, w, T, E, D, O, k, ee, A, te, j, M, N, P, F, I, ne, re, ie, L, R,
 				{
 					label: "Map",
 					link: "/map"
+				},
+				{
+					label: "Chat",
+					link: "/chat"
 				},
 				{
 					label: "Profile",

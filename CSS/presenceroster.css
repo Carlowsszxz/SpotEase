@@ -1,70 +1,233 @@
 .presence-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 28px 24px 36px;
 }
 
-.presence-controls {
+.presence-page header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin: 14px 0 16px;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 18px 0 16px;
+  border-bottom: 1px solid var(--line, var(--bt-border));
+  margin-bottom: 16px;
 }
 
-.presence-controls input[type="search"] {
-  min-width: 260px;
-  flex: 1;
+.presence-page header h1 {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+}
+
+.presence-page header .small-muted {
+  max-width: 640px;
+  margin: 6px 0 0;
+}
+
+.shortcut-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.shortcut-card {
+  display: block;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--line, var(--bt-border));
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--panel, var(--bt-card));
+  text-decoration: none;
+  color: var(--text, var(--bt-foreground));
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.shortcut-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent, var(--bt-accent));
+  box-shadow: 0 14px 30px rgba(0,0,0,0.12);
+}
+
+.shortcut-card span {
+  display: block;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.shortcut-card small {
+  display: block;
+  color: var(--muted, var(--bt-muted-foreground));
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.presence-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding: 16px;
+  border: 1px solid var(--line, var(--bt-border));
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)), var(--panel, var(--bt-card));
+  box-shadow: 0 10px 22px rgba(0,0,0,0.05);
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-field label {
+  color: var(--muted, var(--bt-muted-foreground));
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.control-field input,
+.control-field select {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--line, var(--bt-border));
+  background: var(--panel, var(--bt-card));
+  color: var(--text, var(--bt-foreground));
+  padding: 0 12px;
+}
+
+.control-field input:focus,
+.control-field select:focus {
+  outline: none;
+  border-color: var(--accent, var(--bt-accent));
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+}
+
+.presence-toolbar .btn {
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
 }
 
 .presence-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .summary-card {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 12px;
-  background: var(--panel);
+  border: 1px solid var(--line, var(--bt-border));
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--panel, var(--bt-card));
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
 }
 
 .summary-label {
-  color: var(--muted);
-  font-size: 12px;
+  color: var(--muted, var(--bt-muted-foreground));
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .summary-value {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: 6px;
+  line-height: 1;
 }
 
 .presence-note {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line, var(--bt-border));
+  border-radius: 12px;
+  background: var(--panel, var(--bt-card));
+  padding: 16px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.05);
+}
+
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.note-grid strong {
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+}
+
+.panel {
+  border: 1px solid var(--line, var(--bt-border));
+  border-radius: 14px;
+  background: var(--panel, var(--bt-card));
+  box-shadow: 0 10px 22px rgba(0,0,0,0.05);
+}
+
+.panel h3 {
+  margin: 0 0 12px;
+  padding-top: 18px;
+  font-family: var(--bt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 12px;
+}
+
+.panel > *:not(h3) {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.panel > *:last-child {
+  margin-bottom: 16px;
 }
 
 .presence-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  overflow: hidden;
 }
 
 .presence-table th,
 .presence-table td {
-  padding: 10px;
-  border-bottom: 1px solid var(--line);
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line, var(--bt-border));
   text-align: left;
   vertical-align: top;
 }
 
 .presence-table th {
-  color: var(--muted);
+  color: var(--muted, var(--bt-muted-foreground));
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
+  background: rgba(255,255,255,0.02);
 }
 
 .user-name {
@@ -72,17 +235,19 @@
 }
 
 .user-meta {
-  color: var(--muted);
+  color: var(--muted, var(--bt-muted-foreground));
   font-size: 12px;
   margin-top: 3px;
 }
 
 .status-chip {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 5px 9px;
   border-radius: 999px;
   font-size: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line, var(--bt-border));
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .status-chip.present {
@@ -107,11 +272,72 @@
 
 .movement-list li {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--muted, var(--bt-muted-foreground));
+  line-height: 1.4;
+}
+
+.small-muted {
+  color: var(--muted, var(--bt-muted-foreground));
+}
+
+.btn {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
 }
 
 @media (max-width: 900px) {
+  .presence-page header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .shortcut-strip {
+    grid-template-columns: 1fr;
+  }
+
   .presence-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .note-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .presence-toolbar {
+    align-items: stretch;
+  }
+
+  .toolbar-left,
+  .toolbar-right {
+    width: 100%;
+  }
+
+  .control-field {
+    flex: 1 1 240px;
+  }
+}
+
+@media (max-width: 560px) {
+  .presence-page {
+    padding: 20px 16px 28px;
+  }
+
+  .presence-page header h1 {
+    font-size: 34px;
+  }
+
+  .presence-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-value {
+    font-size: 24px;
+  }
+
+  .presence-table {
+    min-width: 820px;
   }
 }

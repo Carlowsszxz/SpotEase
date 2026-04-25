@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="CSS/frames.css">
   <link rel="stylesheet" href="CSS/admin-navbar.css">
   <link rel="stylesheet" href="CSS/adminpanel.css">
-  <link rel="stylesheet" href="CSS/modal.css">
   <link rel="stylesheet" href="CSS/bold-typography.css">
 </head>
 <body>
@@ -17,82 +16,106 @@
 		injectAdminNavbar();
 	</script>
 
-  <!-- Modal overlay - must be outside admin-panel for proper stacking -->
-  <div id="resourceOverlay" class="modal-overlay"></div>
-  <div id="resourceModal" class="modal-panel" aria-hidden="true">
-    <button id="closeModal" class="close-btn">×</button>
-    <h3 id="modalTitle">Add Resource</h3>
-    <div class="reservation-form">
-      <div class="form-group">
-        <label>Name</label>
-        <input id="modalName" type="text">
-      </div>
-      <div class="form-group">
-        <label>Type</label>
-        <select id="modalType">
-          <option value="parking">Parking</option>
-          <option value="seat">Seat</option>
-          <option value="room">Room</option>
-          <option value="other">Other</option>
-        </select>
-        <input id="modalTypeCustom" type="text" placeholder="Enter custom type" style="display:none; margin-top: 8px;">
-      </div>
-      <div class="form-group">
-        <label>Location</label>
-        <input id="modalLocation" type="text">
-      </div>
-      <div class="form-group">
-        <label>Capacity</label>
-        <input id="modalCapacity" type="number" min="1" value="1">
-      </div>
-      <div class="form-group">
-        <label><input type="checkbox" id="modalStatus"> Active</label>
-      </div>
-      <div class="form-actions"><button id="saveResource" class="btn btn-primary">Save</button></div>
-    </div>
-  </div>
-
   <div class="admin-panel">
     <header>
       <h1>Admin Panel</h1>
-      <p class="small-muted">Resource management, sensor health, and analytics.</p>
+      <p class="small-muted">Read-only overview of resources, sensors, alerts, RFID, and analytics.</p>
       <div class="header-actions">
         <button id="logoutBtn" class="btn btn-logout">Logout</button>
       </div>
     </header>
 
+    <section class="overview-stats" aria-label="Admin overview summary">
+      <article class="overview-stat">
+        <span class="overview-label">Resources</span>
+        <strong id="resourceCount">—</strong>
+        <span class="overview-hint">Current spaces</span>
+      </article>
+      <article class="overview-stat">
+        <span class="overview-label">Sensors</span>
+        <strong id="sensorCount">—</strong>
+        <span class="overview-hint">Active coverage</span>
+      </article>
+      <article class="overview-stat">
+        <span class="overview-label">Alerts</span>
+        <strong id="alertCount">—</strong>
+        <span class="overview-hint">Security events</span>
+      </article>
+      <article class="overview-stat">
+        <span class="overview-label">Notices</span>
+        <strong id="noticeCount">—</strong>
+        <span class="overview-hint">Student updates</span>
+      </article>
+    </section>
+
+    <section class="shortcut-strip" aria-label="Quick shortcuts">
+      <a class="shortcut-card" href="FrameResourceList.html">
+        <span>Resource List</span>
+        <small>View current spaces and capacity</small>
+      </a>
+      <a class="shortcut-card" href="FrameSensorReadings.html">
+        <span>Sensor Readings</span>
+        <small>Inspect active sensors and signals</small>
+      </a>
+      <a class="shortcut-card" href="FrameAnalytics.html">
+        <span>Analytics</span>
+        <small>Open peak-time and maintenance charts</small>
+      </a>
+      <a class="shortcut-card" href="FrameAuditLogs.html">
+        <span>Audit Logs</span>
+        <small>Review RFID, occupancy, and security history</small>
+      </a>
+      <a class="shortcut-card" href="FrameEmergency.html">
+        <span>Emergency</span>
+        <small>Open safe points and alerts</small>
+      </a>
+    </section>
+
     <section class="admin-grid">
       <div class="panel resource-mgmt">
-        <h3>Resources</h3>
+        <h3>Resources Overview</h3>
         <div class="resource-controls">
-          <button id="addResource" class="btn btn-primary">Add Resource</button>
           <input id="searchResource" type="search" placeholder="Search resources">
+          <a class="btn btn-secondary" href="FrameResourceList.html">Open Resource List</a>
         </div>
 		<div class="table-wrap" aria-label="Resources table">
 			<table class="resource-table" id="resourceTable">
-			  <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+			  <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Capacity</th><th>Status</th></tr></thead>
 			  <tbody></tbody>
 			</table>
 		</div>
       </div>
 
       <div class="panel sensor-panel">
-        <h3>Sensor Status</h3>
+        <h3>Sensor Status Overview</h3>
+        <div class="panel-actions-inline">
+          <a class="btn btn-secondary" href="FrameSensorReadings.html">Open Sensor Readings</a>
+        </div>
         <ul id="sensorList" class="sensor-list"></ul>
       </div>
 
+      <div class="panel ble-panel">
+        <h3>BLE Presence Overview</h3>
+        <p class="small-muted" style="margin: 0 0 12px;">Recent BLE scans from gateways. Use Presence Roster for full BLE details.</p>
+        <ul id="bleOverviewList" class="sensor-list"></ul>
+        <p id="bleOverviewEmpty" class="small-muted" style="display:none; margin-top: 10px;">No BLE scans received yet.</p>
+        <div class="panel-actions-inline" style="margin-top: 12px;">
+          <a class="btn btn-secondary" href="FramePresenceRoster.html">Open Presence Roster</a>
+        </div>
+      </div>
+
       <div class="panel analytics-panel">
-        <h3>Analytics</h3>
+        <h3>Analytics Overview</h3>
         <ul class="analytics-links">
-          <li><a href="#">Occupancy Trends</a></li>
-          <li><a href="#">Peak Times</a></li>
-          <li><a href="#">Heatmaps</a></li>
+          <li><a href="FrameAnalytics.html">Open occupancy trends and charts</a></li>
+          <li><a href="FrameAnalytics.html">View peak hours and maintenance hints</a></li>
+          <li><a href="FrameAuditLogs.html">Jump to audit log summary</a></li>
         </ul>
       </div>
 
 	  <div class="panel security-panel">
-		<h3>After-hours Security</h3>
-		<p class="small-muted" style="margin: 0 0 12px;">Flags entries after 5:00 PM and before 6:00 AM. Identity may be unknown; security can verify via patrol/CCTV.</p>
+		<h3>After-hours Security Overview</h3>
+		<p class="small-muted" style="margin: 0 0 12px;">View after-hours events and incident reports. Editing and status actions are handled on the dedicated pages or backend workflow.</p>
 		<div style="margin-bottom: 12px;">
 		  <button id="exportSecurityBtn" class="btn btn-secondary" type="button">Export as Text</button>
 		  <p id="securityExportStatus" class="small-muted" style="display:none; margin-top: 8px;"></p>
@@ -104,35 +127,18 @@
 		<ul id="securityEventsList" class="security-list"></ul>
 		<p id="noSecurityEvents" class="small-muted" style="display:none;">No after-hours events.</p>
 
-    <div class="rfid-assign">
-      <h3>RFID Assignment</h3>
-      <p class="small-muted" style="margin: 0 0 12px;">Assign an RC522 card UID to a user (admin only). Optional: give the tag a friendly name.</p>
-      <div class="rfid-controls">
-      <select id="rfidUserSelect" aria-label="Select user">
-        <option value="">Select a user...</option>
-      </select>
-      <input id="rfidUidInput" type="text" placeholder="UID (e.g. A4845B82)" autocomplete="off" spellcheck="false">
-      <input id="rfidTagNameInput" type="text" placeholder="Tag name (optional)" autocomplete="off">
-      <button id="assignRfidBtn" class="btn btn-primary" type="button">Assign</button>
-      </div>
-      <p id="rfidAssignStatus" class="small-muted" style="display:none;"></p>
-    </div>
+		<div class="panel-actions-inline" style="margin-top: 12px;">
+		  <a class="btn btn-secondary" href="FrameAuditLogs.html">Audit Logs</a>
+		  <a class="btn btn-secondary" href="FrameEmergency.html">Emergency</a>
+		</div>
 	  </div>
 
       <div class="panel notifications-panel">
-        <h3>Student Notifications</h3>
-        <p class="small-muted" style="margin: 0 0 12px;">Post notices shown on student dashboard alerts (e.g. maintenance, closures).</p>
-        <div class="notif-form">
-          <input id="notifTitle" type="text" placeholder="Title (e.g. Library Maintenance)">
-          <textarea id="notifMessage" rows="3" placeholder="Message"></textarea>
-          <div class="notif-time-row">
-            <label>Start <input id="notifStartAt" type="datetime-local"></label>
-            <label>End <input id="notifEndAt" type="datetime-local"></label>
-            <label class="notif-active"><input id="notifIsActive" type="checkbox" checked> Active</label>
-            <button id="notifAddBtn" class="btn btn-primary" type="button">Add Notice</button>
-          </div>
+        <h3>Student Notifications Overview</h3>
+        <p class="small-muted" style="margin: 0 0 12px;">Recent notices shown to students on the website.</p>
+        <div class="panel-actions-inline" style="margin-bottom: 12px;">
+          <a class="btn btn-secondary" href="FrameDashboard.html">Dashboard Alerts</a>
         </div>
-        <p id="notifStatus" class="small-muted" style="display:none;"></p>
         <ul id="notifList" class="notif-list"></ul>
         <p id="noNotifs" class="small-muted" style="display:none;">No notifications yet.</p>
       </div>

@@ -140,11 +140,25 @@ import {
 
   function populateFilters(){
     var sources = unique(logs.map(function(l){return l.source || 'audit';})); sources.unshift('all');
-    if(filterSource) filterSource.innerHTML = sources.map(function(s){ return '<option value="'+s+'">'+(s==='all'?'All':s)+'</option>'; }).join('');
+    setSelectOptions(filterSource, sources, function(s){ return s==='all' ? 'All' : s; });
     var actions = unique(logs.map(function(l){return l.action;})); actions.unshift('all');
-    filterAction.innerHTML = actions.map(function(a){ return '<option value="'+a+'">'+(a==='all'?'All':a)+'</option>'}).join('');
-    var users = unique(logs.map(function(l){return l.user;})); users.unshift('all'); filterUser.innerHTML = users.map(function(u){ return '<option value="'+u+'">'+(u==='all'?'All':u)+'</option>'}).join('');
-    var resources = unique(logs.map(function(l){return l.resource||'';})).filter(Boolean); resources.unshift('all'); filterResource.innerHTML = resources.map(function(r){ return '<option value="'+r+'">'+(r==='all'?'All':r)+'</option>'}).join('');
+    setSelectOptions(filterAction, actions, function(a){ return a==='all' ? 'All' : a; });
+    var users = unique(logs.map(function(l){return l.user;})); users.unshift('all');
+    setSelectOptions(filterUser, users, function(u){ return u==='all' ? 'All' : u; });
+    var resources = unique(logs.map(function(l){return l.resource||'';})).filter(Boolean); resources.unshift('all');
+    setSelectOptions(filterResource, resources, function(r){ return r==='all' ? 'All' : r; });
+  }
+
+  function setSelectOptions(el, values, toLabel){
+    if(!el) return;
+    var previous = el.value || 'all';
+    el.innerHTML = (values || []).map(function(v){
+      var label = toLabel ? toLabel(v) : v;
+      return '<option value="'+v+'">'+label+'</option>';
+    }).join('');
+
+    if((values || []).indexOf(previous) !== -1) el.value = previous;
+    else if((values || []).indexOf('all') !== -1) el.value = 'all';
   }
 
   function unique(arr){ return arr.filter(function(v,i,a){return a.indexOf(v)===i}); }
@@ -183,7 +197,12 @@ import {
   function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   clearBtn.addEventListener('click',function(){ if(filterSource) filterSource.value='all'; filterAction.value='all'; filterUser.value='all'; filterResource.value='all'; filterFrom.value=''; filterTo.value=''; filterKeyword.value=''; currentPage=1; render(); });
-  [filterSource,filterAction,filterUser,filterResource,filterFrom,filterTo,filterKeyword,pageSizeSel].forEach(function(el){ if(el) el.addEventListener('input', function(){ currentPage=1; render(); }); });
+  [filterSource,filterAction,filterUser,filterResource,filterFrom,filterTo,filterKeyword,pageSizeSel].forEach(function(el){
+    if(!el) return;
+    var onFilterChange = function(){ currentPage=1; render(); };
+    el.addEventListener('input', onFilterChange);
+    el.addEventListener('change', onFilterChange);
+  });
   prevPage.addEventListener('click', function(){ if(currentPage>1){ currentPage--; render(); } }); nextPage.addEventListener('click', function(){ currentPage++; render(); });
 
   // init

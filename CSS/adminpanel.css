@@ -17,7 +17,7 @@
 
 .admin-panel header h1{
 	margin: 0;
-	font-size: 56px;
+	font-size: 44px;
 	line-height: 1.05;
 	letter-spacing: -0.06em;
 	color: var(--bt-foreground);
@@ -32,6 +32,90 @@
 	flex-wrap: wrap;
 }
 
+/* Overview summary */
+.overview-stats{
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	margin: 18px 0 14px;
+}
+
+.overview-stat{
+	padding: 14px 16px;
+	border: 1px solid var(--bt-border);
+	background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent), var(--bt-card);
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.overview-label,
+.overview-hint{
+	display: block;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	color: var(--bt-muted-foreground);
+}
+
+.overview-stat strong{
+	display: block;
+	margin: 8px 0 6px;
+	font-size: 28px;
+	line-height: 1;
+	letter-spacing: -0.04em;
+	color: var(--bt-foreground);
+}
+
+.overview-hint{ text-transform: none; letter-spacing: 0.08em; }
+
+/* Shortcut cards */
+.shortcut-strip{
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 10px;
+	margin: 0 0 16px;
+}
+
+.shortcut-card{
+	display: block;
+	padding: 14px 14px 12px;
+	border: 1px solid var(--bt-border);
+	background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--bt-card);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+	text-decoration: none;
+	color: var(--bt-foreground);
+	transition: transform var(--bt-fast) var(--bt-ease), border-color var(--bt-fast) var(--bt-ease), background-color var(--bt-fast) var(--bt-ease);
+	border-radius: 10px;
+}
+
+.shortcut-card:hover{
+	transform: translateY(-1px);
+	border-color: var(--bt-accent);
+	background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)), var(--bt-card);
+	box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+}
+
+.shortcut-card:active{
+	transform: translateY(0);
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.shortcut-card span{
+	display: block;
+	font-family: var(--bt-font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 11px;
+	margin-bottom: 8px;
+}
+
+.shortcut-card small{
+	display: block;
+	color: var(--bt-muted-foreground);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
 /* Layout */
 .admin-grid{
 	display: grid;
@@ -39,6 +123,7 @@
 	gap: 14px;
 	grid-template-areas:
 		"resources sensors"
+		"ble ble"
 		"analytics analytics"
 		"security security"
 		"notifications notifications";
@@ -46,6 +131,7 @@
 
 .resource-mgmt{ grid-area: resources; }
 .sensor-panel{ grid-area: sensors; }
+.ble-panel{ grid-area: ble; }
 .analytics-panel{ grid-area: analytics; }
 
 .security-panel{ grid-area: security; }
@@ -95,8 +181,11 @@
 
 .resource-mgmt h3,
 .sensor-panel h3,
+.ble-panel h3,
 .analytics-panel h3,
-.security-panel h3{
+.security-panel h3,
+.notifications-panel h3,
+.overview-links-panel h3{
 	margin: 0 0 12px;
 	padding-top: 18px;
 	font-family: var(--bt-font-mono);
@@ -251,6 +340,86 @@ button.btn-logout{
 	min-width: 220px;
 }
 
+.panel-actions-inline{
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.panel .btn,
+.header-actions .btn,
+.shortcut-card,
+.analytics-links a{
+	font-size: 12px;
+	line-height: 1.2;
+}
+
+.admin-panel .btn{
+	padding: 10px 12px;
+	border-radius: 999px;
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.btn-secondary{
+	background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+	border: 1px solid rgba(255,255,255,0.14);
+	color: var(--bt-foreground);
+}
+
+.btn-secondary:hover{
+	background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
+	color: var(--bt-foreground);
+	border-color: var(--bt-accent);
+	transform: translateY(-1px);
+}
+
+.btn-secondary:active{
+	transform: translateY(0);
+}
+
+.btn-logout{
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.header-actions .btn,
+.panel-actions-inline .btn{
+	min-height: 40px;
+}
+
+.resource-controls .btn,
+.panel-actions-inline .btn{
+	border-radius: 999px;
+}
+
+.resource-controls input[type="search"]{
+	border-radius: 999px;
+	border: 1px solid rgba(255,255,255,0.14);
+	background: rgba(255,255,255,0.03);
+	padding-inline: 14px;
+}
+
+.resource-controls input[type="search"]:focus{
+	outline: none;
+	border-color: var(--bt-accent);
+	box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+}
+
+.header-actions .btn,
+.resource-controls .btn,
+.panel-actions-inline .btn{
+	transition: transform var(--bt-fast) var(--bt-ease), box-shadow var(--bt-fast) var(--bt-ease), background-color var(--bt-fast) var(--bt-ease), border-color var(--bt-fast) var(--bt-ease);
+}
+
+.header-actions .btn:hover,
+.resource-controls .btn:hover,
+.panel-actions-inline .btn:hover{
+	transform: translateY(-1px);
+}
+
 /* Tables */
 .table-wrap{
 	border-top: 1px solid var(--bt-border);
@@ -373,6 +542,11 @@ button.btn-logout{
 /* Analytics */
 .analytics-links{ list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--bt-border); }
 .analytics-links li{ padding: 12px 0; border-bottom: 1px solid var(--bt-border); }
+.analytics-links a{
+	color: var(--bt-foreground);
+	text-decoration: none;
+}
+.analytics-links a:hover{ color: var(--bt-accent); }
 
 /* Modal overrides for this page (match dark theme) */
 .modal-overlay.show{ background: rgba(0, 0, 0, 0.55); }
@@ -387,6 +561,8 @@ button.btn-logout{
 .modal-panel .close-btn:hover{ color: var(--bt-foreground); }
 
 @media (max-width: 1024px){
+	.overview-stats{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.shortcut-strip{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.admin-grid{
 		grid-template-columns: 1fr;
 		grid-template-areas:
@@ -400,5 +576,9 @@ button.btn-logout{
 
 @media (max-width: 480px){
 	.admin-panel{ margin: 24px auto; padding: 18px; }
-	.admin-panel header h1{ font-size: 44px; }
+	.admin-panel header h1{ font-size: 36px; }
+	.overview-stats{ grid-template-columns: 1fr; }
+	.shortcut-strip{ grid-template-columns: 1fr; }
+	.header-actions{ width: 100%; }
+	.header-actions .btn{ width: 100%; }
 }

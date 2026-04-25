@@ -1,5 +1,5 @@
 import { supabase } from './supabase-auth.js';
-import { fetchOccupancyEvents, fetchResourcesLookup, fetchSensorsLookup } from './services/admin-observability-data.js';
+import { fetchOccupancyEvents, fetchResourcesLookup, fetchSensorsLookup, fetchBleScans } from './services/admin-observability-data.js';
 
 /* Sensor Readings viewer. Primary source is Supabase `occupancy_events`, with localStorage fallback. */
 (function(){
@@ -125,6 +125,14 @@ import { fetchOccupancyEvents, fetchResourcesLookup, fetchSensorsLookup } from '
       fetchSensorsLookup(supabase)
     ]);
 
+    var bleEvents = [];
+    try {
+      bleEvents = await fetchBleScans(supabase, 3000);
+    } catch (err) {
+      console.warn('BLE scans table unavailable or not allowed yet:', err);
+      bleEvents = [];
+    }
+
     var resourceMap = {};
     (resources || []).forEach(function(r){
       var name = String((r && r.name) || '').trim();
@@ -146,6 +154,7 @@ import { fetchOccupancyEvents, fetchResourcesLookup, fetchSensorsLookup } from '
         resource: resourceMap[ev.resource_id] || ('Resource ' + shortId(ev.resource_id)),
         value: value,
         payload: {
+          source: 'occupancy_events',
           id: ev.id,
           sensor_id: ev.sensor_id,
           resource_id: ev.resource_id,
@@ -156,8 +165,32 @@ import { fetchOccupancyEvents, fetchResourcesLookup, fetchSensorsLookup } from '
       };
     });
 
+    var mappedBleReadings = (bleEvents || []).map(function(ev){
+      var signal = Number(ev.rssi || 0);
+      var hasName = !!String(ev.device_name || '').trim();
+      return {
+        ts: ev.created_at || new Date().toISOString(),
+        sensor: ev.gateway_id ? ('BLE GW ' + ev.gateway_id) : 'BLE Gateway',
+        resource: 'BLE Nearby Devices',
+        value: signal,
+        payload: {
+          source: 'ble_scans',
+          id: ev.id,
+          gateway_id: ev.gateway_id,
+          scan_batch: ev.scan_batch,
+          device_address: ev.device_address,
+          device_name: hasName ? ev.device_name : null,
+          rssi: signal,
+          created_at: ev.created_at
+        },
+        status: signal >= -75 ? 'ok' : 'warn'
+      };
+    });
+
+    var allReadings = mappedReadings.concat(mappedBleReadings);
+
     return {
-      readings: mappedReadings,
+      readings: allReadings,
       sensorHealth: computeSensorHealthRows(sensors || [], events || [], resourceMap, sensorMap)
     };
   }
