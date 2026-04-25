@@ -10,6 +10,7 @@
     { "src": "/", "dest": "/FrameHome.html" },
     { "src": "/login", "dest": "/FrameLogin.html" },
     { "src": "/register", "dest": "/FrameRegister.html" },
+    { "src": "/chat", "dest": "/FrameChat.html" },
     { "src": "/dashboard", "dest": "/FrameDashboard.html" },
     { "src": "/map", "dest": "/FrameMap.html" },
     { "src": "/about", "dest": "/FrameHome.html" },
