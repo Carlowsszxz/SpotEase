@@ -8,11 +8,25 @@ export async function fetchUsersForAdminUi(supabase) {
 
   const { data: users, error: usersError } = await supabase
     .from('users')
-    .select('id, email, name')
+    .select('id, email, name, role')
     .order('name', { ascending: true });
 
   if (usersError) throw usersError;
   return users || [];
+}
+
+export async function updateUserRole(supabase, userId, role) {
+  const payload = {
+    role: role || null,
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabase
+    .from('users')
+    .update(payload)
+    .eq('id', userId);
+
+  if (error) throw error;
 }
 
 export async function fetchAssignableUsersForAdminUi(supabase) {

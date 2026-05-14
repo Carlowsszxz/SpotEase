@@ -3,7 +3,9 @@ import { supabase } from './supabase-auth.js'
 import {
   fetchSecurityEvents,
   fetchResources,
-  fetchAnnouncements
+  fetchAnnouncements,
+  fetchUsersForAdminUi,
+  updateUserRole
 } from './services/adminpanel-data.js'
 import { fetchBleScans } from './services/admin-observability-data.js'
 
@@ -16,6 +18,11 @@ import { fetchBleScans } from './services/admin-observability-data.js'
     const searchInput = document.getElementById('searchResource')
     const sensorList = document.getElementById('sensorList')
     const logoutBtn = document.getElementById('logoutBtn')
+
+    const roleUserSelect = document.getElementById('roleUserSelect')
+    const roleSelect = document.getElementById('roleSelect')
+    const updateRoleBtn = document.getElementById('updateRoleBtn')
+    const roleStatus = document.getElementById('roleStatus')
 
     const securityEventsList = document.getElementById('securityEventsList')
     const noSecurityEvents = document.getElementById('noSecurityEvents')
@@ -47,6 +54,8 @@ import { fetchBleScans } from './services/admin-observability-data.js'
     let currentBleScans = []
     let currentCapacityAlerts = []
     let currentCapacityStatus = []
+    let roleUsers = []
+    let roleUsersById = {}
 
     function escapeHtml(s){
       return String(s == null ? '' : s)
@@ -55,6 +64,84 @@ import { fetchBleScans } from './services/admin-observability-data.js'
         .replace(/>/g,'&gt;')
         .replace(/"/g,'&quot;')
         .replace(/'/g,'&#039;')
+    }
+
+    function normalizeRole(value){
+      return String(value || '').trim().toLowerCase()
+    }
+
+    function displayRole(value){
+      return normalizeRole(value) === 'admin' ? 'Admin' : 'Member'
+    }
+
+    function setRoleStatus(msg, isError){
+      if(!roleStatus) return
+      roleStatus.textContent = msg
+      roleStatus.classList.toggle('error', !!isError)
+    }
+
+    function formatUserLabel(user){
+      if(!user) return 'Unknown user'
+      const name = String(user.name || '').trim()
+      const email = String(user.email || '').trim()
+      const base = name ? (email ? name + ' - ' + email : name) : (email || user.id)
+      return base + ' (' + displayRole(user.role) + ')'
+    }
+
+    function populateRoleUsers(users){
+      roleUsers = users || []
+      roleUsersById = {}
+
+      if(!roleUserSelect) return
+      roleUserSelect.innerHTML = ''
+
+      if(!roleUsers || roleUsers.length === 0){
+        roleUserSelect.appendChild(new Option('No users found', ''))
+        setRoleStatus('No users available to update.', true)
+        if(updateRoleBtn) updateRoleBtn.disabled = true
+        return
+      }
+
+      roleUserSelect.appendChild(new Option('Select a user', ''))
+      roleUsers.forEach(function(user){
+        roleUsersById[user.id] = user
+        roleUserSelect.appendChild(new Option(formatUserLabel(user), user.id))
+      })
+
+      setRoleStatus('Select a user to update their role.')
+      if(updateRoleBtn) updateRoleBtn.disabled = true
+    }
+
+    function syncRoleSelection(){
+      if(!roleUserSelect || !roleSelect) return
+      const userId = roleUserSelect.value
+      const user = roleUsersById[userId]
+      if(!user){
+        roleSelect.value = 'member'
+        if(updateRoleBtn) updateRoleBtn.disabled = true
+        return
+      }
+
+      roleSelect.value = normalizeRole(user.role) === 'admin' ? 'admin' : 'member'
+      if(updateRoleBtn) updateRoleBtn.disabled = false
+      setRoleStatus('Selected: ' + formatUserLabel(user))
+    }
+
+    async function loadRoleUsers(selectedId){
+      if(!roleUserSelect) return
+      try{
+        const users = await fetchUsersForAdminUi(supabase)
+        populateRoleUsers(users)
+        if(selectedId){
+          roleUserSelect.value = selectedId
+          syncRoleSelection()
+        }
+      }catch(err){
+        console.error('Failed to load users for roles', err)
+        roleUserSelect.innerHTML = '<option value="">Unable to load users</option>'
+        setRoleStatus('Unable to load users.', true)
+        if(updateRoleBtn) updateRoleBtn.disabled = true
+      }
     }
 
     function formatWhen(ts){
@@ -539,12 +626,45 @@ import { fetchBleScans } from './services/admin-observability-data.js'
       })
     }
 
+    if(roleUserSelect){
+      roleUserSelect.addEventListener('change', syncRoleSelection)
+    }
+
+    if(updateRoleBtn){
+      updateRoleBtn.addEventListener('click', async () => {
+        if(!roleUserSelect || !roleSelect) return
+        const userId = roleUserSelect.value
+        const user = roleUsersById[userId]
+
+        if(!userId || !user){
+          setRoleStatus('Please select a user first.', true)
+          return
+        }
+
+        const nextRole = roleSelect.value === 'admin' ? 'admin' : 'member'
+        updateRoleBtn.disabled = true
+        setRoleStatus('Updating role for ' + formatUserLabel(user) + '...')
+
+        try{
+          await updateUserRole(supabase, userId, nextRole)
+          await loadRoleUsers(userId)
+          setRoleStatus('Role updated to ' + displayRole(nextRole) + '.')
+        }catch(err){
+          console.error('Role update failed', err)
+          setRoleStatus('Role update failed. Please try again.', true)
+        }finally{
+          updateRoleBtn.disabled = false
+        }
+      })
+    }
+
     await loadResources()
     await loadSecurityEvents()
     await loadAnnouncements()
     await loadBleOverview()
     await loadCapacityAlerts()
     await loadCapacityStatus()
+    await loadRoleUsers()
 
     setInterval(loadResources, 30000)
     setInterval(loadSecurityEvents, 15000)

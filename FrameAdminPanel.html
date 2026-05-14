@@ -79,6 +79,20 @@
         <ul id="sensorList" class="sensor-list"></ul>
       </div>
 
+      <div class="panel user-role-panel">
+        <h3>User Roles</h3>
+        <p class="small-muted panel-subtext">Assign admin access and update user roles.</p>
+        <div class="role-controls">
+          <select id="roleUserSelect"><option value="">Loading users…</option></select>
+          <select id="roleSelect">
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button id="updateRoleBtn" class="btn btn-primary" type="button">Update Role</button>
+        </div>
+        <p id="roleStatus" class="small-muted" style="margin-top:8px;">Select a user to update their role.</p>
+      </div>
+
       <div class="panel capacity-panel">
         <h3>Capacity Alerts</h3>
         <p class="small-muted panel-subtext">Alerts appear when spaces approach or reach full capacity. The public website reflects the current status automatically.</p>

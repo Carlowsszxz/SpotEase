@@ -233,6 +233,7 @@
 	gap: 16px;
 	grid-template-areas:
 		"resources sensors"
+		"roles roles"
 		"capacity capacity"
 		"ble ble"
 		"analytics analytics"
@@ -242,6 +243,7 @@
 
 .resource-mgmt{ grid-area: resources; }
 .sensor-panel{ grid-area: sensors; }
+.user-role-panel{ grid-area: roles; }
 .capacity-panel{ grid-area: capacity; }
 .ble-panel{ grid-area: ble; }
 .analytics-panel{ grid-area: analytics; }
@@ -264,8 +266,28 @@
 	margin-top: 4px;
 }
 
+.role-controls{
+	display: grid;
+	grid-template-columns: minmax(280px, 1.6fr) minmax(200px, 1fr) auto;
+	gap: 12px;
+	align-items: stretch;
+	margin-top: 4px;
+}
+
 .rfid-controls select,
 .rfid-controls input{
+	min-width: 0;
+	height: 52px;
+	padding: 0 14px;
+	border-radius: 0;
+	border: 1px solid var(--bt-border);
+	background: var(--bt-input) !important;
+	color: var(--bt-foreground) !important;
+	box-shadow: none;
+	line-height: 52px;
+}
+
+.role-controls select{
 	min-width: 0;
 	height: 52px;
 	padding: 0 14px;
@@ -282,6 +304,10 @@
 	color: var(--bt-muted-foreground) !important;
 }
 
+.role-controls select::placeholder{
+	color: var(--bt-muted-foreground) !important;
+}
+
 .rfid-controls select:focus,
 .rfid-controls input:focus{
 	outline: none;
@@ -289,7 +315,21 @@
 	box-shadow: 0 0 0 1px var(--bt-accent);
 }
 
+.role-controls select:focus{
+	outline: none;
+	border-color: var(--bt-accent);
+	box-shadow: 0 0 0 1px var(--bt-accent);
+}
+
 .rfid-controls .btn{
+	height: 52px;
+	padding: 0 18px;
+	align-self: stretch;
+	border-radius: 0;
+	white-space: nowrap;
+}
+
+.role-controls .btn{
 	height: 52px;
 	padding: 0 18px;
 	align-self: stretch;
@@ -993,8 +1033,14 @@ button.btn-logout{
 	.rfid-controls{
 		grid-template-columns: 1fr 1fr;
 	}
+	.role-controls{
+		grid-template-columns: 1fr 1fr;
+	}
 
 	.rfid-controls .btn{
+		grid-column: 1 / -1;
+	}
+	.role-controls .btn{
 		grid-column: 1 / -1;
 	}
 	.admin-grid{
@@ -1002,6 +1048,7 @@ button.btn-logout{
 		grid-template-areas:
 			"resources"
 			"sensors"
+			"roles"
 			"ble"
 			"analytics"
 			"security"
@@ -1022,8 +1069,14 @@ button.btn-logout{
 	.rfid-controls{
 		grid-template-columns: 1fr;
 	}
+	.role-controls{
+		grid-template-columns: 1fr;
+	}
 
 	.rfid-controls .btn{
+		width: 100%;
+	}
+	.role-controls .btn{
 		width: 100%;
 	}
 }
