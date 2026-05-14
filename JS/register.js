@@ -30,6 +30,12 @@ if (form) {
             return;
         }
 
+        const compactName = fullname.replace(/\s+/g, '');
+        if (compactName && !/[A-Za-z]/.test(compactName)) {
+            msgEl.textContent = 'Full name must include at least one letter.';
+            return;
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             msgEl.textContent = 'Please enter a valid email address.';
