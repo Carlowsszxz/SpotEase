@@ -1,0 +1,25 @@
+<!-- navbar.html - shared navigation for the app -->
+<link rel="stylesheet" href="CSS/navbar.css">
+<link rel="stylesheet" href="JS/react-nav/app-pill-nav.css">
+<nav class="main-nav">
+  <div class="nav-inner">
+    <div id="appPillNavRoot" class="app-pill-nav-root" aria-label="Primary app navigation"></div>
+
+    <div class="nav-right">
+      <span id="navUsername" class="nav-username" style="display:none"></span>
+      <a id="navLoginLink" href="FrameLogin.html" class="nav-link">Login</a>
+      <a id="navRegisterLink" href="FrameRegister.html" class="nav-link">Register</a>
+    </div>
+  </div>
+</nav>
+
+<button type="button" class="ai-chatbot-toggle" data-ai-chatbot-trigger aria-expanded="false" aria-controls="ai-chat-panel">Ask SpotEase AI</button>
+
+<a
+  id="emergencyCta"
+  class="emergency-cta"
+  href="FrameEmergency.html"
+  role="button"
+  aria-label="Have an emergency? Hold for 1 second to open emergency help."
+  title="Hold for 1 second to open emergency help"
+>Have an emergency? Press me</a>

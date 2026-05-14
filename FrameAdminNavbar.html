@@ -1,0 +1,34 @@
+<!-- admin-navbar.html - shared navigation for admin pages -->
+<link rel="stylesheet" href="CSS/admin-navbar.css">
+<nav class="main-nav" aria-label="Admin navigation">
+  <div class="nav-inner">
+    <div class="nav-brand" aria-label="Admin area">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-copy">
+        <strong>SpotEase</strong>
+        <small>Admin Ops</small>
+      </div>
+    </div>
+
+    <div class="nav-section">Core</div>
+    <ul class="nav-links">
+      <li><a href="FrameAdminPanel.html"><span class="nav-icon" aria-hidden="true"></span><span>Admin Panel</span></a></li>
+      <li><a href="FrameAnalytics.html"><span class="nav-icon" aria-hidden="true"></span><span>Analytics</span></a></li>
+      <li><a href="FrameAuditLogs.html"><span class="nav-icon" aria-hidden="true"></span><span>Audit Logs</span></a></li>
+    </ul>
+
+    <div class="nav-section">Operations</div>
+    <ul class="nav-links">
+      <li><a href="FramePresenceRoster.html"><span class="nav-icon" aria-hidden="true"></span><span>Presence Roster</span></a></li>
+      <li><a href="FrameSensorReadings.html"><span class="nav-icon" aria-hidden="true"></span><span>Sensor Readings</span></a></li>
+      <li><a href="FrameAssignRFID.html"><span class="nav-icon" aria-hidden="true"></span><span>Assign RFID</span></a></li>
+      <li><a href="FrameResourceList.html"><span class="nav-icon" aria-hidden="true"></span><span>Resources</span></a></li>
+    </ul>
+
+    <div class="nav-right">
+      <button id="navLogout" class="logout-btn" style="display:none">Logout</button>
+      <a id="navLoginLink" href="FrameLogin.html" class="nav-link">Login</a>
+      <a id="navRegisterLink" href="FrameRegister.html" class="nav-link">Register</a>
+    </div>
+  </div>
+</nav>

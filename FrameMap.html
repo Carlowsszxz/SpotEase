@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Resource Map</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/map.css">
+  <link rel="stylesheet" href="CSS/modal.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/ai-chatbot.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module">
+    import { checkAuth } from './JS/auth.js';
+    checkAuth('FrameLogin.html');
+  </script>
+</head>
+<body>
+	<div id="navbar"></div>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
+  <div id="mapReactRoot"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="module" src="JS/react-map/map-page.js"></script>
+  <script type="module" src="JS/ai-chatbot-react.js"></script>
+</body>
+</html>

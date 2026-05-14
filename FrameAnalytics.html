@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Analytics</title>
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/analytics.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/admin-shell.css">
+</head>
+
+<body class="admin-shell">
+	<div id="navbar"></div>
+	<script type="module">
+    import { injectAdminNavbar } from './JS/app-shell.js';
+    injectAdminNavbar();
+	</script>
+
+  <main class="admin-content">
+  <div class="analytics-page">
+    <header>
+      <div class="header-copy">
+        <h1>Analytics</h1>
+        <p class="small-muted">Telemetry activity dashboard focused on ultrasonic and RFID signals for monitoring and diagnostics.</p>
+      </div>
+    </header>
+
+    <section class="analytics-kpis" aria-label="Analytics summary">
+      <article class="kpi-card">
+        <span class="kpi-label">Ultrasonic Records</span>
+        <strong id="kpiUltrasonicRecords" class="kpi-value">—</strong>
+        <span class="kpi-hint">Loaded readings</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">RFID Records</span>
+        <strong id="kpiRfidRecords" class="kpi-value">—</strong>
+        <span class="kpi-hint">Loaded taps/scans</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Ultrasonic Peak Hour</span>
+        <strong id="kpiUltrasonicPeak" class="kpi-value">—</strong>
+        <span class="kpi-hint">Busiest hour</span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">RFID Peak Hour</span>
+        <strong id="kpiRfidPeak" class="kpi-value">—</strong>
+        <span class="kpi-hint">Busiest hour</span>
+      </article>
+    </section>
+
+    <section class="data-analysis-summary" aria-label="Phase 1 Data Analysis">
+      <h3>📊 Data Analysis Summary (Phase 1)</h3>
+      <div id="dataAnalysisSummary" class="analysis-cards">
+        <article class="analysis-card">
+          <div class="analysis-header">Ultrasonic Sensor Data</div>
+          <div class="analysis-stat">
+            <span class="stat-label">Total Records:</span>
+            <span id="analysisTotalUltrasonic" class="stat-value">—</span>
+          </div>
+          <div class="analysis-stat">
+            <span class="stat-label">Peak Hour:</span>
+            <span id="analysisPeakHourUltrasonic" class="stat-value">—</span>
+          </div>
+          <div class="analysis-stat">
+            <span class="stat-label">Quietest Hour:</span>
+            <span id="analysisQuietestHourUltrasonic" class="stat-value">—</span>
+          </div>
+        </article>
+        <article class="analysis-card">
+          <div class="analysis-header">RFID Tap Data</div>
+          <div class="analysis-stat">
+            <span class="stat-label">Total Records:</span>
+            <span id="analysisTotalRfid" class="stat-value">—</span>
+          </div>
+          <div class="analysis-stat">
+            <span class="stat-label">Peak Hour:</span>
+            <span id="analysisPeakHourRfid" class="stat-value">—</span>
+          </div>
+          <div class="analysis-stat">
+            <span class="stat-label">Quietest Hour:</span>
+            <span id="analysisQuietestHourRfid" class="stat-value">—</span>
+          </div>
+        </article>
+      </div>
+      <p class="small-muted analysis-note">✓ Analysis data cached for Phase 2-4. Open browser console to view detailed report.</p>
+    </section>
+
+    <section class="predicted-peaks-section" aria-label="AI Predicted Peak Hours">
+      <div class="section-header">
+        <h3>🔮 AI-Powered Peak Hour Predictions (Next 7 Days)</h3>
+        <p class="section-subtext">Forecast of busiest times using historical ultrasonic and RFID patterns</p>
+      </div>
+      <div class="predictions-tabs">
+        <button class="tab-btn active" data-sensor="ultrasonic">🔊 Ultrasonic</button>
+        <button class="tab-btn" data-sensor="rfid">🏷️ RFID</button>
+      </div>
+      <div class="predictions-table-wrap">
+        <table class="predictions-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Peak Hours (Top 3)</th>
+              <th>Confidence</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody id="predictionsTableBody">
+            <tr><td colspan="4" class="loading-text">Loading predictions...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="cleaning-schedule-section" aria-label="Recommended Cleaning Schedule">
+      <div class="section-header">
+        <h3>🧹 Recommended Cleaning Schedule</h3>
+        <p class="section-subtext">Optimal times for facility maintenance based on predicted low-occupancy windows</p>
+      </div>
+      <div class="cleaning-tabs">
+        <button class="tab-btn active" data-sensor="ultrasonic">🔊 Ultrasonic</button>
+        <button class="tab-btn" data-sensor="rfid">🏷️ RFID</button>
+      </div>
+      <div class="cleaning-grid" id="cleaningScheduleGrid">
+        <div class="loading-text">Loading cleaning schedule...</div>
+      </div>
+    </section>
+
+    <section class="prediction-insights-section" aria-label="Prediction Insights">
+      <div class="section-header">
+        <h3>💡 AI Insights & Recommendations</h3>
+        <p class="section-subtext">Data-driven insights to optimize facility management</p>
+      </div>
+      <div class="insights-grid" id="predictionInsightsGrid">
+        <div class="loading-text">Loading insights...</div>
+      </div>
+    </section>
+
+    <!-- Phase 5: Enhanced Features - Alerts System -->
+    <section class="alerts-section" aria-label="System Alerts">
+      <div class="section-header">
+        <h3>⚠️ System Alerts & Anomalies</h3>
+        <p class="section-subtext">Real-time notifications when actual occupancy deviates from predictions</p>
+      </div>
+      <div id="alertsContainer" class="alerts-container">
+        <div class="empty-state">
+          <span class="empty-icon">✓</span>
+          <p>No active alerts. Facility occupancy matches predictions.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Phase 5: Learning System & Accuracy Metrics -->
+    <section class="learning-metrics-section" aria-label="Prediction Learning & Accuracy">
+      <div class="section-header">
+        <h3>📈 Prediction Learning & Accuracy</h3>
+        <p class="section-subtext">System learns from historical data to improve future predictions</p>
+      </div>
+      <div class="metrics-grid">
+        <article class="metrics-card">
+          <span class="metrics-label">Overall Accuracy</span>
+          <strong id="overallAccuracy" class="metrics-value">—%</strong>
+          <span class="metrics-hint">Average prediction match rate</span>
+        </article>
+        <article class="metrics-card">
+          <span class="metrics-label">Total Tracked</span>
+          <strong id="totalTracked" class="metrics-value">—</strong>
+          <span class="metrics-hint">Prediction records analyzed</span>
+        </article>
+        <article class="metrics-card">
+          <span class="metrics-label">Trend</span>
+          <strong id="accuracyTrend" class="metrics-value">—</strong>
+          <span class="metrics-hint">Improving / Stable / Declining</span>
+        </article>
+        <article class="metrics-card">
+          <span class="metrics-label">Best Day</span>
+          <strong id="bestDayName" class="metrics-value">—</strong>
+          <span class="metrics-hint" id="bestDayAccuracy">—</span>
+        </article>
+      </div>
+      <div class="learning-controls">
+        <button id="resetAccuracyBtn" class="btn-secondary">Reset Accuracy Data</button>
+        <button id="exportAccuracyBtn" class="btn-secondary">Export Report</button>
+      </div>
+    </section>
+
+      <div class="chart-card">
+        <h3>Ultrasonic Activity by Hour</h3>
+        <canvas id="ultrasonicPeakChart"></canvas>
+        <p id="ultrasonicPeakSummary" class="chart-summary"></p>
+      </div>
+
+      <div class="chart-card">
+        <h3>RFID Activity by Hour</h3>
+        <canvas id="rfidPeakChart"></canvas>
+        <p id="rfidPeakSummary" class="chart-summary"></p>
+      </div>
+    </section>
+
+    <section class="maintenance-suggestions">
+      <h3>Telemetry Recommendations</h3>
+      <div id="maintenanceSuggestions" class="suggestions-list"></div>
+    </section>
+
+    <section class="insights">
+      <h3>Telemetry Insights</h3>
+      <div id="insightsList" class="insights-list"></div>
+    </section>
+
+  </div>
+  </main>
+
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+
+    // Check authentication and admin role
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
+  <script type="module" src="JS/analytics.js"></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Emergency</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/emergency.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <link rel="stylesheet" href="CSS/ai-chatbot.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module">
+    import { checkAuth } from './JS/auth.js';
+    checkAuth('FrameLogin.html');
+  </script>
+</head>
+<body>
+  <div id="navbar"></div>
+  <script type="module">
+    import { injectNavbar } from './JS/app-shell.js';
+    injectNavbar();
+  </script>
+
+  <main>
+  <div class="emergency-page">
+    <header class="emergency-header">
+      <h1>Emergency</h1>
+      <p>Emergency response dashboard for rapid actions, safety updates, and room occupancy monitoring.</p>
+
+      <div class="emergency-controls">
+        <label for="emergencyRoomSelect">Choose room</label>
+        <select id="emergencyRoomSelect">
+          <option value="">Select a room</option>
+        </select>
+      </div>
+    </header>
+
+    <section id="emergencyPriorityBanner" class="emergency-priority-banner" aria-live="polite">
+      <div class="emergency-priority-head">Status</div>
+      <div id="emergencyPriorityTitle" class="emergency-priority-title">No active emergency reported</div>
+      <div id="emergencyPriorityMeta" class="emergency-priority-meta">Follow posted guidance and stay alert.</div>
+    </section>
+
+    <div id="emergencyStatus" class="emergency-status" aria-live="polite" style="display:none;"></div>
+
+    <section class="emergency-card emergency-actions-card">
+      <h2>Emergency Actions</h2>
+      <div class="emergency-actions-grid">
+        <button id="callSecurityBtn" type="button" class="emergency-action-btn">Call Campus Security</button>
+        <a href="tel:911" class="emergency-action-btn">Call 911</a>
+        <button id="shareLocationBtn" type="button" class="emergency-action-btn">Share My Location</button>
+        <button id="emergencyContactsBtn" type="button" class="emergency-action-btn">Emergency Contacts</button>
+      </div>
+      <div id="locationShareStatus" class="emergency-note" style="margin-top:10px;">Location sharing ready.</div>
+    </section>
+
+    <section class="emergency-grid">
+      <section class="emergency-card">
+        <h2>Nearest Safe Point</h2>
+        <div id="safePointName" class="safe-point-name">Library Emergency Exit</div>
+        <div id="safePointHint" class="safe-point-hint">Near the comfort room</div>
+        <div id="safePointRoute" class="emergency-note">Route: Use nearest marked exit, then proceed to assembly area.</div>
+        <div class="safe-point-actions">
+          <a href="FrameMap.html" class="emergency-action-btn">Open Map</a>
+        </div>
+      </section>
+
+      <section class="emergency-card">
+        <h2>I’m Safe Check-in</h2>
+        <p class="small-muted" style="margin-top: 10px;">Tap once to mark yourself safe during an incident.</p>
+        <button id="checkInSafeBtn" type="button" class="emergency-action-btn" style="margin-top:12px;">I’m Safe</button>
+        <div id="checkInStatus" class="emergency-note" style="margin-top:10px;">No check-in yet.</div>
+      </section>
+    </section>
+
+    <section class="emergency-card">
+      <h2>Estimated inside (Sensors)</h2>
+      <div class="emergency-metric">
+        <div class="emergency-metric-label">Estimated people inside now</div>
+        <div class="emergency-metric-value" id="estimatedInsideTotal">—</div>
+      </div>
+      <div class="emergency-note">Last sensor update: <span id="sensorLastUpdated">—</span></div>
+
+      <div class="emergency-subtitle">Occupied spaces (top)</div>
+      <div id="occupiedSpacesList" class="emergency-spaces"></div>
+    </section>
+
+    <section class="emergency-card">
+      <h2>Evacuation Accountability</h2>
+      <p class="small-muted" style="margin-top: 10px;">RFID timestamps and ultrasonic movement logs help confirm evacuation progress.</p>
+      <div class="evac-summary">
+        <div class="evac-summary-card">
+          <div class="emergency-metric-label">RFID last seen</div>
+          <div class="evac-summary-value" id="rfidLastSeenCount">—</div>
+          <div class="emergency-note">Unique tags detected</div>
+        </div>
+        <div class="evac-summary-card">
+          <div class="emergency-metric-label">Recent exits</div>
+          <div class="evac-summary-value" id="rfidExitCount">—</div>
+          <div class="emergency-note">Last 30 minutes</div>
+        </div>
+        <div class="evac-summary-card">
+          <div class="emergency-metric-label">Ultrasonic flow</div>
+          <div class="evac-summary-value" id="ultrasonicDelta">—</div>
+          <div class="emergency-note">Net movement (exits - entries)</div>
+        </div>
+      </div>
+
+      <div class="emergency-subtitle">RFID last-seen roster</div>
+      <div id="rfidRoster" class="emergency-roster"></div>
+      <div id="rfidRosterEmpty" class="emergency-note">No RFID logs available.</div>
+
+      <div class="emergency-subtitle">Ultrasonic movement log</div>
+      <ul id="ultrasonicLog" class="emergency-updates"></ul>
+      <div id="ultrasonicEmpty" class="emergency-note">No ultrasonic movement logs yet.</div>
+    </section>
+
+    <section class="emergency-card">
+      <h2>Recent Signal Loss Events</h2>
+      <div class="emergency-note" style="margin-bottom: 12px;">BLE tracking signal timeouts (last 4 hours)</div>
+      <ul id="signalLossList" class="emergency-updates"></ul>
+      <div id="signalLossEmpty" class="emergency-note">No recent signal loss events.</div>
+    </section>
+
+    <section class="emergency-card">
+      <h2>Live Safety Updates</h2>
+      <ul id="emergencyUpdatesList" class="emergency-updates"></ul>
+      <div id="emergencyUpdatesEmpty" class="emergency-note">No active safety updates.</div>
+    </section>
+  </div>
+  </main>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="module" src="JS/ai-chatbot-react.js"></script>
+  <script type="module" src="JS/emergency.js"></script>
+</body>
+</html>

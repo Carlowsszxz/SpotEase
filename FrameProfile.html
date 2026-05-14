@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Profile</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/profile.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/ai-chatbot.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+	<div id="navbar"></div>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
+
+  <div class="profile-page">
+    <header>
+      <h1>Account Profile</h1>
+      <p class="small-muted">Update your account details and security settings.</p>
+    </header>
+
+    <form id="profileForm">
+      <section class="main-grid">
+        <div class="panel profile-details">
+          <h3>Details</h3>
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" required>
+
+          <label for="email">Email</label>
+		  <input id="email" type="email" required readonly aria-readonly="true">
+		  <p id="emailHelp" class="small-muted">Email can’t be changed here.</p>
+        </div>
+
+        <div class="panel profile-security">
+          <h3>Security</h3>
+		  <p id="securityHelp" class="small-muted"></p>
+          <label for="currentPassword">Current Password</label>
+          <input id="currentPassword" type="password" placeholder="Current password">
+          <label for="newPassword">New Password</label>
+          <input id="newPassword" type="password" placeholder="New password">
+          <label for="confirmPassword">Confirm New Password</label>
+          <input id="confirmPassword" type="password" placeholder="Confirm new password">
+        </div>
+      </section>
+
+      <div class="actions-row">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+
+      <div id="profileMsg" class="small-muted" aria-live="polite"></div>
+    </form>
+
+    <section class="panel rfid-activity" aria-labelledby="rfidActivityTitle">
+      <h3 id="rfidActivityTitle">RFID Activity</h3>
+      <p class="small-muted">Quick status for your assigned RFID tag.</p>
+
+      <div class="rfid-summary">
+        <div class="rfid-metric">
+          <div class="rfid-label">Last tap</div>
+          <div id="rfidLastTap" class="rfid-value">Loading…</div>
+        </div>
+      </div>
+
+      <a id="rfidHistoryLink" class="btn btn-secondary" href="FrameAccessHistory.html">View access history</a>
+      <div id="rfidEmpty" class="small-muted" style="display:none;">No RFID taps found yet for your assigned tag.</div>
+      <div id="rfidErr" class="small-muted" style="display:none;"></div>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="module" src="JS/profile.js"></script>
+  <script type="module" src="JS/ai-chatbot-react.js"></script>
+</body>
+</html>

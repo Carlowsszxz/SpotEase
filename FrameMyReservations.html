@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Reservations</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/myreservations.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+	<div id="navbar"></div>
+	<script type="module">
+		import { injectNavbar } from './JS/app-shell.js';
+		injectNavbar();
+	</script>
+
+
+  <div class="my-reservations">
+    <div id="statusBar" class="status-bar" aria-live="polite"></div>
+
+    <header>
+      <h1>My Reservations</h1>
+      <p class="small-muted">Manage your upcoming, active and past reservations.</p>
+    </header>
+
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+      <button id="retryBtn" class="btn" style="display:none">Retry</button>
+      <div id="lastUpdated" class="small-muted" style="font-size:12px"></div>
+    </div>
+
+    <section class="summary-row">
+      <div class="summary-item">Upcoming: <span id="countUpcoming">0</span></div>
+      <div class="summary-item">Active: <span id="countActive">0</span></div>
+      <div class="summary-item">Past: <span id="countPast">0</span></div>
+    </section>
+
+    <section class="lists-grid">
+      <div class="list-panel">
+        <h3>Active</h3>
+        <ul id="activeList" class="res-list"></ul>
+        <p id="noActive" class="small-muted">No active reservations.</p>
+      </div>
+
+      <div class="list-panel">
+        <h3>Upcoming</h3>
+        <ul id="upcomingList" class="res-list"></ul>
+        <p id="noUpcoming" class="small-muted">No upcoming reservations.</p>
+      </div>
+
+      <div class="list-panel full">
+        <h3>Past / Cancelled</h3>
+        <ul id="pastList" class="res-list"></ul>
+        <p id="noPast" class="small-muted">No past reservations.</p>
+      </div>
+    </section>
+  </div>
+
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="spinner" role="status" aria-live="polite">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="loading-text">Loading…</div>
+    </div>
+  </div>
+
+  <script type="module" src="JS/auth.js"></script>
+  <script type="module" src="JS/myreservations.js"></script>
+</body>
+</html>

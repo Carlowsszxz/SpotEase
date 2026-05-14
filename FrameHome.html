@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotEase</title>
+        <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+    <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+    <link rel="stylesheet" href="CSS/navbar.css">
+    <link rel="stylesheet" href="JS/react-hero/home-hero-tilted.css">
+    <link rel="stylesheet" href="CSS/home.css">
+    <link rel="stylesheet" href="CSS/ai-chatbot.css">
+        <link rel="stylesheet" href="CSS/bold-typography.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+</head>
+<body>
+    <div id="navbar"></div>
+    <script type="module">
+        import { injectNavbar } from './JS/app-shell.js';
+        injectNavbar();
+    </script>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        Live Campus Space Intelligence <span class="highlight">in Production</span>
+                    </h1>
+                    <p class="hero-subtitle">SpotEase is deployed to monitor real-time occupancy across study areas, labs, and meeting rooms, helping students, staff, and operations teams make faster space decisions.</p>
+                    <div class="hero-actions">
+                        <a href="FrameRegister.html" class="btn btn-primary">Get Started</a>
+                        <a href="#about" class="btn btn-secondary">Learn More</a>
+                    </div>
+                    <div class="hero-signals">
+                        <span>Live occupancy telemetry</span>
+                        <span>RFID access events</span>
+                        <span>Operational alerting</span>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div id="heroTiltRoot" aria-label="Interactive hero card"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" aria-label="How SpotEase works">
+        <div class="how-inner">
+            <div class="how-step reveal">
+                <p class="step-kicker">01</p>
+                <h2>See</h2>
+                <p>Check live occupancy by room before you walk there.</p>
+            </div>
+            <div class="how-step reveal">
+                <p class="step-kicker">02</p>
+                <h2>Decide</h2>
+                <p>Select available spaces immediately with clear capacity and status indicators.</p>
+            </div>
+            <div class="how-step reveal">
+                <p class="step-kicker">03</p>
+                <h2>Act</h2>
+                <p>Book resources and respond to alerts before congestion impacts users.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-about-intro" id="about">
+        <div class="about-inner reveal">
+            <p class="about-eyebrow">About SpotEase</p>
+            <h2 class="about-title">A deployed platform for occupancy visibility, reservation workflows, and safer campus operations.</h2>
+            <p class="about-lead">SpotEase combines IoT sensing, RFID event tracking, and analytics dashboards to improve utilization, reduce search time, and support day-to-day operational decisions.</p>
+        </div>
+    </section>
+
+    <section class="home-parallax" data-parallax>
+        <div class="home-parallax-media" data-speed="0.24">
+            <img src="Images/Scroll Parallax/Image 1.jpeg" alt="SpotEase deployed campus monitoring view">
+        </div>
+        <div class="home-parallax-overlay"></div>
+        <div class="home-parallax-content reveal">
+            <h3>Real Deployment Context</h3>
+            <p>This view reflects actual campus deployment conditions where occupancy data, access activity, and response workflows are monitored continuously.</p>
+        </div>
+    </section>
+
+    <section class="home-features" aria-label="Core capabilities">
+        <div class="home-features-heading reveal">
+            <h2>Core capabilities</h2>
+            <p>Focused feature set designed for speed, clarity, and reliability.</p>
+        </div>
+        <div class="home-features-inner">
+            <div class="home-feature-card reveal">
+                <h3>Operational Dashboarding</h3>
+                <p>Live status views, trend charts, and activity insights give users and administrators immediate operational awareness.</p>
+            </div>
+            <div class="home-feature-card reveal">
+                <h3>Cross-Device Access</h3>
+                <p>Interfaces are optimized for desktop and mobile so occupancy checks, reservations, and alerts stay accessible anywhere on campus.</p>
+            </div>
+            <div class="home-feature-card reveal">
+                <h3>Integrated IoT Pipeline</h3>
+                <p>Ultrasonic sensing, RFID scanning, and cloud-backed analytics work together to deliver reliable real-time space intelligence.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-container">
+            <h2>Deploy Smarter Space Operations</h2>
+            <p>Improve resource availability, reduce congestion, and strengthen campus safety with real-time occupancy and access intelligence.</p>
+            <a href="FrameRegister.html" class="btn btn-primary">Create an Account</a>
+        </div>
+    </section>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <p class="footer-brand">SpotEase</p>
+                <p class="footer-copy">Production-ready space intelligence for students, faculty, and campus operations teams.</p>
+            </div>
+            <div class="footer-contact">
+                <div class="footer-links" aria-label="Footer links">
+                    <a href="#home">Home</a>
+                    <a href="#about">About</a>
+                    <a href="FrameLogin.html">Sign in</a>
+                </div>
+           
+                
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="JS/supabase-auth.js"></script>
+    <script type="module" src="JS/home.js"></script>
+    <script type="module" src="JS/ai-chatbot-react.js"></script>
+    <script type="module" src="JS/react-hero/home-hero-tilted.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
+
+        // Copy email to clipboard (only if footer email button exists)
+        const emailCopyBtn = document.querySelector('.email-copy-btn');
+        if (emailCopyBtn) {
+            emailCopyBtn.addEventListener('click', function() {
+                const email = 'contact@spotease.com';
+                navigator.clipboard.writeText(email).then(() => {
+                    const btn = this;
+                    const originalLabel = btn.getAttribute('aria-label');
+                    btn.setAttribute('aria-label', 'Email copied!');
+                    btn.classList.add('copied');
+                    
+                    // Show toast notification
+                    const toast = document.getElementById('toast');
+                    toast.textContent = 'Copied!';
+                    toast.classList.add('show');
+                    
+                    setTimeout(() => {
+                        btn.setAttribute('aria-label', originalLabel);
+                        btn.classList.remove('copied');
+                        toast.classList.remove('show');
+                    }, 2000);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

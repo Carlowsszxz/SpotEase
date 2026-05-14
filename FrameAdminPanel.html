@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/adminpanel.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/admin-shell.css">
+</head>
+
+<body class="admin-shell">
+	<div id="navbar"></div>
+	<script type="module">
+    import { injectAdminNavbar } from './JS/app-shell.js';
+    injectAdminNavbar();
+	</script>
+
+  <main class="admin-content">
+  <div class="admin-panel">
+    <header>
+      <div class="header-copy">
+        <h1>Admin Panel</h1>
+        <p class="small-muted">Central operations view for resource health, sensor activity, security signals, and student-facing notices.</p>
+      </div>
+      <div class="header-actions">
+        <button id="logoutBtn" class="btn btn-logout">Logout</button>
+        <a class="btn btn-primary" href="FrameAssignRFID.html">Assign RFID</a>
+      </div>
+    </header>
+
+    <section class="overview-stats" aria-label="Admin overview summary">
+      <article class="overview-stat">
+        <span class="overview-label">Resources</span>
+        <strong id="resourceCount">—</strong>
+        <span class="overview-hint">Current spaces</span>
+      </article>
+      <article class="overview-stat">
+        <span class="overview-label">Sensors</span>
+        <strong id="sensorCount">—</strong>
+        <span class="overview-hint">Active coverage</span>
+      </article>
+      <article class="overview-stat">
+        <span class="overview-label">Alerts</span>
+        <strong id="alertCount">—</strong>
+        <span class="overview-hint">Security events</span>
+      </article>
+      <article class="overview-stat">
+        <span class="overview-label">Notices</span>
+        <strong id="noticeCount">—</strong>
+        <span class="overview-hint">Student updates</span>
+      </article>
+    </section>
+
+
+
+    <section class="admin-grid">
+      <div class="panel resource-mgmt">
+        <h3>Resources Overview</h3>
+        <div class="resource-controls">
+          <input id="searchResource" type="search" placeholder="Search resources">
+          <a class="btn btn-secondary" href="FrameResourceList.html">Open Resource List</a>
+        </div>
+		<div class="table-wrap" aria-label="Resources table">
+			<table class="resource-table" id="resourceTable">
+			  <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Capacity</th><th>Status</th></tr></thead>
+			  <tbody></tbody>
+			</table>
+		</div>
+      </div>
+
+      <div class="panel sensor-panel">
+        <h3>Sensor Status Overview</h3>
+        <div class="panel-actions-inline">
+          <a class="btn btn-secondary" href="FrameSensorReadings.html">Open Sensor Readings</a>
+        </div>
+        <ul id="sensorList" class="sensor-list"></ul>
+      </div>
+
+      <div class="panel capacity-panel">
+        <h3>Capacity Alerts</h3>
+        <p class="small-muted panel-subtext">Alerts appear when spaces approach or reach full capacity. The public website reflects the current status automatically.</p>
+        <div class="capacity-summary">
+          <div class="capacity-metric">
+            <span class="overview-label">Full</span>
+            <strong id="capacityFullCount">—</strong>
+            <span class="overview-hint">Spaces at 100%</span>
+          </div>
+          <div class="capacity-metric">
+            <span class="overview-label">Near</span>
+            <strong id="capacityNearCount">—</strong>
+            <span class="overview-hint">95% and above</span>
+          </div>
+          <div class="capacity-public-status" id="capacityPublicStatus">
+            <span class="badge">Website status: —</span>
+            <span class="small-muted">Students see this on the library website.</span>
+          </div>
+        </div>
+        <div class="table-wrap capacity-alerts-wrap" aria-label="Active capacity alerts">
+          <table class="capacity-alerts-table" id="capacityAlertsTable">
+            <thead>
+              <tr>
+                <th>Space</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Occupancy</th>
+                <th>Triggered</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="capacityAlertsEmpty" class="small-muted" style="display:none;">No capacity alerts right now.</p>
+      </div>
+
+      <div class="panel ble-panel">
+        <h3>BLE Presence Overview</h3>
+        <p class="small-muted panel-subtext">Recent gateway BLE scans. Use Presence Roster for full presence detail.</p>
+        <ul id="bleOverviewList" class="sensor-list"></ul>
+        <p id="bleOverviewEmpty" class="small-muted panel-msg" style="display:none;">No BLE scans received yet.</p>
+        <div class="panel-actions-inline panel-spacer-sm">
+          <a class="btn btn-secondary" href="FramePresenceRoster.html">Open Presence Roster</a>
+        </div>
+      </div>
+
+      <div class="panel analytics-panel">
+        <h3>Analytics Overview</h3>
+        <ul class="analytics-links">
+          <li><a href="FrameAnalytics.html">Open occupancy trends and charts</a></li>
+          <li><a href="FrameAnalytics.html">View peak hours and maintenance hints</a></li>
+          <li><a href="FrameAuditLogs.html">Jump to audit log summary</a></li>
+        </ul>
+      </div>
+
+	  <div class="panel security-panel">
+		<h3>After-hours Security Overview</h3>
+    <p class="small-muted panel-subtext">Review after-hours events and incidents. Status management is handled in dedicated workflows.</p>
+    <div class="export-actions">
+		  <button id="exportSecurityBtn" class="btn btn-secondary" type="button">Export as Text</button>
+      <p id="securityExportStatus" class="small-muted export-status" style="display:none;"></p>
+		</div>
+    <div id="securityExportContainer" class="security-export-wrap" style="display:none;">
+      <textarea id="securityExportText" class="security-export-text" readonly></textarea>
+      <button id="copySecurityTextBtn" class="btn btn-primary security-copy-btn" type="button">Copy to Clipboard</button>
+		</div>
+		<ul id="securityEventsList" class="security-list"></ul>
+		<p id="noSecurityEvents" class="small-muted" style="display:none;">No after-hours events.</p>
+
+    <div class="panel-actions-inline panel-spacer-sm">
+		  <a class="btn btn-secondary" href="FrameAuditLogs.html">Audit Logs</a>
+		</div>
+	  </div>
+
+      <div class="panel notifications-panel">
+        <h3>Student Notifications Overview</h3>
+        <p class="small-muted panel-subtext">Recent notices currently visible to students.</p>
+        <div class="panel-actions-inline panel-spacer-sm panel-spacer-bottom-sm">
+          <a class="btn btn-secondary" href="FrameDashboard.html">Dashboard Alerts</a>
+        </div>
+        <ul id="notifList" class="notif-list"></ul>
+        <p id="noNotifs" class="small-muted" style="display:none;">No notifications yet.</p>
+      </div>
+    </section>
+
+  </div>
+  </main>
+
+  <script type="module">
+    import { checkAdminAuth } from './JS/admin-auth.js'
+
+    // Check authentication and admin role
+    checkAdminAuth('FrameLogin.html', 'FrameDashboard.html')
+  </script>
+  <script src="JS/adminpanel.js" type="module"></script>
+</body>
+</html>

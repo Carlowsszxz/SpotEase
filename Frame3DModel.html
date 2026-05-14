@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>3D Model Viewer</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <link rel="stylesheet" href="CSS/model3d.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div id="navbar"></div>
+  <script type="module">
+    import { injectNavbar } from './JS/app-shell.js';
+    injectNavbar();
+  </script>
+
+  <main class="model-page">
+    <header class="model-header">
+      <h1>Live Space Preview</h1>
+      <p>Modern visual mode (no 3D setup needed)</p>
+    </header>
+
+    <section class="model-card">
+      <div class="neo-scene" aria-hidden="true">
+        <div class="neo-grid"></div>
+        <div class="neo-glow neo-glow-a"></div>
+        <div class="neo-glow neo-glow-b"></div>
+
+        <article class="neo-tile neo-tile-main">
+          <div class="inside-label">Current Presence</div>
+          <div id="sceneCount" class="scene-count count-visible">0</div>
+          <div id="sceneStatus" class="scene-status zone-meta-visible">Available</div>
+        </article>
+
+        <article class="neo-tile neo-tile-side">
+          <div class="inside-label">Zones Active</div>
+          <div class="scene-small">4 spaces online</div>
+        </article>
+
+        <article class="neo-tile neo-tile-side neo-tile-bottom">
+          <div class="inside-label">Flow</div>
+          <div class="scene-small">Realtime sample feed</div>
+        </article>
+      </div>
+      <div class="inside-hud" aria-live="polite">
+        <div class="hud-block">
+          <div class="inside-label">People Inside</div>
+          <div id="insideCount" class="inside-count count-visible">0</div>
+        </div>
+        <div class="hud-block hud-block-right">
+          <div class="inside-label">Status</div>
+          <div id="zoneMeta" class="zone-meta zone-meta-visible">Available · 0/20</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const neoScene = document.querySelector('.neo-scene');
+      const insideCount = document.getElementById('insideCount');
+      const sceneCount = document.getElementById('sceneCount');
+      const sceneStatus = document.getElementById('sceneStatus');
+      const zoneMeta = document.getElementById('zoneMeta');
+
+      const capacity = 20;
+      const sampleCounts = [9, 10, 12, 11, 13, 15, 14, 16, 15, 13, 12, 11];
+      let sampleIndex = 0;
+      let targetX = 0;
+      let targetY = 0;
+      let currentX = 0;
+      let currentY = 0;
+      let hoverRaf = null;
+
+      const updateSceneTilt = () => {
+        if (!neoScene) return;
+        currentX += (targetX - currentX) * 0.1;
+        currentY += (targetY - currentY) * 0.1;
+
+        neoScene.style.setProperty('--hover-x', currentX.toFixed(3));
+        neoScene.style.setProperty('--hover-y', currentY.toFixed(3));
+
+        if (Math.abs(targetX - currentX) > 0.002 || Math.abs(targetY - currentY) > 0.002) {
+          hoverRaf = requestAnimationFrame(updateSceneTilt);
+        } else {
+          hoverRaf = null;
+        }
+      };
+
+      if (neoScene) {
+        neoScene.addEventListener('pointermove', (event) => {
+          const rect = neoScene.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+
+          targetX = Math.max(-1, Math.min(1, x));
+          targetY = Math.max(-1, Math.min(1, y));
+
+          if (!hoverRaf) hoverRaf = requestAnimationFrame(updateSceneTilt);
+        });
+
+        neoScene.addEventListener('pointerleave', () => {
+          targetX = 0;
+          targetY = 0;
+          if (!hoverRaf) hoverRaf = requestAnimationFrame(updateSceneTilt);
+        });
+      }
+
+      const updateCount = (nextValue) => {
+        if (!insideCount) return;
+        insideCount.classList.remove('count-visible');
+        insideCount.classList.add('count-fade');
+
+        window.setTimeout(() => {
+          insideCount.textContent = String(nextValue);
+          insideCount.classList.remove('count-fade');
+          insideCount.classList.add('count-visible');
+        }, 130);
+
+        if (!sceneCount) return;
+        sceneCount.classList.remove('count-visible');
+        sceneCount.classList.add('count-fade');
+        window.setTimeout(() => {
+          sceneCount.textContent = String(nextValue);
+          sceneCount.classList.remove('count-fade');
+          sceneCount.classList.add('count-visible');
+        }, 130);
+      };
+
+      const getStatus = (count) => {
+        const ratio = count / capacity;
+        if (ratio >= 1) return 'Full';
+        if (ratio >= 0.75) return 'Near Full';
+        return 'Available';
+      };
+
+      const updateZoneMeta = (text) => {
+        if (!zoneMeta) return;
+        zoneMeta.classList.remove('zone-meta-visible');
+        zoneMeta.classList.add('zone-meta-fade');
+        window.setTimeout(() => {
+          zoneMeta.textContent = text;
+          zoneMeta.classList.remove('zone-meta-fade');
+          zoneMeta.classList.add('zone-meta-visible');
+        }, 120);
+
+        if (!sceneStatus) return;
+        sceneStatus.classList.remove('zone-meta-visible');
+        sceneStatus.classList.add('zone-meta-fade');
+        window.setTimeout(() => {
+          sceneStatus.textContent = text;
+          sceneStatus.classList.remove('zone-meta-fade');
+          sceneStatus.classList.add('zone-meta-visible');
+        }, 120);
+      };
+
+      const render = () => {
+        const count = sampleCounts[sampleIndex];
+        const status = getStatus(count);
+        updateCount(count);
+        updateZoneMeta(`${status} · ${count}/${capacity}`);
+      };
+
+      render();
+
+      window.setInterval(() => {
+        sampleIndex = (sampleIndex + 1) % sampleCounts.length;
+        render();
+      }, 2800);
+    })();
+  </script>
+
+  <script type="module">
+    import { checkAuth } from './JS/auth.js';
+    checkAuth('FrameLogin.html');
+  </script>
+</body>
+</html>

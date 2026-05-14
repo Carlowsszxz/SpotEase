@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpotEase Chat</title>
+  <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+  <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/navbar.css">
+  <link rel="stylesheet" href="CSS/modal.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/chat.css">
+  <link rel="stylesheet" href="CSS/ai-chatbot.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div id="navbar"></div>
+  <script type="module">
+    import { injectNavbar } from './JS/app-shell.js';
+    injectNavbar();
+  </script>
+
+  <main class="chat-page">
+    <section class="chat-shell">
+      <header class="chat-header">
+        <div>
+          <p class="chat-eyebrow">Community forum</p>
+          <h1>Room Forum</h1>
+          <p class="small-muted">Pick a room and post updates like environment issues, crowd feedback, or study tips. Posts are public to all users in that room forum.</p>
+        </div>
+        <div class="chat-header-actions">
+          <button type="button" class="btn btn-secondary" id="refreshInboxBtn">Refresh</button>
+          <a href="FrameDashboard.html" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+      </header>
+
+      <section class="chat-layout" aria-label="Chat workspace">
+        <aside class="chat-sidebar chat-panel">
+          <div class="chat-sidebar-head">
+            <h2>Rooms</h2>
+            <span id="inboxStatus" class="chat-status">Loading…</span>
+          </div>
+
+          <label class="chat-search-label" for="chatSearchInput">Search room</label>
+          <input id="chatSearchInput" class="chat-search-input" type="search" placeholder="Type to filter rooms">
+
+          <div id="conversationList" class="conversation-list" aria-label="Conversation list"></div>
+        </aside>
+
+        <section class="chat-thread chat-panel">
+          <div class="chat-thread-head">
+            <div>
+              <h2 id="threadTitle">Select a room</h2>
+              <p id="threadMeta">Choose a room to view and post community updates.</p>
+            </div>
+          </div>
+
+          <div id="threadNotice" class="chat-notice">Posts will appear here once a room is selected.</div>
+          <div id="messageList" class="chat-messages" aria-live="polite"></div>
+
+          <form id="composerForm" class="chat-composer">
+            <label class="chat-label" for="chatMessage">Post update</label>
+            <textarea id="chatMessage" class="chat-input" rows="4" maxlength="2000" placeholder="Example: No aircon in this room right now." disabled></textarea>
+            <div class="chat-composer-actions">
+              <span id="composerSafety" class="chat-safety"></span>
+              <button type="submit" id="sendMessageBtn" class="btn btn-primary" disabled>Post</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    import { checkAuth } from './JS/auth.js';
+    checkAuth('FrameLogin.html');
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="module" src="JS/chat.js"></script>
+  <script type="module" src="JS/ai-chatbot-react.js"></script>
+</body>
+</html>

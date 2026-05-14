@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Assign RFID Tag</title>
+  <link rel="stylesheet" href="CSS/frames.css">
+  <link rel="stylesheet" href="CSS/admin-navbar.css">
+  <link rel="stylesheet" href="CSS/adminpanel.css">
+  <link rel="stylesheet" href="CSS/bold-typography.css">
+  <link rel="stylesheet" href="CSS/admin-shell.css">
+</head>
+<body class="admin-shell">
+  <div id="navbar"></div>
+  <script type="module">
+    import { injectAdminNavbar } from './JS/app-shell.js';
+    injectAdminNavbar();
+  </script>
+
+  <main class="admin-content">
+  <div class="admin-panel">
+    <header>
+      <div class="header-copy">
+        <h1>Assign RFID Tag</h1>
+        <p class="small-muted">Scan an RFID tag to associate it with a user account.</p>
+      </div>
+    </header>
+
+    <section class="panel rfid-assign">
+      <h3>RFID Assignment</h3>
+      <div class="rfid-controls">
+        <select id="userSelect"><option value="">Loading users…</option></select>
+        <input id="rfidInput" type="text" placeholder="Scan RFID tag here" autocomplete="off" autocorrect="off" autocapitalize="off">
+        <input id="tagName" type="text" placeholder="Optional tag name (e.g. Student Card)">
+        <button id="assignBtn" class="btn btn-primary" type="button">Assign Tag</button>
+      </div>
+      <p id="rfidStatus" class="small-muted" style="margin-top:8px;">Ready to scan.</p>
+    </section>
+
+    <section class="panel rfid-recent-taps">
+      <div class="rfid-recent-header">
+        <div>
+          <h3>Recent Unassigned Taps</h3>
+          <p class="small-muted">Shows the latest RFID scans that do not have a user assigned yet.</p>
+        </div>
+        <button id="refreshRecentTapsBtn" class="btn btn-secondary" type="button">Refresh</button>
+      </div>
+      <p id="recentTapMeta" class="small-muted rfid-recent-meta">Loading recent taps…</p>
+      <div id="recentTapList" class="rfid-recent-list" aria-live="polite"></div>
+    </section>
+  </div>
+  </main>
+
+  <script type="module" src="JS/admin-assign-rfid.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="icon" type="image/png" href="Images/SpotEase.png?v=1" sizes="any">
+    <link rel="apple-touch-icon" href="Images/SpotEase.png?v=1">
+    <link rel="stylesheet" href="CSS/register.css">
+    <link rel="stylesheet" href="CSS/bold-typography.css">
+</head>
+<body>
+    <div class="register-wrapper">
+        <div class="register-image-section">
+            <img src="Images/LoginImage.jpg" alt="Building" class="register-image">
+            <div class="register-image-overlay">
+            </div>
+        </div>
+
+        <div class="register-form-section">
+            <h1>Create Account</h1>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input type="text" id="fullname" name="fullname" placeholder="Enter your Full Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your Email here" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your Password here" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your Password" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Create Account</button>
+            </form>
+
+            <p id="register-message" class="message"></p>
+
+            <p class="signin-link">Already have an account? <a href="FrameLogin.html" target="contentFrame">Sign in</a></p>
+
+            <p class="university-footer">University of Makati</p>
+        </div>
+    </div>
+
+    <script type="module" src="JS/supabase-auth.js"></script>
+    <script type="module" src="JS/register.js"></script>
+</body>
+</html>
